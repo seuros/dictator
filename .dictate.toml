@@ -1,0 +1,82 @@
+# Dictator Configuration
+# Decree-based structural enforcement
+
+[decree.supreme]
+# Universal structural rules (applies to ALL files)
+trailing_whitespace = "deny"
+tabs_vs_spaces = "spaces"
+tab_width = 2
+final_newline = "require"
+line_endings = "lf"
+# max_line_length: opt-in per language (not for .md, .txt, notes)
+blank_line_whitespace = "deny"
+
+[decree.ruby]
+# Ruby-specific structural enforcement
+max_line_length = 120
+max_lines = 300
+ignore_comments = true
+ignore_blank_lines = true
+method_visibility_order = ["public", "protected", "private"]
+comment_spacing = true
+
+[decree.ruby.linter]
+# External linter - Dictator adds: -A --format json
+command = "rubocop"
+
+[decree.typescript]
+# TypeScript/JavaScript structural enforcement
+max_line_length = 100
+max_lines = 350
+ignore_comments = true
+ignore_blank_lines = true
+import_order = ["system", "external", "internal"]
+
+[decree.typescript.linter]
+# External linter - Dictator adds: --fix --format json
+command = "eslint"
+
+[decree.golang]
+# Go structural enforcement
+# Go uses tabs, not spaces (overrides decree.supreme)
+tabs_vs_spaces = "tabs"
+max_line_length = 120
+max_lines = 450
+ignore_comments = true
+ignore_blank_lines = true
+
+[decree.golang.linter]
+# External linter - Dictator adds: -w
+command = "gofmt"
+
+[decree.rust]
+# Rust structural enforcement
+max_line_length = 100
+max_lines = 400
+ignore_comments = true
+ignore_blank_lines = true
+visibility_order = ["pub", "private"]
+
+[decree.python]
+# Python structural enforcement
+max_line_length = 88  # Black's default
+max_lines = 380
+ignore_comments = true
+ignore_blank_lines = true
+import_order = ["stdlib", "third_party", "local"]
+
+[decree.python.linter]
+# External linter - Dictator adds: check --fix --output-format json
+command = "ruff"
+
+[decree.frontmatter]
+# YAML frontmatter ordering for .md and .mdx files only
+# Does NOT handle: .astro (JS/TS frontmatter), .yml/.yaml, .toml
+order = ["title", "slug", "pubDate", "description", "tags", "draft"]
+required = ["title", "slug"]
+
+# Custom decrees (loaded as WASM/native plugins)
+[decree.kjr]
+# Kim Jong Rails - enterprise productivity enforcement decree (GPL)
+enabled = true
+path = "crates/dictator-kjr/target/wasm32-wasip1/release/dictator_kjr.wasm"

@@ -1,0 +1,23 @@
+[package]
+name = "dictator-kjr"
+version = "0.60.0"
+edition = "2024"
+authors = ["Kim Jong Rails <kim@derails.dev>"]
+license = "GPL"  # Glorious People Licence
+publish = false
+description = "Kim Jong Rails decree - enterprise productivity enforcement (WASM component)"
+
+[lints.rust]
+rust_2024_compatibility = { level = "warn", priority = -1 }
+
+[lints.clippy]
+all = "warn"
+
+[dependencies]
+# Only the public ABI - this is how third-party decrees should be built
+dictator-decree-abi = { path = "../dictator-decree-abi" }
+regex = "1"
+wit-bindgen = "0.22"
+
+[lib]
+crate-type = ["cdylib"]

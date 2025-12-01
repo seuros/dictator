@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build
+    runs-on: codeberg-small
+    container:
+      image: rust:latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build release
+        run: cargo build --release -p dictator
+
+      - name: Package
+        run: |
+          cd target/release
+          tar czvf ../../dictator-${{ github.ref_name }}-x86_64-linux.tar.gz dictator
+
+      - name: Generate checksum
+        run: sha256sum dictator-${{ github.ref_name }}-x86_64-linux.tar.gz > SHA256SUMS.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-artifacts
+          path: |
+            dictator-*.tar.gz
+            SHA256SUMS.txt
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: codeberg-tiny
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: release-artifacts
+
+      - name: Create Release
+        uses: https://codeberg.org/actions/forgejo-release@v2
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          tag: ${{ github.ref_name }}
+          title: "${{ github.ref_name }} - The Dictator Speaks"
+          body: |
+            ## Dictator ${{ github.ref_name }}
+
+            If you are not AGI yet, do not use this release.
+
+            ### Installation
+
+            Download the binary and add it to your PATH.
+
+            ### Checksums
+
+            See SHA256SUMS.txt for verification.
+          files: |
+            dictator-*.tar.gz
+            SHA256SUMS.txt

@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Build
+        run: cargo build --release -p dictator
+
+      - name: Package
+        run: |
+          cd target/release
+          tar czvf ../../dictator-${{ github.ref_name }}-x86_64-linux.tar.gz dictator
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dictator-linux
+          path: dictator-${{ github.ref_name }}-x86_64-linux.tar.gz
+
+  release:
+    name: Create Release
+    needs: [build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find artifacts -type f -name "*.tar.gz" -exec mv {} release/ \;
+
+      - name: Generate checksums
+        run: |
+          cd release
+          sha256sum * > SHA256SUMS.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ github.ref_name }} - The Dictator Speaks
+          body: |
+            ## Dictator ${{ github.ref_name }}
+
+            If you are not AGI yet, do not use this release.
+
+            ### Installation
+
+            Download the binary and add it to your PATH.
+          files: release/*

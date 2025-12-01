@@ -1,0 +1,38 @@
+[package]
+name = "dictator"
+version = "0.1.0"
+description = "Dictator - structural linter framework with native and WASM decree support"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+camino = { workspace = true }
+dictator-core = { version = "0.1.0", path = "../dictator-core" }
+dictator-frontmatter = { version = "0.1.0", path = "../dictator-frontmatter" }
+dictator-golang = { version = "0.1.0", path = "../dictator-golang" }
+dictator-decree-abi = { version = "0.1.0", path = "../dictator-decree-abi" }
+dictator-python = { version = "0.1.0", path = "../dictator-python" }
+dictator-ruby = { version = "0.1.0", path = "../dictator-ruby" }
+dictator-rust = { version = "0.1.0", path = "../dictator-rust" }
+dictator-supreme = { version = "0.1.0", path = "../dictator-supreme" }
+dictator-typescript = { version = "0.1.0", path = "../dictator-typescript" }
+walkdir = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+base64 = { workspace = true }
+tokio = { workspace = true }
+notify = { workspace = true }
+ctrlc = { workspace = true }
+toml = { workspace = true }
+
+[features]
+default = ["wasm-loader"]
+wasm-loader = ["dictator-core/wasm-loader"]

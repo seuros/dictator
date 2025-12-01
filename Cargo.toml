@@ -1,0 +1,64 @@
+[workspace]
+members = [
+    "crates/dictator-core",
+    "crates/dictator-decree-abi",
+    "crates/dictator",
+    "crates/dictator-ruby",
+    "crates/dictator-supreme",
+    "crates/dictator-typescript",
+    "crates/dictator-golang",
+    "crates/dictator-rust",
+    "crates/dictator-python",
+    "crates/dictator-frontmatter",
+]
+# WASM components require WASI SDK - build separately with:
+# WASI_SYSROOT=/path/to/wasi-sysroot cargo build -p <decree> --target wasm32-wasip1
+exclude = ["crates/dictator-kjr"]  # Enterprise productivity decree (GPL, WASM-only)
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+authors = ["Abdelkader Boudih <terminale@gmail.com>"]
+license = "MIT"
+
+[workspace.dependencies]
+anyhow = "1"
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_bytes = "0.11"
+clap = { version = "4", features = ["derive"] }
+rayon = "1"
+dashmap = "5"
+parking_lot = "0.12"
+camino = "1"
+walkdir = "2"
+toml = "0.8"
+serde_yaml = "0.9"
+base64 = "0.22"
+tokio = { version = "1", features = ["full"] }
+
+# WASM + decree related (host side; decree crates may opt out)
+wasmtime = { version = "39", default-features = true, features = ["component-model"] }
+wit-component = "0.19"
+wasmtime-wasi = { version = "39", default-features = true }
+libloading = "0.8"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+notify = "6"
+ctrlc = "3"
+
+[workspace.lints.rust]
+rust_2024_compatibility = { level = "warn", priority = -1 }
+unsafe_code = "deny"
+unused_must_use = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+
+[workspace.metadata]
+# Placeholder for tool config.

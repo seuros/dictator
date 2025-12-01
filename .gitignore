@@ -1,0 +1,25 @@
+# Build artifacts
+target/
+
+# Editor/OS
+*.swp
+*.swo
+.DS_Store
+.idea/
+.vscode/
+
+# Rust toolchains
+/.rustup-toolchain
+/.cargo/
+
+# Logs
+*.log
+
+# WASM outputs
+**/target/wasm32-wasip1/
+
+# Dictator configs generated locally
+.dictate.local.toml
+
+# Python cache
+.ruff_cache/

@@ -1,0 +1,17 @@
+[package]
+name = "dictator-rust"
+version = "0.1.0"
+description = "Rust language decree for Dictator structural linter"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+dictator-decree-abi = { version = "0.1.0", path = "../dictator-decree-abi" }
+memchr = "2"
+
+[lib]
+crate-type = ["lib", "cdylib"]
