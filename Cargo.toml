@@ -49,6 +49,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 notify = "6"
 ctrlc = "3"
+tempfile = "3"
 
 [workspace.lints.rust]
 rust_2024_compatibility = { level = "warn", priority = -1 }

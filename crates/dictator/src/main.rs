@@ -13,6 +13,7 @@ mod dictate;
 mod files;
 mod lint;
 mod mcp;
+mod occupy;
 mod output;
 mod regime;
 mod watch;
@@ -24,6 +25,7 @@ use census::run_census;
 use cli::{Args, Command};
 use dictate::run_dictate;
 use lint::run_once;
+use occupy::run_occupy;
 use watch::run_watch;
 
 fn main() -> Result<()> {
@@ -53,5 +55,6 @@ fn main() -> Result<()> {
             run_census(census, config);
             Ok(())
         }
+        Command::Occupy(occupy) => run_occupy(occupy),
     }
 }

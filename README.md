@@ -241,6 +241,10 @@ The entire pipeline is “cheap first, expensive later”: Dictator slaps your s
 Dictator reads `.dictate.toml`, loads the configured decrees (WASM components), and runs enforcement.
 
 ```bash
+# Initialize config (creates .dictate.toml)
+dictator occupy
+dictator init                  # alias
+
 # Lint files (read-only, reports violations)
 dictator lint src/
 dictator stalint src/          # alias
@@ -258,6 +262,7 @@ dictator --config .dictate.dev.toml lint src/
 
 | Command | Alias | Mode | Description |
 |---------|-------|------|-------------|
+| `occupy` | `init` | Setup | Creates `.dictate.toml` with default config |
 | `lint` | `stalint` | Read-only | Reports violations without modifying files |
 | `dictate` | `kjr` | Destructive | Fixes whitespace, line endings, final newline |
 | `watch` | - | Read-only | Monitors files and reports on change |

@@ -37,10 +37,24 @@ pub enum Command {
     Watch(WatchArgs),
     /// Show regime status: loaded decrees, config, external linters
     Census(CensusArgs),
+    /// Initialize .dictate.toml with default configuration
+    #[command(visible_alias = "init")]
+    Occupy(OccupyArgs),
 }
 
 #[derive(Debug, Parser)]
 pub struct CensusArgs {}
+
+#[derive(Debug, Parser)]
+pub struct OccupyArgs {
+    /// Target directory for .dictate.toml (defaults to current directory)
+    #[arg(default_value = ".")]
+    pub path: Utf8PathBuf,
+
+    /// Overwrite existing .dictate.toml if present
+    #[arg(short, long)]
+    pub force: bool,
+}
 
 #[derive(Debug, Parser)]
 pub struct LintArgs {
