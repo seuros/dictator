@@ -1,0 +1,32 @@
+# Dictator configuration for CI
+# Minimal setup with only decree.supreme and decree.rust (confined to src/)
+# Avoids WASM decree loading errors and sandbox scanning
+
+[decree.supreme]
+trailing_whitespace = "deny"
+final_newline = "require"
+line_endings = "lf"
+
+[decree.rust]
+path = "src"
+enabled = true
+max_lines = 600
+
+# Explicitly disable all other decrees
+[decree.ruby]
+enabled = false
+
+[decree.typescript]
+enabled = false
+
+[decree.golang]
+enabled = false
+
+[decree.python]
+enabled = false
+
+[decree.frontmatter]
+enabled = false
+
+[decree.kjr]
+enabled = false

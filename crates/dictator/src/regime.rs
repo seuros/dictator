@@ -11,6 +11,14 @@ use dictator_typescript::init_decree as create_typescript_plugin;
 
 use crate::files::FileTypes;
 
+/// Check if a decree should be loaded based on config.
+/// Returns true if: no config, no decree entry, or enabled != false
+fn should_load_decree(config: Option<&DictateConfig>, key: &str) -> bool {
+    config
+        .and_then(|c| c.decree.get(key))
+        .is_none_or(|s| s.enabled != Some(false))
+}
+
 /// Initialize regime with all decrees for watch mode (all file types supported)
 pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
     let mut regime = Regime::new();
@@ -40,38 +48,71 @@ pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
     }
 
     // For watch mode, load all decrees (we don't know what files will change)
-    if let Some(config) = decree_config
-        && let Some(ruby_settings) = config.decree.get("ruby")
-    {
-        let ruby_config = dictator_ruby::config_from_decree_settings(ruby_settings);
-        regime.add_decree(dictator_ruby::init_decree_with_config(ruby_config));
-    } else {
-        regime.add_decree(create_ruby_plugin());
+    if should_load_decree(decree_config, "ruby") {
+        if let Some(config) = decree_config
+            && let Some(ruby_settings) = config.decree.get("ruby")
+        {
+            let ruby_config = dictator_ruby::config_from_decree_settings(ruby_settings);
+            regime.add_decree(dictator_ruby::init_decree_with_config(ruby_config));
+        } else {
+            regime.add_decree(create_ruby_plugin());
+        }
     }
 
-    if let Some(config) = decree_config
-        && let Some(ts_settings) = config.decree.get("typescript")
-    {
-        let ts_config = dictator_typescript::config_from_decree_settings(ts_settings);
-        regime.add_decree(dictator_typescript::init_decree_with_config(ts_config));
-    } else {
-        regime.add_decree(create_typescript_plugin());
+    if should_load_decree(decree_config, "typescript") {
+        if let Some(config) = decree_config
+            && let Some(ts_settings) = config.decree.get("typescript")
+        {
+            let ts_config = dictator_typescript::config_from_decree_settings(ts_settings);
+            regime.add_decree(dictator_typescript::init_decree_with_config(ts_config));
+        } else {
+            regime.add_decree(create_typescript_plugin());
+        }
     }
 
-    regime.add_decree(create_golang_plugin());
-    regime.add_decree(create_rust_plugin());
-    regime.add_decree(create_python_plugin());
+    if should_load_decree(decree_config, "golang") {
+        if let Some(config) = decree_config
+            && let Some(golang_settings) = config.decree.get("golang")
+        {
+            let golang_config = dictator_golang::config_from_decree_settings(golang_settings);
+            regime.add_decree(dictator_golang::init_decree_with_config(golang_config));
+        } else {
+            regime.add_decree(create_golang_plugin());
+        }
+    }
+    if should_load_decree(decree_config, "rust") {
+        if let Some(config) = decree_config
+            && let Some(rust_settings) = config.decree.get("rust")
+        {
+            let rust_config = dictator_rust::config_from_decree_settings(rust_settings);
+            regime.add_decree(dictator_rust::init_decree_with_config(rust_config));
+        } else {
+            regime.add_decree(create_rust_plugin());
+        }
+    }
+    if should_load_decree(decree_config, "python") {
+        if let Some(config) = decree_config
+            && let Some(python_settings) = config.decree.get("python")
+        {
+            let python_config = dictator_python::config_from_decree_settings(python_settings);
+            regime.add_decree(dictator_python::init_decree_with_config(python_config));
+        } else {
+            regime.add_decree(create_python_plugin());
+        }
+    }
 
-    if let Some(config) = decree_config
-        && let Some(frontmatter_settings) = config.decree.get("frontmatter")
-    {
-        let frontmatter_config =
-            dictator_frontmatter::config_from_decree_settings(frontmatter_settings);
-        regime.add_decree(dictator_frontmatter::init_decree_with_config(
-            frontmatter_config,
-        ));
-    } else {
-        regime.add_decree(create_frontmatter_plugin());
+    if should_load_decree(decree_config, "frontmatter") {
+        if let Some(config) = decree_config
+            && let Some(frontmatter_settings) = config.decree.get("frontmatter")
+        {
+            let frontmatter_config =
+                dictator_frontmatter::config_from_decree_settings(frontmatter_settings);
+            regime.add_decree(dictator_frontmatter::init_decree_with_config(
+                frontmatter_config,
+            ));
+        } else {
+            regime.add_decree(create_frontmatter_plugin());
+        }
     }
 
     regime
@@ -109,7 +150,7 @@ pub fn init_regime_for_files(
     }
 
     // Load language-specific decrees based on file types
-    if file_types.has_ruby {
+    if file_types.has_ruby && should_load_decree(decree_config, "ruby") {
         if let Some(config) = decree_config
             && let Some(ruby_settings) = config.decree.get("ruby")
         {
@@ -119,7 +160,7 @@ pub fn init_regime_for_files(
             regime.add_decree(create_ruby_plugin());
         }
     }
-    if file_types.has_typescript {
+    if file_types.has_typescript && should_load_decree(decree_config, "typescript") {
         if let Some(config) = decree_config
             && let Some(ts_settings) = config.decree.get("typescript")
         {
@@ -129,16 +170,37 @@ pub fn init_regime_for_files(
             regime.add_decree(create_typescript_plugin());
         }
     }
-    if file_types.has_golang {
-        regime.add_decree(create_golang_plugin());
+    if file_types.has_golang && should_load_decree(decree_config, "golang") {
+        if let Some(config) = decree_config
+            && let Some(golang_settings) = config.decree.get("golang")
+        {
+            let golang_config = dictator_golang::config_from_decree_settings(golang_settings);
+            regime.add_decree(dictator_golang::init_decree_with_config(golang_config));
+        } else {
+            regime.add_decree(create_golang_plugin());
+        }
     }
-    if file_types.has_rust {
-        regime.add_decree(create_rust_plugin());
+    if file_types.has_rust && should_load_decree(decree_config, "rust") {
+        if let Some(config) = decree_config
+            && let Some(rust_settings) = config.decree.get("rust")
+        {
+            let rust_config = dictator_rust::config_from_decree_settings(rust_settings);
+            regime.add_decree(dictator_rust::init_decree_with_config(rust_config));
+        } else {
+            regime.add_decree(create_rust_plugin());
+        }
     }
-    if file_types.has_python {
-        regime.add_decree(create_python_plugin());
+    if file_types.has_python && should_load_decree(decree_config, "python") {
+        if let Some(config) = decree_config
+            && let Some(python_settings) = config.decree.get("python")
+        {
+            let python_config = dictator_python::config_from_decree_settings(python_settings);
+            regime.add_decree(dictator_python::init_decree_with_config(python_config));
+        } else {
+            regime.add_decree(create_python_plugin());
+        }
     }
-    if file_types.has_configs {
+    if file_types.has_configs && should_load_decree(decree_config, "frontmatter") {
         if let Some(config) = decree_config
             && let Some(frontmatter_settings) = config.decree.get("frontmatter")
         {

@@ -1,6 +1,7 @@
 //! Census command - shows regime status
 
 use crate::cli::CensusArgs;
+use camino::Utf8PathBuf;
 use std::process::Command;
 
 /// Native decrees that are always available
@@ -23,10 +24,15 @@ const EXTERNAL_LINTERS: &[(&str, &str, &[&str])] = &[
     ("gofmt", "gofmt", &["go"]),
 ];
 
-pub fn run_census(args: CensusArgs) {
-    let config_path = args.config.unwrap_or_else(|| ".dictate.toml".into());
-    let config_exists = config_path.exists();
-    let dictate_config = dictator_core::DictateConfig::load_default();
+pub fn run_census(_args: CensusArgs, config_path: Option<Utf8PathBuf>) {
+    let dictate_config = config_path
+        .as_ref()
+        .and_then(|p| dictator_core::DictateConfig::from_file(p.as_std_path()).ok())
+        .or_else(dictator_core::DictateConfig::load_default);
+
+    let default_path = Utf8PathBuf::from(".dictate.toml");
+    let config_display = config_path.as_ref().unwrap_or(&default_path);
+    let config_exists = config_display.exists();
 
     println!("Regime Status");
     println!("─────────────");
@@ -34,18 +40,21 @@ pub fn run_census(args: CensusArgs) {
 
     // Config status
     if config_exists {
-        println!("Config: {config_path} (found)");
+        println!("Config: {config_display} (found)");
     } else {
-        println!("Config: {config_path} (not found - using defaults)");
+        println!("Config: {config_display} (not found - using defaults)");
     }
     println!();
 
     // Native decrees
     println!("Native decrees: {}", NATIVE_DECREES.len());
     for (name, extensions) in NATIVE_DECREES {
-        let enabled = dictate_config
-            .as_ref()
-            .is_none_or(|cfg| cfg.decree.contains_key(*name) || *name == "supreme");
+        // Mirror should_load_decree logic from regime.rs
+        let enabled = *name == "supreme"
+            || dictate_config
+                .as_ref()
+                .and_then(|c| c.decree.get(*name))
+                .is_none_or(|s| s.enabled != Some(false));
 
         let status = if enabled { "✓" } else { "○" };
         let exts = extensions.join(", ");

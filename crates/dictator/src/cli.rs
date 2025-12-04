@@ -17,6 +17,10 @@ pub enum OutputFormat {
 #[derive(Debug, Parser)]
 #[command(name = "dictator", version, about = "Multi-regime linter")]
 pub struct Args {
+    /// Optional config file (TOML only). Default: .dictate.toml if present.
+    #[arg(short, long, global = true)]
+    pub config: Option<Utf8PathBuf>,
+
     #[command(subcommand)]
     pub command: Command,
 }
@@ -36,21 +40,13 @@ pub enum Command {
 }
 
 #[derive(Debug, Parser)]
-pub struct CensusArgs {
-    /// Optional config file (TOML only). Default: .dictate.toml if present.
-    #[arg(long)]
-    pub config: Option<Utf8PathBuf>,
-}
+pub struct CensusArgs {}
 
 #[derive(Debug, Parser)]
 pub struct LintArgs {
     /// Files or directories to lint.
     #[arg(required = true)]
     pub paths: Vec<Utf8PathBuf>,
-
-    /// Optional config file (TOML only). Default: .dictate.toml if present.
-    #[arg(long)]
-    pub config: Option<Utf8PathBuf>,
 
     /// Output JSON instead of human format
     #[arg(long)]
@@ -67,10 +63,6 @@ pub struct DictateArgs {
     /// Files or directories to fix.
     #[arg(required = true)]
     pub paths: Vec<Utf8PathBuf>,
-
-    /// Optional config file (TOML only). Default: .dictate.toml if present.
-    #[arg(long)]
-    pub config: Option<Utf8PathBuf>,
 }
 
 #[derive(Debug, Parser)]
@@ -91,8 +83,4 @@ pub struct WatchArgs {
     #[cfg(feature = "wasm-loader")]
     #[arg(long, value_name = "PATH", num_args = 0..)]
     pub plugin: Vec<Utf8PathBuf>,
-
-    /// Optional config file (TOML only). Default: .dictate.toml if present.
-    #[arg(long)]
-    pub config: Option<Utf8PathBuf>,
 }

@@ -44,12 +44,13 @@ fn main() -> Result<()> {
 
     tracing_subscriber::fmt::init();
     let args = Args::parse();
+    let config = args.config;
     match args.command {
-        Command::Lint(lint) => run_once(lint),
+        Command::Lint(lint) => run_once(lint, config),
         Command::Dictate(dictate) => run_dictate(dictate),
-        Command::Watch(watch) => run_watch(watch),
+        Command::Watch(watch) => run_watch(watch, config),
         Command::Census(census) => {
-            run_census(census);
+            run_census(census, config);
             Ok(())
         }
     }

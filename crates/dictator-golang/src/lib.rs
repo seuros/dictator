@@ -5,19 +5,37 @@
 use dictator_decree_abi::{BoxDecree, Decree, Diagnostic, Diagnostics, Span};
 use memchr::memchr_iter;
 
+/// Configuration for golang decree
+#[derive(Debug, Clone)]
+pub struct GolangConfig {
+    pub max_lines: usize,
+}
+
+impl Default for GolangConfig {
+    fn default() -> Self {
+        Self { max_lines: 450 }
+    }
+}
+
 /// Lint Go source for structural violations.
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
+    lint_source_with_config(source, &GolangConfig::default())
+}
+
+/// Lint with custom configuration
+#[must_use]
+pub fn lint_source_with_config(source: &str, config: &GolangConfig) -> Diagnostics {
     let mut diags = Diagnostics::new();
 
-    check_file_line_count(source, &mut diags);
+    check_file_line_count(source, config.max_lines, &mut diags);
     check_indentation_style(source, &mut diags);
 
     diags
 }
 
-/// Rule 1: File line count - max 450 lines (ignoring comments and blank lines)
-fn check_file_line_count(source: &str, diags: &mut Diagnostics) {
+/// Rule 1: File line count (ignoring comments and blank lines)
+fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics) {
     let mut code_lines = 0;
     let bytes = source.as_bytes();
     let mut line_start = 0;
@@ -43,11 +61,11 @@ fn check_file_line_count(source: &str, diags: &mut Diagnostics) {
         }
     }
 
-    if code_lines > 450 {
+    if code_lines > max_lines {
         diags.push(Diagnostic {
             rule: "golang/file-too-long".to_string(),
             message: format!(
-                "File has {code_lines} code lines (max 450, excluding comments and blank lines)"
+                "File has {code_lines} code lines (max {max_lines}, excluding comments and blank lines)"
             ),
             enforced: false,
             span: Span::new(0, source.len().min(100)),
@@ -103,7 +121,16 @@ fn check_indentation_style(source: &str, diags: &mut Diagnostics) {
 }
 
 #[derive(Default)]
-pub struct Golang;
+pub struct Golang {
+    config: GolangConfig,
+}
+
+impl Golang {
+    #[must_use]
+    pub const fn new(config: GolangConfig) -> Self {
+        Self { config }
+    }
+}
 
 impl Decree for Golang {
     fn name(&self) -> &'static str {
@@ -111,7 +138,7 @@ impl Decree for Golang {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        lint_source(source)
+        lint_source_with_config(source, &self.config)
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -128,7 +155,21 @@ impl Decree for Golang {
 
 #[must_use]
 pub fn init_decree() -> BoxDecree {
-    Box::new(Golang)
+    Box::new(Golang::default())
+}
+
+/// Create decree with custom config
+#[must_use]
+pub fn init_decree_with_config(config: GolangConfig) -> BoxDecree {
+    Box::new(Golang::new(config))
+}
+
+/// Convert `DecreeSettings` to `GolangConfig`
+#[must_use]
+pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> GolangConfig {
+    GolangConfig {
+        max_lines: settings.max_lines.unwrap_or(450),
+    }
 }
 
 #[cfg(test)]

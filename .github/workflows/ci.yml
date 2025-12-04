@@ -65,5 +65,4 @@ jobs:
         run: cargo build --release -p dictator
 
       - name: Run stalint
-        run: ./target/release/dictator lint .
-        continue-on-error: true # Advisory for now
+        run: ./target/release/dictator -c .dictate.ci.toml lint crates/dictator/src crates/dictator-core/src crates/dictator-supreme/src crates/dictator-ruby/src crates/dictator-typescript/src crates/dictator-golang/src crates/dictator-rust/src crates/dictator-python/src crates/dictator-frontmatter/src

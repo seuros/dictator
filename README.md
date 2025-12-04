@@ -1,4 +1,4 @@
-# Dictator
+# The Dictator
 
 **Fast structural enforcement, before the linters.**
 

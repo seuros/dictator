@@ -10,11 +10,31 @@ use dictator_decree_abi::{BoxDecree, Decree, Diagnostics};
 
 pub use imports::{ImportType, classify_module, is_python_stdlib};
 
+/// Configuration for python decree
+#[derive(Debug, Clone)]
+pub struct PythonConfig {
+    pub max_lines: usize,
+}
+
+impl Default for PythonConfig {
+    fn default() -> Self {
+        Self {
+            max_lines: file_length::DEFAULT_MAX_LINES,
+        }
+    }
+}
+
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
+    lint_source_with_config(source, &PythonConfig::default())
+}
+
+/// Lint with custom configuration
+#[must_use]
+pub fn lint_source_with_config(source: &str, config: &PythonConfig) -> Diagnostics {
     let mut diags = Diagnostics::new();
 
-    file_length::check_file_line_count(source, &mut diags);
+    file_length::check_file_line_count(source, config.max_lines, &mut diags);
     imports::check_import_ordering(source, &mut diags);
     indentation::check_indentation_consistency(source, &mut diags);
 
@@ -22,7 +42,16 @@ pub fn lint_source(source: &str) -> Diagnostics {
 }
 
 #[derive(Default)]
-pub struct Python;
+pub struct Python {
+    config: PythonConfig,
+}
+
+impl Python {
+    #[must_use]
+    pub const fn new(config: PythonConfig) -> Self {
+        Self { config }
+    }
+}
 
 impl Decree for Python {
     fn name(&self) -> &'static str {
@@ -30,7 +59,7 @@ impl Decree for Python {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        lint_source(source)
+        lint_source_with_config(source, &self.config)
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -47,7 +76,21 @@ impl Decree for Python {
 
 #[must_use]
 pub fn init_decree() -> BoxDecree {
-    Box::new(Python)
+    Box::new(Python::default())
+}
+
+/// Create decree with custom config
+#[must_use]
+pub fn init_decree_with_config(config: PythonConfig) -> BoxDecree {
+    Box::new(Python::new(config))
+}
+
+/// Convert `DecreeSettings` to `PythonConfig`
+#[must_use]
+pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> PythonConfig {
+    PythonConfig {
+        max_lines: settings.max_lines.unwrap_or(file_length::DEFAULT_MAX_LINES),
+    }
 }
 
 #[cfg(test)]

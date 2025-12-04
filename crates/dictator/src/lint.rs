@@ -1,6 +1,7 @@
 //! Lint command implementation
 
 use anyhow::Result;
+use camino::Utf8PathBuf;
 use dictator_core::Source;
 use std::collections::HashSet;
 use std::fs;
@@ -11,8 +12,8 @@ use crate::files::{collect_all_files, detect_file_types};
 use crate::output::{SerializableDiagnostic, byte_to_line_col, print_diagnostic};
 use crate::regime::init_regime_for_files;
 
-pub fn run_once(args: LintArgs) -> Result<()> {
-    let cfg = load_config(args.config.as_ref())?;
+pub fn run_once(args: LintArgs, config_path: Option<Utf8PathBuf>) -> Result<()> {
+    let cfg = load_config(config_path.as_ref())?;
     let format = if args.json {
         OutputFormat::Json
     } else {
@@ -28,7 +29,10 @@ pub fn run_once(args: LintArgs) -> Result<()> {
     let file_types = detect_file_types(&files);
 
     // Load decree configuration
-    let decree_config = dictator_core::DictateConfig::load_default();
+    let decree_config = config_path
+        .as_ref()
+        .and_then(|p| dictator_core::DictateConfig::from_file(p.as_std_path()).ok())
+        .or_else(dictator_core::DictateConfig::load_default);
 
     // Load native decrees based on detected file types
     let mut regime = init_regime_for_files(&file_types, decree_config.as_ref());
