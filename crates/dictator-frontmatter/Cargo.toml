@@ -10,8 +10,8 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-dictator-decree-abi = { version = "0.1.0", path = "../dictator-decree-abi" }
-dictator-core = { version = "0.1.0", path = "../dictator-core" }
+dictator-decree-abi = { version = "0.2.0", path = "../dictator-decree-abi" }
+dictator-core = { version = "0.2.0", path = "../dictator-core" }
 serde.workspace = true
 serde_yaml.workspace = true
 
