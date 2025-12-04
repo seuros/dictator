@@ -1,0 +1,35 @@
+{
+  "release-type": "rust",
+  "packages": {
+    "crates/dictator": {
+      "package-name": "dictator"
+    },
+    "crates/dictator-core": {
+      "package-name": "dictator-core"
+    },
+    "crates/dictator-decree-abi": {
+      "package-name": "dictator-decree-abi"
+    },
+    "crates/dictator-supreme": {
+      "package-name": "dictator-supreme"
+    },
+    "crates/dictator-ruby": {
+      "package-name": "dictator-ruby"
+    },
+    "crates/dictator-typescript": {
+      "package-name": "dictator-typescript"
+    },
+    "crates/dictator-golang": {
+      "package-name": "dictator-golang"
+    },
+    "crates/dictator-rust": {
+      "package-name": "dictator-rust"
+    },
+    "crates/dictator-python": {
+      "package-name": "dictator-python"
+    },
+    "crates/dictator-frontmatter": {
+      "package-name": "dictator-frontmatter"
+    }
+  }
+}
