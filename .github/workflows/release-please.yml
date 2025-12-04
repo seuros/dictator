@@ -21,11 +21,9 @@ jobs:
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
 
   build-binaries:
-    name: Build ${{ matrix.target }}
+    name: Build binaries
     runs-on: ${{ matrix.os }}
     needs: release-please
     if: ${{ needs.release-please.outputs.release_created == 'true' }}
