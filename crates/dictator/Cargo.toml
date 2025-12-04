@@ -2,6 +2,7 @@
 name = "dictator"
 version = "0.1.0"
 description = "Dictator - structural linter framework with native and WASM decree support"
+readme = "../../README.md"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
