@@ -1,6 +1,6 @@
 [package]
 name = "dictator"
-version = "0.1.0"
+version = "0.2.0"
 description = "Dictator - structural linter framework with native and WASM decree support"
 readme = "../../README.md"
 edition.workspace = true

@@ -1,6 +1,6 @@
 [package]
 name = "dictator-core"
-version = "0.1.0"
+version = "0.2.0"
 description = "Core plugin loading and regime management for Dictator"
 edition.workspace = true
 authors.workspace = true
