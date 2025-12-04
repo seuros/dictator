@@ -34,6 +34,9 @@ notify = { workspace = true }
 ctrlc = { workspace = true }
 toml = { workspace = true }
 
+[dev-dependencies]
+tempfile = { workspace = true }
+
 [features]
 default = ["wasm-loader"]
 wasm-loader = ["dictator-core/wasm-loader"]
