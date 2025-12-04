@@ -1,35 +1,57 @@
 {
   "release-type": "rust",
+  "plugins": [
+    {
+      "type": "cargo-workspace"
+    },
+    {
+      "type": "linked-versions",
+      "groupName": "dictator",
+      "components": [
+        "dictator",
+        "dictator-core",
+        "dictator-decree-abi",
+        "dictator-supreme",
+        "dictator-ruby",
+        "dictator-typescript",
+        "dictator-golang",
+        "dictator-rust",
+        "dictator-python",
+        "dictator-frontmatter"
+      ],
+      "merge": false
+    }
+  ],
   "packages": {
     "crates/dictator": {
-      "package-name": "dictator"
+      "component": "dictator"
     },
     "crates/dictator-core": {
-      "package-name": "dictator-core"
+      "component": "dictator-core"
     },
     "crates/dictator-decree-abi": {
-      "package-name": "dictator-decree-abi"
+      "component": "dictator-decree-abi"
     },
     "crates/dictator-supreme": {
-      "package-name": "dictator-supreme"
+      "component": "dictator-supreme"
     },
     "crates/dictator-ruby": {
-      "package-name": "dictator-ruby"
+      "component": "dictator-ruby"
     },
     "crates/dictator-typescript": {
-      "package-name": "dictator-typescript"
+      "component": "dictator-typescript"
     },
     "crates/dictator-golang": {
-      "package-name": "dictator-golang"
+      "component": "dictator-golang"
     },
     "crates/dictator-rust": {
-      "package-name": "dictator-rust"
+      "component": "dictator-rust"
     },
     "crates/dictator-python": {
-      "package-name": "dictator-python"
+      "component": "dictator-python"
     },
     "crates/dictator-frontmatter": {
-      "package-name": "dictator-frontmatter"
+      "component": "dictator-frontmatter"
     }
   }
 }
