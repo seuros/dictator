@@ -14,8 +14,9 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      version: ${{ steps.release.outputs.version }}
+      dictator_released: ${{ steps.release.outputs['crates/dictator--release_created'] }}
+      dictator_tag: ${{ steps.release.outputs['crates/dictator--tag_name'] }}
+      dictator_version: ${{ steps.release.outputs['crates/dictator--version'] }}
     steps:
       - uses: googleapis/release-please-action@v4
         id: release
@@ -26,7 +27,7 @@ jobs:
     name: Build binaries
     runs-on: ${{ matrix.os }}
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    if: ${{ needs.release-please.outputs.dictator_released == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -50,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: v${{ needs.release-please.outputs.version }}
+          ref: ${{ needs.release-please.outputs.dictator_tag }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -73,26 +74,26 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          tar czvf ../../../dictator-v${{ needs.release-please.outputs.version }}-${{ matrix.target }}.tar.gz dictator
+          tar czvf ../../../dictator-v${{ needs.release-please.outputs.dictator_version }}-${{ matrix.target }}.tar.gz dictator
           cd ../../..
 
       - name: Package (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           cd target/${{ matrix.target }}/release
-          7z a ../../../dictator-v${{ needs.release-please.outputs.version }}-${{ matrix.target }}.zip dictator.exe
+          7z a ../../../dictator-v${{ needs.release-please.outputs.dictator_version }}-${{ matrix.target }}.zip dictator.exe
           cd ../../..
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: dictator-${{ matrix.target }}
-          path: dictator-v${{ needs.release-please.outputs.version }}-${{ matrix.target }}.*
+          path: dictator-v${{ needs.release-please.outputs.dictator_version }}-${{ matrix.target }}.*
 
   upload-release-assets:
     runs-on: ubuntu-latest
     needs: [release-please, build-binaries]
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    if: ${{ needs.release-please.outputs.dictator_released == 'true' }}
     permissions:
       contents: write
     steps:
@@ -107,7 +108,7 @@ jobs:
       - name: Upload to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: v${{ needs.release-please.outputs.version }}
+          VERSION: ${{ needs.release-please.outputs.dictator_tag }}
         run: |
           shopt -s nullglob
           for file in dist/*; do

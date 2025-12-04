@@ -157,26 +157,28 @@ detect_platform() {
 
 resolve_tag() {
   if [ -n "$REQUESTED_VERSION" ]; then
-    TAG="v${REQUESTED_VERSION#v}"
+    TAG="dictator-v${REQUESTED_VERSION#v}"
     return
   fi
 
-  if ! release_json=$(http_fetch "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null); then
-    warn "GitHub API unavailable; falling back to release redirect"
-  else
-    TAG=$(printf '%s\n' "$release_json" | awk -F'"' '/"tag_name":/ {print $4; exit}')
+  # Fetch all releases and find latest dictator-v* release
+  if ! releases_json=$(http_fetch "https://api.github.com/repos/${REPO}/releases" 2>/dev/null); then
+    fail "Unable to fetch releases from GitHub API"
   fi
 
-  if [ -z "${TAG:-}" ]; then
-    if [ "$HTTP_CLIENT" != "curl" ]; then
-      fail "Unable to determine latest release (curl required for fallback). Please install curl or specify --version."
-    fi
-    TAG=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://github.com/${REPO}/releases/latest" 2>/dev/null || true)
-    TAG="${TAG##*/}"
-  fi
+  # Find the first (latest) release with tag matching dictator-v*
+  TAG=$(printf '%s\n' "$releases_json" | awk -F'"' '
+    /"tag_name":/ {
+      tag = $4
+      if (tag ~ /^dictator-v[0-9]/) {
+        print tag
+        exit
+      }
+    }
+  ')
 
   if [ -z "${TAG:-}" ]; then
-    fail "Could not determine latest release tag"
+    fail "Could not find a dictator-v* release"
   fi
 }
 
@@ -208,13 +210,16 @@ map_target() {
 }
 
 download_binary() {
-  local tmp_dir tmp_bin download_url target_triple
+  local tmp_dir tmp_bin download_url target_triple version
   tmp_dir=$(mktemp -d 2>/dev/null || mktemp -d -t dictator-install)
   TMP_DIR="$tmp_dir"
   trap 'rm -rf "$TMP_DIR"' EXIT
 
   target_triple=$(map_target "$OS" "$ARCH")
   tmp_bin="${TMP_DIR}/dictator"
+
+  # Extract version from tag (dictator-v0.2.0 -> v0.2.0)
+  version="${TAG#dictator-}"
 
   # Determine file extension
   local archive_ext
@@ -223,7 +228,7 @@ download_binary() {
     *) archive_ext="tar.gz" ;;
   esac
 
-  BINARY_NAME="dictator-${TAG}-${target_triple}.${archive_ext}"
+  BINARY_NAME="dictator-${version}-${target_triple}.${archive_ext}"
   download_url="https://github.com/${REPO}/releases/download/${TAG}/${BINARY_NAME}"
 
   info "Downloading dictator ${TAG} for ${OS}/${ARCH}"
