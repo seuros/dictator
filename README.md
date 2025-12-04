@@ -15,6 +15,52 @@ Think of it as border control for your codebase: everything must satisfy basic s
 - Drive **LLM workflows**, **CI**, and **monorepos** with one config: `.dictate.toml`.
 - Extend via **WASM decrees** and an **MCP server** for AI assistants.
 
+## Installation
+
+### Binary Release (Recommended)
+
+Download and install a pre-built binary for your platform:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/seuros/dictator/master/scripts/install.sh | bash
+```
+
+This installs `dictator` to `~/.local/bin` by default. Make sure this directory is on your PATH:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+**Installation options:**
+- `--prefix <dir>` — Install to a custom directory
+- `--version <tag>` — Install a specific release version
+- `--help` — Show all options
+
+Example:
+```bash
+curl -fsSL https://raw.githubusercontent.com/seuros/dictator/master/scripts/install.sh | bash -- --prefix ~/.cargo/bin
+```
+
+### Build from Source
+
+Requires Rust 1.91+:
+
+```bash
+cargo install --git https://github.com/seuros/dictator
+```
+
+Or from this repository:
+
+```bash
+cargo install --path crates/dictator
+```
+
+### Runtime Requirements
+
+- **Linux**: glibc 2.31+ (most modern distributions)
+- **macOS**: 11.0+ (Intel or Apple Silicon)
+- **Windows**: 10+ (64-bit)
+
 ## The Problem
 
 **Expensive linters are slow.** Running RuboCop on a large Rails codebase takes minutes. ESLint on a monorepo crawls.
@@ -190,20 +236,6 @@ At a high level:
    and then leave the harder, semantic work to your “real” linters.
 
 The entire pipeline is “cheap first, expensive later”: Dictator slaps your structure into shape, then your quality linters and type-checkers show up once the room is already clean.
-
-## Installation
-
-From this repository:
-
-```bash
-cargo install --path crates/dictator
-```
-
-Or run directly with Cargo during development:
-
-```bash
-cargo run -p dictator -- --help
-```
 
 ## Usage
 
