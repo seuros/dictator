@@ -59,7 +59,6 @@ cargo install --path crates/dictator
 
 - **Linux**: glibc 2.31+ (most modern distributions)
 - **macOS**: 11.0+ (Intel or Apple Silicon)
-- **Windows**: 10+ (64-bit)
 
 ## The Problem
 
