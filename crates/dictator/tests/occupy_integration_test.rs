@@ -141,10 +141,12 @@ fn test_occupy_with_current_directory_default() -> Result<()> {
         force: false,
     });
 
-    // Restore original directory
-    std::env::set_current_dir(original_dir)?;
+    // Always restore original directory, even if occupy fails
+    let restore_result = std::env::set_current_dir(original_dir);
 
+    // Check both results
     result?;
+    restore_result?;
 
     // Verify file was created
     let config_path = temp_path.join(".dictate.toml");
