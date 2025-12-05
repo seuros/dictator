@@ -1,6 +1,6 @@
 [package]
 name = "dictator-decree-abi"
-version = "0.4.0"
+version = "0.5.0"
 description = "ABI and trait definitions for Dictator structural linter decree plugins"
 edition.workspace = true
 authors.workspace = true
