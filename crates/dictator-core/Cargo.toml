@@ -1,6 +1,6 @@
 [package]
 name = "dictator-core"
-version = "0.4.0"
+version = "0.5.0"
 description = "Core plugin loading and regime management for Dictator"
 edition.workspace = true
 authors.workspace = true
@@ -10,7 +10,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-dictator-decree-abi = { version = "0.4.0", path = "../dictator-decree-abi" }
+dictator-decree-abi = { version = "0.5.0", path = "../dictator-decree-abi" }
 anyhow = { workspace = true }
 camino = { workspace = true }
 tracing = { workspace = true }
