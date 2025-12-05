@@ -210,13 +210,17 @@ fn check_line(
             }
         }
         TabsOrSpaces::Tabs => {
-            // Check for leading spaces (indentation should be tabs)
-            if line.starts_with("  ") {
+            // Check for any spaces in the indentation prefix (must be tabs only)
+            if let Some((idx, _)) = line
+                .char_indices()
+                .take_while(|(_, c)| c.is_whitespace() && *c != '\n' && *c != '\r')
+                .find(|(_, c)| *c == ' ')
+            {
                 diags.push(Diagnostic {
                     rule: format!("{owner}/space-indentation"),
                     message: "spaces found, use tabs".to_string(),
                     enforced: true,
-                    span: Span::new(start, start + 2),
+                    span: Span::new(start + idx, start + idx + 1),
                 });
             }
         }
@@ -470,6 +474,28 @@ mod tests {
     #[test]
     fn detects_spaces_when_tabs_expected() {
         let src = "  hello world\n";
+        let config = SupremeConfig {
+            tabs_vs_spaces: TabsOrSpaces::Tabs,
+            ..Default::default()
+        };
+        let diags = lint_source_with_config(src, &config);
+        assert!(diags.iter().any(|d| d.rule == "supreme/space-indentation"));
+    }
+
+    #[test]
+    fn detects_single_space_when_tabs_expected() {
+        let src = " hello world\n";
+        let config = SupremeConfig {
+            tabs_vs_spaces: TabsOrSpaces::Tabs,
+            ..Default::default()
+        };
+        let diags = lint_source_with_config(src, &config);
+        assert!(diags.iter().any(|d| d.rule == "supreme/space-indentation"));
+    }
+
+    #[test]
+    fn detects_mixed_tabs_and_spaces_when_tabs_expected() {
+        let src = "\t hello world\n"; // tab then space
         let config = SupremeConfig {
             tabs_vs_spaces: TabsOrSpaces::Tabs,
             ..Default::default()
