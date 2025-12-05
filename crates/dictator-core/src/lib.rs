@@ -112,6 +112,12 @@ mod loader {
     fn load_native(lib_path: &Path) -> Result<BoxDecree> {
         use dictator_decree_abi::{ABI_VERSION, DECREE_FACTORY_EXPORT, DecreeFactory};
 
+        // We must keep the library handle alive for the lifetime of the process; unloading
+        // invalidates function pointers held by the decree and triggers UB. We keep every
+        // successfully loaded Library in a global registry instead of letting it drop.
+        static LOADED_LIBRARIES: std::sync::OnceLock<std::sync::Mutex<Vec<Library>>> =
+            std::sync::OnceLock::new();
+
         unsafe {
             let lib = Library::new(lib_path)
                 .with_context(|| format!("failed to load native decree: {}", lib_path.display()))?;
@@ -143,6 +149,13 @@ mod loader {
                 metadata.decree_version,
                 metadata.abi_version
             );
+
+            // Park the library handle so it is never dropped/unloaded.
+            LOADED_LIBRARIES
+                .get_or_init(std::sync::Mutex::default)
+                .lock()
+                .expect("loaded libraries mutex poisoned")
+                .push(lib);
 
             Ok(decree)
         }

@@ -113,6 +113,11 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
             let mut exit_code = 0;
             let mut json_out: Vec<SerializableDiagnostic> = Vec::new();
             for path in files {
+                // If the file vanished between the event and processing, ignore it.
+                if !std::path::Path::new(path.as_str()).exists() {
+                    continue;
+                }
+
                 let text = fs::read_to_string(&path)?;
                 let path_ref = path.as_path();
                 let source = Source {
@@ -172,6 +177,6 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
 const fn is_relevant(event: &Event) -> bool {
     matches!(
         event.kind,
-        EventKind::Modify(_) | EventKind::Create(_) | EventKind::Remove(_)
+        EventKind::Modify(_) | EventKind::Create(_)
     )
 }
