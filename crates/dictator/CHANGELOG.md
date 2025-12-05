@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.6.0](https://github.com/seuros/dictator/compare/dictator-v0.5.1...dictator-v0.6.0) (2025-12-05)
+
+
+### Features
+
+* include sanitized snippets in MCP diagnostics ([a097870](https://github.com/seuros/dictator/commit/a0978703f095c671febd014ace48d6e1b67abf16))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.5.1 to 0.6.0
+    * dictator-frontmatter bumped from 0.5.1 to 0.6.0
+    * dictator-golang bumped from 0.5.1 to 0.6.0
+    * dictator-decree-abi bumped from 0.5.1 to 0.6.0
+    * dictator-python bumped from 0.5.1 to 0.6.0
+    * dictator-ruby bumped from 0.5.1 to 0.6.0
+    * dictator-rust bumped from 0.5.1 to 0.6.0
+    * dictator-supreme bumped from 0.5.1 to 0.6.0
+    * dictator-typescript bumped from 0.5.1 to 0.6.0
+
 ## [0.5.1](https://github.com/seuros/dictator/compare/dictator-v0.5.0...dictator-v0.5.1) (2025-12-05)
 
 
