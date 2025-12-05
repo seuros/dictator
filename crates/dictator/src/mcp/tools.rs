@@ -14,6 +14,23 @@ use super::protocol::{
 use super::state::ServerState;
 use super::utils::{command_available, get_log_path, is_git_repo, log_to_file};
 
+#[derive(Deserialize)]
+struct InitializeParams {
+    #[serde(rename = "protocolVersion")]
+    #[allow(dead_code)]
+    protocol_version: String,
+    #[serde(rename = "clientInfo")]
+    client_info: Implementation,
+    #[allow(dead_code)]
+    capabilities: Value,
+}
+
+#[derive(Deserialize)]
+struct CallToolParams {
+    name: String,
+    arguments: Option<Value>,
+}
+
 /// Handle JSON-RPC initialize request
 pub fn handle_initialize(
     id: Value,
@@ -23,18 +40,6 @@ pub fn handle_initialize(
     tracing::info!("Handling initialize");
 
     // Parse client's initialize request
-    #[derive(Deserialize)]
-    #[allow(dead_code)] // Fields used by serde deserialization
-    #[allow(clippy::items_after_statements)]
-    struct InitializeParams {
-        #[serde(rename = "protocolVersion")]
-        protocol_version: String,
-        #[serde(rename = "clientInfo")]
-        client_info: Implementation,
-        #[allow(dead_code)]
-        capabilities: Value,
-    }
-
     let init_params: InitializeParams = match params {
         Some(p) => match serde_json::from_value(p) {
             Ok(params) => params,
@@ -306,13 +311,6 @@ pub fn handle_call_tool(
     notif_tx: mpsc::Sender<String>,
 ) -> JsonRpcResponse {
     tracing::info!("Handling tools/call");
-
-    #[derive(Deserialize)]
-    #[allow(clippy::items_after_statements)]
-    struct CallToolParams {
-        name: String,
-        arguments: Option<Value>,
-    }
 
     let Some(params) = params else {
         return JsonRpcResponse {
