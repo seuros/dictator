@@ -36,6 +36,9 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
     // Load native decrees
     let mut regime = init_regime_for_watch(decree_config.as_ref());
 
+    // Extensions actually covered by loaded decrees (empty/None = watch all)
+    let watched_exts = regime.watched_extensions();
+
     // Load custom WASM decrees from config
     if let Some(ref config) = decree_config {
         for (name, settings) in &config.decree {
@@ -100,11 +103,18 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
                 let Ok(p) = Utf8PathBuf::from_path_buf(path.to_owned()) else {
                     continue;
                 };
-                if let Some(ext) = p.extension()
-                    && matches!(ext, "rb" | "ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs" | "py" | "go" | "rs")
-                {
-                    files.push(p);
+
+                let ext = p.extension().map(str::to_ascii_lowercase);
+
+                // If specific extensions are declared, only watch those; otherwise watch all.
+                if let Some(ref allowed) = watched_exts {
+                    let Some(ext) = ext else { continue; };
+                    if !allowed.contains(ext.as_str()) {
+                        continue;
+                    }
                 }
+
+                files.push(p);
             }
             if files.is_empty() {
                 continue;

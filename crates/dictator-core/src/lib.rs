@@ -6,6 +6,7 @@ pub mod linter_output;
 use anyhow::Result;
 use camino::Utf8Path;
 use dictator_decree_abi::{BoxDecree, Diagnostics};
+use std::collections::HashSet;
 
 pub use config::{DecreeSettings, DictateConfig};
 
@@ -42,6 +43,32 @@ impl Regime {
 
     pub fn add_decree(&mut self, decree: BoxDecree) {
         self.decrees.push(decree);
+    }
+
+    /// Return the union of supported extensions for all loaded decrees.
+    ///
+    /// - If at least one decree declares specific extensions, returns `Some(HashSet)` of
+    ///   those (lowercased) extensions.
+    /// - If no decree declares extensions (all empty lists), returns `None`, meaning
+    ///   "watch everything" (typical when only supreme is loaded).
+    #[must_use]
+    pub fn watched_extensions(&self) -> Option<HashSet<String>> {
+        let mut exts = HashSet::new();
+        for decree in &self.decrees {
+            let supported = &decree.metadata().supported_extensions;
+            if supported.is_empty() {
+                continue; // empty means "all" for enforcement, but we don't widen the watch set
+            }
+            for ext in supported {
+                exts.insert(ext.to_ascii_lowercase());
+            }
+        }
+
+        if exts.is_empty() {
+            None
+        } else {
+            Some(exts)
+        }
     }
 
     /// Load a WASM decree from a file path.
@@ -295,5 +322,70 @@ mod loader {
             Some("wasm") => load_wasm(path),
             _ => load_native(path),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dictator_decree_abi::{Capability, Decree, DecreeMetadata, Diagnostics};
+
+    struct MockDecree {
+        name: &'static str,
+        exts: Vec<String>,
+    }
+
+    impl Decree for MockDecree {
+        fn name(&self) -> &str {
+            self.name
+        }
+
+        fn lint(&self, _path: &str, _source: &str) -> Diagnostics {
+            Diagnostics::new()
+        }
+
+        fn metadata(&self) -> DecreeMetadata {
+            DecreeMetadata {
+                abi_version: "1".into(),
+                decree_version: "1".into(),
+                description: String::new(),
+                dectauthors: None,
+                supported_extensions: self.exts.clone(),
+                capabilities: vec![Capability::Lint],
+            }
+        }
+    }
+
+    #[test]
+    fn watched_extensions_unites_declared_sets() {
+        let decree_a: BoxDecree = Box::new(MockDecree {
+            name: "a",
+            exts: vec!["rs".into(), "Rb".into()],
+        });
+        let decree_b: BoxDecree = Box::new(MockDecree {
+            name: "b",
+            exts: vec!["ts".into()],
+        });
+        let mut regime = Regime::new();
+        regime.add_decree(decree_a);
+        regime.add_decree(decree_b);
+
+        let exts = regime.watched_extensions().unwrap();
+        assert!(exts.contains("rs"));
+        assert!(exts.contains("rb"));
+        assert!(exts.contains("ts"));
+        assert_eq!(exts.len(), 3);
+    }
+
+    #[test]
+    fn watched_extensions_none_when_only_universal() {
+        let sup: BoxDecree = Box::new(MockDecree {
+            name: "supreme",
+            exts: vec![], // universal decree declares no extensions
+        });
+        let mut regime = Regime::new();
+        regime.add_decree(sup);
+
+        assert!(regime.watched_extensions().is_none());
     }
 }
