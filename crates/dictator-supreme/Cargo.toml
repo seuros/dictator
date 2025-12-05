@@ -1,6 +1,6 @@
 [package]
 name = "dictator-supreme"
-version = "0.3.0"
+version = "0.4.0"
 description = "Supreme decree - universal structural rules for Dictator"
 edition.workspace = true
 authors.workspace = true
@@ -10,8 +10,8 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-dictator-decree-abi = { version = "0.3.0", path = "../dictator-decree-abi" }
-dictator-core = { version = "0.3.0", path = "../dictator-core" }
+dictator-decree-abi = { version = "0.4.0", path = "../dictator-decree-abi" }
+dictator-core = { version = "0.4.0", path = "../dictator-core" }
 memchr = "2"
 
 [lib]
