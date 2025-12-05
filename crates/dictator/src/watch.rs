@@ -101,7 +101,7 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
                     continue;
                 };
                 if let Some(ext) = p.extension()
-                    && matches!(ext, "rb" | "ts" | "tsx" | "js" | "jsx" | "py" | "go" | "rs")
+                    && matches!(ext, "rb" | "ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs" | "py" | "go" | "rs")
                 {
                     files.push(p);
                 }

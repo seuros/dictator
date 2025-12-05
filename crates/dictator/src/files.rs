@@ -49,7 +49,7 @@ pub fn detect_file_types(files: &[Utf8PathBuf]) -> FileTypes {
     for file in files {
         match file.extension() {
             Some("rb" | "rake") => types.has_ruby = true,
-            Some("ts" | "tsx" | "js" | "jsx") => types.has_typescript = true,
+            Some("ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs") => types.has_typescript = true,
             Some("go") => types.has_golang = true,
             Some("rs") => types.has_rust = true,
             Some("py") => types.has_python = true,
@@ -61,4 +61,28 @@ pub fn detect_file_types(files: &[Utf8PathBuf]) -> FileTypes {
         }
     }
     types
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn path(name: &str) -> Utf8PathBuf {
+        Utf8PathBuf::from(name)
+    }
+
+    #[test]
+    fn detects_mjs_and_cjs_as_typescript() {
+        let files = vec![path("web/app.mjs"), path("cli/tools.cjs")];
+        let types = detect_file_types(&files);
+        assert!(types.has_typescript);
+        assert!(!types.has_ruby && !types.has_golang && !types.has_rust && !types.has_python);
+    }
+
+    #[test]
+    fn detects_markdown_as_config() {
+        let files = vec![path("content/post.md"), path("content/page.mdx")];
+        let types = detect_file_types(&files);
+        assert!(types.has_configs);
+    }
 }
