@@ -2,7 +2,8 @@
 
 use camino::Utf8Path;
 use dictator_core::Source;
-use notify::{Event, RecursiveMode, Watcher};
+use notify::{RecursiveMode, Watcher};
+use notify_types::event::Event;
 use serde::Deserialize;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};

@@ -33,7 +33,7 @@ dashmap = "5"
 parking_lot = "0.12"
 camino = "1"
 walkdir = "2"
-toml = "0.8"
+toml = "0.9"
 serde_yaml = "0.9"
 base64 = "0.22"
 tokio = { version = "1", features = ["full"] }
@@ -42,12 +42,13 @@ tokio = { version = "1", features = ["full"] }
 wasmtime = { version = "39", default-features = true, features = ["component-model"] }
 wit-component = "0.19"
 wasmtime-wasi = { version = "39", default-features = true }
-libloading = "0.8"
+libloading = "0.9"
 
 # Logging
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
-notify = "6"
+notify = "8"
+notify-types = "2"
 ctrlc = "3"
 tempfile = "3"
 

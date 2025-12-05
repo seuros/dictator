@@ -3,7 +3,8 @@
 use anyhow::Result;
 use camino::Utf8PathBuf;
 use dictator_core::Source;
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{RecommendedWatcher, RecursiveMode, Watcher};
+use notify_types::event::{Event, EventKind};
 use std::collections::HashSet;
 use std::fs;
 use std::sync::mpsc;
