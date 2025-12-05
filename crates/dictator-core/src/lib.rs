@@ -64,11 +64,7 @@ impl Regime {
             }
         }
 
-        if exts.is_empty() {
-            None
-        } else {
-            Some(exts)
-        }
+        if exts.is_empty() { None } else { Some(exts) }
     }
 
     /// Load a WASM decree from a file path.

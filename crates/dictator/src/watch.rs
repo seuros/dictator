@@ -108,7 +108,9 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
 
                 // If specific extensions are declared, only watch those; otherwise watch all.
                 if let Some(ref allowed) = watched_exts {
-                    let Some(ext) = ext else { continue; };
+                    let Some(ext) = ext else {
+                        continue;
+                    };
                     if !allowed.contains(ext.as_str()) {
                         continue;
                     }
@@ -185,8 +187,5 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
 }
 
 const fn is_relevant(event: &Event) -> bool {
-    matches!(
-        event.kind,
-        EventKind::Modify(_) | EventKind::Create(_)
-    )
+    matches!(event.kind, EventKind::Modify(_) | EventKind::Create(_))
 }
