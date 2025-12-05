@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.1](https://github.com/seuros/dictator/compare/dictator-rust-v0.5.0...dictator-rust-v0.5.1) (2025-12-05)
+
+
+### Miscellaneous Chores
+
+* **dictator-rust:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.5.0 to 0.5.1
+    * dictator-core bumped from 0.5.0 to 0.5.1
+
 ## [0.5.0](https://github.com/seuros/dictator/compare/dictator-rust-v0.4.0...dictator-rust-v0.5.0) (2025-12-05)
 
 
