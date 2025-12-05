@@ -24,6 +24,7 @@ dictator-rust = { version = "0.3.0", path = "../dictator-rust" }
 dictator-supreme = { version = "0.3.0", path = "../dictator-supreme" }
 dictator-typescript = { version = "0.3.0", path = "../dictator-typescript" }
 walkdir = { workspace = true }
+ignore = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

@@ -118,6 +118,21 @@ git push → Dictator (2ms) → ✓ → RuboCop (45s) → ✓ → Deploy
 
 **Monorepo enforcement.** One binary, one config, all languages. Consistent structural rules across Ruby services, TS frontends, YAML configs.
 
+**Git-aware filtering.** Dictator enforces `.gitignore` boundaries. Your build artifacts, dependencies, and editor cruft don't exist to Dictator. `target/`, `node_modules/`, `.DS_Store`—invisible.
+
+Dictator uses the `ignore` crate (from ripgrep) for full git semantics:
+- All `.gitignore` files in the hierarchy (parent dirs, subdirs)
+- `.git/info/exclude` (per-repo exclusions)
+- Global gitignore config (`core.excludesFile`)
+
+**Outside git repositories:** Dictator still works. It just won't find gitignore files to respect. If you're not in a git repo, every file is visible.
+
+**Overriding gitignore:** Explicit file paths bypass gitignore. `dictator lint target/debug/foo.rs` lints that file even if `target/` is ignored. Directories respect gitignore. Single files don't negotiate.
+
+**Territorial enforcement.** Dictator can **critique** any file in the filesystem. `dictator lint /etc/nginx.conf` reports violations. `dictator dictate /etc/nginx.conf` modifies the file—you're in control via CLI.
+
+Via MCP (AI assistants), destructive operations are restricted to the working directory and require a git repository. This prevents your helpful-but-misaligned AI from "fixing" `/etc/passwd` or reformatting your entire home directory because it detected trailing whitespace. You won't get "Oops 😅, my bad. Let me reformat your computer." Dictator critiques other states' policies but won't intervene outside project boundaries when an LLM is driving.
+
 ## Why Decrees, Not Rules?
 
 Rules are meant to be broken. That's why you have 1000 linters with 10000 rules and everyone disables half of them.

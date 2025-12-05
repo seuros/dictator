@@ -78,5 +78,5 @@ required = ["title", "slug"]
 # Custom decrees (loaded as WASM/native plugins)
 [decree.kjr]
 # Kim Jong Rails - enterprise productivity enforcement decree (GPL)
-enabled = true
+enabled = false
 path = "crates/dictator-kjr/target/wasm32-wasip1/release/dictator_kjr.wasm"

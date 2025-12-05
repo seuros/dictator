@@ -16,7 +16,7 @@ fn test_occupy_creates_config_file() -> Result<()> {
 
     // Run occupy command
     dictator::occupy::run_occupy(dictator::cli::OccupyArgs {
-        path: temp_path.clone(),
+        path: temp_path,
         force: false,
     })?;
 
@@ -43,7 +43,7 @@ fn test_occupy_fails_without_force_if_exists() -> Result<()> {
 
     // Attempt occupy without --force should fail
     let result = dictator::occupy::run_occupy(dictator::cli::OccupyArgs {
-        path: temp_path.clone(),
+        path: temp_path,
         force: false,
     });
 
@@ -70,7 +70,7 @@ fn test_occupy_overwrites_with_force() -> Result<()> {
 
     // Occupy with --force should succeed
     dictator::occupy::run_occupy(dictator::cli::OccupyArgs {
-        path: temp_path.clone(),
+        path: temp_path,
         force: true,
     })?;
 

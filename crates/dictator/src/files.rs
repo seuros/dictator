@@ -2,8 +2,8 @@
 
 use anyhow::Result;
 use camino::Utf8PathBuf;
+use ignore::WalkBuilder;
 use std::fs;
-use walkdir::WalkDir;
 
 #[derive(Debug, Default)]
 #[allow(clippy::struct_excessive_bools)]
@@ -21,13 +21,19 @@ pub fn collect_all_files(paths: &[Utf8PathBuf]) -> Result<Vec<Utf8PathBuf>> {
     for path in paths {
         let metadata = fs::metadata(path)?;
         if metadata.is_file() {
+            // Explicit file path: always include, regardless of gitignore
             files.push(path.clone());
             continue;
         }
 
-        for entry in WalkDir::new(path) {
-            let entry = entry?;
-            if !entry.file_type().is_file() {
+        // Directory: walk with gitignore filtering
+        let walker = WalkBuilder::new(path)
+            .standard_filters(true) // enables gitignore, .git/info/exclude, global config
+            .build();
+
+        for result in walker {
+            let entry = result?;
+            if !entry.file_type().is_some_and(|ft| ft.is_file()) {
                 continue;
             }
             let p = Utf8PathBuf::from_path_buf(entry.path().to_owned())
