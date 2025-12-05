@@ -37,15 +37,33 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
             overrides,
         ));
 
-        // Load native decrees declared in config
-        for decree_name in config.decree.keys() {
+        // Load native decrees declared in config, applying per-decree settings
+        for (decree_name, settings) in &config.decree {
             match decree_name.as_str() {
-                "typescript" => regime.add_decree(dictator_typescript::init_decree()),
-                "python" => regime.add_decree(dictator_python::init_decree()),
-                "golang" => regime.add_decree(dictator_golang::init_decree()),
-                "rust" => regime.add_decree(dictator_rust::init_decree()),
-                "ruby" => regime.add_decree(dictator_ruby::init_decree()),
-                "frontmatter" => regime.add_decree(dictator_frontmatter::init_decree()),
+                "typescript" => {
+                    let ts_config = dictator_typescript::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_typescript::init_decree_with_config(ts_config));
+                }
+                "python" => {
+                    let py_config = dictator_python::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_python::init_decree_with_config(py_config));
+                }
+                "golang" => {
+                    let go_config = dictator_golang::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_golang::init_decree_with_config(go_config));
+                }
+                "rust" => {
+                    let rs_config = dictator_rust::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_rust::init_decree_with_config(rs_config));
+                }
+                "ruby" => {
+                    let rb_config = dictator_ruby::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_ruby::init_decree_with_config(rb_config));
+                }
+                "frontmatter" => {
+                    let fm_config = dictator_frontmatter::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_frontmatter::init_decree_with_config(fm_config));
+                }
                 _ => {} // Already loaded above; custom WASM decrees handled elsewhere
             }
         }
@@ -411,15 +429,33 @@ pub fn init_regime_from_config() -> Regime {
             overrides,
         ));
 
-        // Load native decrees declared in config
-        for decree_name in config.decree.keys() {
+        // Load native decrees declared in config with overrides
+        for (decree_name, settings) in &config.decree {
             match decree_name.as_str() {
-                "typescript" => regime.add_decree(dictator_typescript::init_decree()),
-                "python" => regime.add_decree(dictator_python::init_decree()),
-                "golang" => regime.add_decree(dictator_golang::init_decree()),
-                "rust" => regime.add_decree(dictator_rust::init_decree()),
-                "ruby" => regime.add_decree(dictator_ruby::init_decree()),
-                "frontmatter" => regime.add_decree(dictator_frontmatter::init_decree()),
+                "typescript" => {
+                    let ts_config = dictator_typescript::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_typescript::init_decree_with_config(ts_config));
+                }
+                "python" => {
+                    let py_config = dictator_python::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_python::init_decree_with_config(py_config));
+                }
+                "golang" => {
+                    let go_config = dictator_golang::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_golang::init_decree_with_config(go_config));
+                }
+                "rust" => {
+                    let rs_config = dictator_rust::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_rust::init_decree_with_config(rs_config));
+                }
+                "ruby" => {
+                    let rb_config = dictator_ruby::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_ruby::init_decree_with_config(rb_config));
+                }
+                "frontmatter" => {
+                    let fm_config = dictator_frontmatter::config_from_decree_settings(settings);
+                    regime.add_decree(dictator_frontmatter::init_decree_with_config(fm_config));
+                }
                 _ => {} // Already loaded above; custom WASM decrees handled elsewhere
             }
         }
