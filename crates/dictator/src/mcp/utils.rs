@@ -2,10 +2,22 @@
 
 use std::fs::OpenOptions;
 use std::io::Write;
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
-/// Get cache directory path following XDG Base Directory spec
-/// Tries `XDG_CACHE_HOME`, then $HOME/.cache, then /tmp as fallback
+/// Get per-worktree cache directory: `.dictator/cache` under the current working dir.
+/// Falls back to XDG cache if cwd cannot be determined.
 pub fn get_cache_dir() -> std::path::PathBuf {
+    if let Ok(cwd) = std::env::current_dir() {
+        let cache = cwd.join(".dictator").join("cache");
+        let _ = std::fs::create_dir_all(&cache);
+        // Restrict to user only; ignore errors quietly.
+        #[cfg(unix)]
+        let _ = std::fs::set_permissions(&cache, std::fs::Permissions::from_mode(0o700));
+        return cache;
+    }
+
+    // Fallback to XDG_CACHE_HOME / $HOME/.cache when cwd unavailable
     let cache_dir = std::env::var("XDG_CACHE_HOME")
         .ok()
         .or_else(|| std::env::var("HOME").ok().map(|h| format!("{h}/.cache")))
