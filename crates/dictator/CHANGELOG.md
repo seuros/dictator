@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.4.0](https://github.com/seuros/dictator/compare/dictator-v0.3.0...dictator-v0.4.0) (2025-12-05)
+
+
+### Features
+
+* honor gitignore boundaries to prevent territorial violations ([#2](https://github.com/seuros/dictator/issues/2)) ([0294614](https://github.com/seuros/dictator/commit/02946148fd25abad1a91890518ed05f15884f31b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.3.0 to 0.4.0
+    * dictator-frontmatter bumped from 0.3.0 to 0.4.0
+    * dictator-golang bumped from 0.3.0 to 0.4.0
+    * dictator-decree-abi bumped from 0.3.0 to 0.4.0
+    * dictator-python bumped from 0.3.0 to 0.4.0
+    * dictator-ruby bumped from 0.3.0 to 0.4.0
+    * dictator-rust bumped from 0.3.0 to 0.4.0
+    * dictator-supreme bumped from 0.3.0 to 0.4.0
+    * dictator-typescript bumped from 0.3.0 to 0.4.0
+
 ## [0.3.0](https://github.com/seuros/dictator/compare/dictator-v0.2.0...dictator-v0.3.0) (2025-12-04)
 
 
