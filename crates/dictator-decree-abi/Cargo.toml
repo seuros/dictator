@@ -5,6 +5,9 @@ description = "ABI and trait definitions for Dictator structural linter decree p
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+repository = "https://github.com/seuros/dictator"
+homepage = "https://github.com/seuros/dictator"
+documentation = "https://docs.rs/dictator-decree-abi"
 
 [lints]
 workspace = true

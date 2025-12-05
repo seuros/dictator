@@ -6,6 +6,9 @@ readme = "../../README.md"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+repository = "https://github.com/seuros/dictator"
+homepage = "https://github.com/seuros/dictator"
+documentation = "https://docs.rs/dictator"
 
 [lints]
 workspace = true

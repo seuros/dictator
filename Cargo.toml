@@ -20,6 +20,8 @@ resolver = "2"
 edition = "2024"
 authors = ["Abdelkader Boudih <terminale@gmail.com>"]
 license = "MIT"
+repository = "https://github.com/seuros/dictator"
+homepage = "https://github.com/seuros/dictator"
 
 [workspace.dependencies]
 anyhow = "1"
