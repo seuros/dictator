@@ -43,7 +43,11 @@ pub enum Command {
 }
 
 #[derive(Debug, Parser)]
-pub struct CensusArgs {}
+pub struct CensusArgs {
+    /// Show decree configuration values from .dictate.toml
+    #[arg(long)]
+    pub details: bool,
+}
 
 #[derive(Debug, Parser)]
 pub struct OccupyArgs {

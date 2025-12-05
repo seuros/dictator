@@ -2,6 +2,7 @@
 
 use crate::cli::CensusArgs;
 use camino::Utf8PathBuf;
+use dictator_core::DecreeSettings;
 use std::process::Command;
 
 /// Native decrees that are always available
@@ -24,7 +25,7 @@ const EXTERNAL_LINTERS: &[(&str, &str, &[&str])] = &[
     ("gofmt", "gofmt", &["go"]),
 ];
 
-pub fn run_census(_args: CensusArgs, config_path: Option<Utf8PathBuf>) {
+pub fn run_census(args: CensusArgs, config_path: Option<Utf8PathBuf>) {
     let dictate_config = config_path
         .as_ref()
         .and_then(|p| dictator_core::DictateConfig::from_file(p.as_std_path()).ok())
@@ -50,15 +51,15 @@ pub fn run_census(_args: CensusArgs, config_path: Option<Utf8PathBuf>) {
     println!("Native decrees: {}", NATIVE_DECREES.len());
     for (name, extensions) in NATIVE_DECREES {
         // Mirror should_load_decree logic from regime.rs
-        let enabled = *name == "supreme"
-            || dictate_config
-                .as_ref()
-                .and_then(|c| c.decree.get(*name))
-                .is_none_or(|s| s.enabled != Some(false));
+        let (enabled, settings) = decree_status(dictate_config.as_ref(), name);
 
         let status = if enabled { "✓" } else { "○" };
         let exts = extensions.join(", ");
         println!("  {status} {name:<12} (*.{exts})");
+
+        if args.details {
+            print_settings(settings);
+        }
     }
     println!();
 
@@ -79,6 +80,9 @@ pub fn run_census(_args: CensusArgs, config_path: Option<Utf8PathBuf>) {
                     let exists = std::path::Path::new(path).exists();
                     let status = if exists { "✓" } else { "✗" };
                     println!("  {status} {name:<12} ({path})");
+                    if args.details {
+                        print_settings(Some(settings));
+                    }
                 }
             }
             println!();
@@ -119,4 +123,67 @@ fn is_command_available(cmd: &str) -> bool {
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false)
+}
+
+fn decree_status<'a>(cfg: Option<&'a dictator_core::DictateConfig>, name: &str) -> (bool, Option<&'a DecreeSettings>) {
+    let settings = cfg.and_then(|c| c.decree.get(name));
+    let enabled = name == "supreme" || settings.is_none_or(|s| s.enabled != Some(false));
+    (enabled, settings)
+}
+
+fn print_settings(settings: Option<&DecreeSettings>) {
+    let Some(settings) = settings else {
+        println!("      (no overrides)");
+        return;
+    };
+
+    let mut fields = Vec::new();
+
+    macro_rules! push_opt {
+        ($label:expr, $opt:expr) => {
+            if let Some(val) = $opt {
+                fields.push(format!("{}={}", $label, val));
+            }
+        };
+    }
+
+    push_opt!("enabled", settings.enabled);
+    push_opt!("path", settings.path.as_deref());
+    push_opt!("trailing_whitespace", settings.trailing_whitespace.as_deref());
+    push_opt!("tabs_vs_spaces", settings.tabs_vs_spaces.as_deref());
+    push_opt!("tab_width", settings.tab_width);
+    push_opt!("final_newline", settings.final_newline.as_deref());
+    push_opt!("line_endings", settings.line_endings.as_deref());
+    push_opt!("max_line_length", settings.max_line_length);
+    push_opt!("blank_line_whitespace", settings.blank_line_whitespace.as_deref());
+    push_opt!("max_lines", settings.max_lines);
+    push_opt!("ignore_comments", settings.ignore_comments);
+    push_opt!("ignore_blank_lines", settings.ignore_blank_lines);
+
+    if let Some(order) = settings.method_visibility_order.as_ref() {
+        fields.push(format!("method_visibility_order=[{}]", order.join(",")));
+    }
+    if let Some(order) = settings.import_order.as_ref() {
+        fields.push(format!("import_order=[{}]", order.join(",")));
+    }
+    if let Some(order) = settings.visibility_order.as_ref() {
+        fields.push(format!("visibility_order=[{}]", order.join(",")));
+    }
+    if let Some(order) = settings.order.as_ref() {
+        fields.push(format!("order=[{}]", order.join(",")));
+    }
+    if let Some(required) = settings.required.as_ref() {
+        fields.push(format!("required=[{}]", required.join(",")));
+    }
+    if let Some(linter) = settings.linter.as_ref() {
+        fields.push(format!("linter.command={}", linter.command));
+    }
+
+    if fields.is_empty() {
+        println!("      (no overrides)");
+    } else {
+        for chunk in fields.chunks(4) {
+            println!("      {}", chunk.join("  "));
+        }
+    }
 }
