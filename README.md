@@ -17,7 +17,21 @@ Think of it as border control for your codebase: everything must satisfy basic s
 
 ## Installation
 
-### Binary Release (Recommended)
+### Crates.io (Recommended)
+
+Install the published crate (fastest):
+
+```bash
+cargo install dictator
+```
+
+To force the latest release and respect the lockfile:
+
+```bash
+cargo install dictator --locked
+```
+
+### Binary Release
 
 Download and install a pre-built binary for your platform:
 
