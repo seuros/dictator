@@ -1,6 +1,6 @@
 [package]
 name = "dictator-typescript"
-version = "0.5.0"
+version = "0.5.1"
 description = "TypeScript/JavaScript decree for Dictator structural linter"
 edition.workspace = true
 authors.workspace = true
@@ -11,8 +11,8 @@ documentation = "https://docs.rs/dictator-typescript"
 workspace = true
 
 [dependencies]
-dictator-decree-abi = { version = "0.5.0", path = "../dictator-decree-abi" }
-dictator-core = { version = "0.5.0", path = "../dictator-core" }
+dictator-decree-abi = { version = "0.5.1", path = "../dictator-decree-abi" }
+dictator-core = { version = "0.5.1", path = "../dictator-core" }
 memchr = "2"
 
 [lib]
