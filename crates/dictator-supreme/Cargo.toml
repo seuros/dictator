@@ -5,6 +5,7 @@ description = "Supreme decree - universal structural rules for Dictator"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+documentation = "https://docs.rs/dictator-supreme"
 
 [lints]
 workspace = true

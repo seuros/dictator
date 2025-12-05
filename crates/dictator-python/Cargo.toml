@@ -5,6 +5,7 @@ description = "Python language decree for Dictator structural linter"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
+documentation = "https://docs.rs/dictator-python"
 
 [lints]
 workspace = true
