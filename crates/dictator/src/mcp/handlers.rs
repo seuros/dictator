@@ -16,6 +16,7 @@ use super::state::{DEFAULT_STALINT_LIMIT, ServerState};
 use super::utils::{
     base64_decode, base64_encode, byte_to_line_col, collect_files, is_within_cwd, log_to_file,
 };
+use dictator_decree_abi::Span;
 
 /// Handle stalint tool
 pub fn handle_stalint(
@@ -143,13 +144,15 @@ pub fn handle_stalint(
             if let Ok(diags) = regime.enforce(&[source]) {
                 for diag in &diags {
                     let (line, col) = byte_to_line_col(&text, diag.span.start);
+                    let snippet = make_snippet(&text, &diag.span, 160);
                     if single_file {
                         all_violations.push(serde_json::json!({
                             "line": line,
                             "col": col,
                             "rule": diag.rule,
                             "message": diag.message,
-                            "enforced": diag.enforced
+                            "enforced": diag.enforced,
+                            "snippet": snippet,
                         }));
                     } else {
                         all_violations.push(serde_json::json!({
@@ -158,7 +161,8 @@ pub fn handle_stalint(
                             "col": col,
                             "rule": diag.rule,
                             "message": diag.message,
-                            "enforced": diag.enforced
+                            "enforced": diag.enforced,
+                            "snippet": snippet,
                         }));
                     }
                 }
@@ -198,6 +202,41 @@ pub fn handle_stalint(
         id,
         result: Some(result),
         error: None,
+    }
+}
+
+/// Build a sanitized single-line snippet around the diagnostic span.
+fn make_snippet(source: &str, span: &Span, max_len: usize) -> String {
+    if source.is_empty() {
+        return String::new();
+    }
+
+    let start = span.start.min(source.len());
+
+    // Find line bounds containing the span start.
+    let line_start = source[..start].rfind('\n').map_or(0, |idx| idx + 1);
+    let line_end = source[start..]
+        .find('\n')
+        .map_or_else(|| source.len(), |off| start + off);
+
+    let line = &source[line_start..line_end];
+
+    // Sanitize control characters (except tab) to spaces and trim trailing whitespace.
+    let mut cleaned: String = line
+        .chars()
+        .map(|c| if c.is_control() && c != '\t' { ' ' } else { c })
+        .collect();
+    cleaned.truncate(cleaned.trim_end().len());
+
+    if cleaned.len() > max_len {
+        let mut out = cleaned
+            .chars()
+            .take(max_len.saturating_sub(1))
+            .collect::<String>();
+        out.push('…');
+        out
+    } else {
+        cleaned
     }
 }
 

@@ -141,6 +141,41 @@ pub fn base64_decode(s: &str) -> Vec<u8> {
     STANDARD.decode(s).unwrap_or_default()
 }
 
+/// Build a sanitized single-line snippet around the diagnostic span.
+pub fn make_snippet(source: &str, span: &dictator_decree_abi::Span, max_len: usize) -> String {
+    if source.is_empty() {
+        return String::new();
+    }
+
+    let start = span.start.min(source.len());
+
+    // Find line bounds containing the span start.
+    let line_start = source[..start].rfind('\n').map_or(0, |idx| idx + 1);
+    let line_end = source[start..]
+        .find('\n')
+        .map_or_else(|| source.len(), |off| start + off);
+
+    let line = &source[line_start..line_end];
+
+    // Sanitize control characters (except tab) to spaces and trim trailing whitespace.
+    let mut cleaned: String = line
+        .chars()
+        .map(|c| if c.is_control() && c != '\t' { ' ' } else { c })
+        .collect();
+    cleaned.truncate(cleaned.trim_end().len());
+
+    if cleaned.len() > max_len {
+        let mut out = cleaned
+            .chars()
+            .take(max_len.saturating_sub(1))
+            .collect::<String>();
+        out.push('…');
+        out
+    } else {
+        cleaned
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

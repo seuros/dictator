@@ -1,8 +1,8 @@
 //! External linter execution and stalint checking.
 
+use super::utils::make_snippet;
 use camino::Utf8Path;
 use dictator_core::{Regime, Source};
-use dictator_decree_abi::Span;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
@@ -124,41 +124,6 @@ pub fn get_linter_args(command: &str) -> Vec<&'static str> {
         "rustfmt" => vec!["--edition", "2021"],
         "clippy" | "cargo-clippy" => vec!["--fix", "--allow-dirty", "--message-format", "json"],
         _ => vec![], // black and unknown linters run without args
-    }
-}
-
-/// Build a sanitized single-line snippet around the diagnostic span.
-fn make_snippet(source: &str, span: &Span, max_len: usize) -> String {
-    if source.is_empty() {
-        return String::new();
-    }
-
-    let start = span.start.min(source.len());
-
-    // Find line bounds containing the span start.
-    let line_start = source[..start].rfind('\n').map_or(0, |idx| idx + 1);
-    let line_end = source[start..]
-        .find('\n')
-        .map_or_else(|| source.len(), |off| start + off);
-
-    let line = &source[line_start..line_end];
-
-    // Sanitize control characters (except tab) to spaces and trim trailing whitespace.
-    let mut cleaned: String = line
-        .chars()
-        .map(|c| if c.is_control() && c != '\t' { ' ' } else { c })
-        .collect();
-    cleaned.truncate(cleaned.trim_end().len());
-
-    if cleaned.len() > max_len {
-        let mut out = cleaned
-            .chars()
-            .take(max_len.saturating_sub(1))
-            .collect::<String>();
-        out.push('…');
-        out
-    } else {
-        cleaned
     }
 }
 
