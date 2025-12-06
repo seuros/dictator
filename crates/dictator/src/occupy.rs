@@ -83,7 +83,7 @@ pub fn run_occupy(args: OccupyArgs) -> Result<()> {
         println!("✓ Created .gitignore ignoring .dictator/");
     }
 
-    println!("✓ Ensured cache dir at {}", cache_dir);
+    println!("✓ Ensured cache dir at {cache_dir}");
     Ok(())
 }
 

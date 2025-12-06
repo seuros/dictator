@@ -20,6 +20,7 @@ target/
 
 # Dictator configs generated locally
 .dictate.local.toml
+.dictator/
 
 # Python cache
 .ruff_cache/
