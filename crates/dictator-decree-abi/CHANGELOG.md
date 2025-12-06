@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/seuros/dictator/compare/dictator-decree-abi-v0.6.0...dictator-decree-abi-v0.6.1) (2025-12-06)
+
+
+### Miscellaneous Chores
+
+* **dictator-decree-abi:** Synchronize dictator versions
+
 ## [0.6.0](https://github.com/seuros/dictator/compare/dictator-decree-abi-v0.5.1...dictator-decree-abi-v0.6.0) (2025-12-05)
 
 

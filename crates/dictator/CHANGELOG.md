@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.6.1](https://github.com/seuros/dictator/compare/dictator-v0.6.0...dictator-v0.6.1) (2025-12-06)
+
+
+### Bug Fixes
+
+* occupy creates .dictator/cache and gitignores it ([f659a54](https://github.com/seuros/dictator/commit/f659a5497299c6bcc317e87b9f086d2648ad6f40))
+* silence clippy and keep cache paths gitignored ([abe7df6](https://github.com/seuros/dictator/commit/abe7df6f80f3ffedcf4669a9e058da32b7915bd6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.6.0 to 0.6.1
+    * dictator-frontmatter bumped from 0.6.0 to 0.6.1
+    * dictator-golang bumped from 0.6.0 to 0.6.1
+    * dictator-decree-abi bumped from 0.6.0 to 0.6.1
+    * dictator-python bumped from 0.6.0 to 0.6.1
+    * dictator-ruby bumped from 0.6.0 to 0.6.1
+    * dictator-rust bumped from 0.6.0 to 0.6.1
+    * dictator-supreme bumped from 0.6.0 to 0.6.1
+    * dictator-typescript bumped from 0.6.0 to 0.6.1
+
 ## [0.6.0](https://github.com/seuros/dictator/compare/dictator-v0.5.1...dictator-v0.6.0) (2025-12-05)
 
 
