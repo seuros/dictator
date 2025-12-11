@@ -12,11 +12,11 @@ use dictator_typescript::init_decree as create_typescript_plugin;
 use crate::files::FileTypes;
 
 /// Check if a decree should be loaded based on config.
-/// Returns true if: no config, no decree entry, or enabled != false
+/// Returns true only if decree is configured and enabled != false
 fn should_load_decree(config: Option<&DictateConfig>, key: &str) -> bool {
     config
         .and_then(|c| c.decree.get(key))
-        .is_none_or(|s| s.enabled != Some(false))
+        .is_some_and(|s| s.enabled != Some(false))
 }
 
 /// Initialize regime with all decrees for watch mode (all file types supported)

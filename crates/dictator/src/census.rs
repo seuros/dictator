@@ -122,7 +122,7 @@ fn decree_status<'a>(
     name: &str,
 ) -> (bool, Option<&'a DecreeSettings>) {
     let settings = cfg.and_then(|c| c.decree.get(name));
-    let enabled = name == "supreme" || settings.is_none_or(|s| s.enabled != Some(false));
+    let enabled = name == "supreme" || settings.is_some_and(|s| s.enabled != Some(false));
     (enabled, settings)
 }
 
