@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.6.2](https://github.com/seuros/dictator/compare/dictator-v0.6.1...dictator-v0.6.2) (2025-12-11)
+
+
+### Bug Fixes
+
+* eradicate counter-revolutionary double-dots from occupation protocol and mandate decree configuration ([5e3ecb5](https://github.com/seuros/dictator/commit/5e3ecb5f5b1316eef4a352a2f50070e3018c8b94))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.6.1 to 0.6.2
+    * dictator-frontmatter bumped from 0.6.1 to 0.6.2
+    * dictator-golang bumped from 0.6.1 to 0.6.2
+    * dictator-decree-abi bumped from 0.6.1 to 0.6.2
+    * dictator-python bumped from 0.6.1 to 0.6.2
+    * dictator-ruby bumped from 0.6.1 to 0.6.2
+    * dictator-rust bumped from 0.6.1 to 0.6.2
+    * dictator-supreme bumped from 0.6.1 to 0.6.2
+    * dictator-typescript bumped from 0.6.1 to 0.6.2
+
 ## [0.6.1](https://github.com/seuros/dictator/compare/dictator-v0.6.0...dictator-v0.6.1) (2025-12-06)
 
 
