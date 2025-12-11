@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.2](https://github.com/seuros/dictator/compare/dictator-golang-v0.6.1...dictator-golang-v0.6.2) (2025-12-11)
+
+
+### Miscellaneous Chores
+
+* **dictator-golang:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.6.1 to 0.6.2
+    * dictator-core bumped from 0.6.1 to 0.6.2
+
 ## [0.6.1](https://github.com/seuros/dictator/compare/dictator-golang-v0.6.0...dictator-golang-v0.6.1) (2025-12-06)
 
 
