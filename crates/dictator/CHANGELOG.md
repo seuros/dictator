@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.6.3](https://github.com/seuros/dictator/compare/dictator-v0.6.2...dictator-v0.6.3) (2025-12-11)
+
+
+### Bug Fixes
+
+* suppress unauthorized decree activation and enforce explicit configuration doctrine ([1fc60bb](https://github.com/seuros/dictator/commit/1fc60bb032fa3f781588e98e188847be1dc78971))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.6.2 to 0.6.3
+    * dictator-frontmatter bumped from 0.6.2 to 0.6.3
+    * dictator-golang bumped from 0.6.2 to 0.6.3
+    * dictator-decree-abi bumped from 0.6.2 to 0.6.3
+    * dictator-python bumped from 0.6.2 to 0.6.3
+    * dictator-ruby bumped from 0.6.2 to 0.6.3
+    * dictator-rust bumped from 0.6.2 to 0.6.3
+    * dictator-supreme bumped from 0.6.2 to 0.6.3
+    * dictator-typescript bumped from 0.6.2 to 0.6.3
+
 ## [0.6.2](https://github.com/seuros/dictator/compare/dictator-v0.6.1...dictator-v0.6.2) (2025-12-11)
 
 
