@@ -24,9 +24,14 @@ pub fn run_occupy(args: OccupyArgs) -> Result<()> {
         args.path
     } else {
         let cwd = std::env::current_dir()?;
-        Utf8PathBuf::from_path_buf(cwd)
-            .map_err(|_| anyhow::anyhow!("non-utf8 path"))?
-            .join(&args.path)
+        let cwd = Utf8PathBuf::from_path_buf(cwd).map_err(|_| anyhow::anyhow!("non-utf8 path"))?;
+
+        // Avoid double-dot when path is "."
+        if args.path.as_str() == "." {
+            cwd
+        } else {
+            cwd.join(&args.path)
+        }
     };
 
     // Ensure target directory exists
@@ -84,6 +89,7 @@ pub fn run_occupy(args: OccupyArgs) -> Result<()> {
     }
 
     println!("✓ Ensured cache dir at {cache_dir}");
+    println!("📝 Next: Configure {config_path} for your project's requirements");
     Ok(())
 }
 
