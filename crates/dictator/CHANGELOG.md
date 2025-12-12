@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.6.4](https://github.com/seuros/dictator/compare/dictator-v0.6.3...dictator-v0.6.4) (2025-12-12)
+
+
+### Bug Fixes
+
+* honor gitignore boundaries in MCP file collection to prevent territorial violations ([0c00b1a](https://github.com/seuros/dictator/commit/0c00b1a6df25df9814dee1bb9d5d1f2e0485ba5e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.6.3 to 0.6.4
+    * dictator-frontmatter bumped from 0.6.3 to 0.6.4
+    * dictator-golang bumped from 0.6.3 to 0.6.4
+    * dictator-decree-abi bumped from 0.6.3 to 0.6.4
+    * dictator-python bumped from 0.6.3 to 0.6.4
+    * dictator-ruby bumped from 0.6.3 to 0.6.4
+    * dictator-rust bumped from 0.6.3 to 0.6.4
+    * dictator-supreme bumped from 0.6.3 to 0.6.4
+    * dictator-typescript bumped from 0.6.3 to 0.6.4
+
 ## [0.6.3](https://github.com/seuros/dictator/compare/dictator-v0.6.2...dictator-v0.6.3) (2025-12-11)
 
 
