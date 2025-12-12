@@ -520,11 +520,20 @@ mod tests {
         regime.add_decree(golang);
 
         let path = Utf8Path::new("main.go");
-        let sources = [Source { path, text: "package main" }];
+        let sources = [Source {
+            path,
+            text: "package main",
+        }];
 
         let diags = regime.enforce(&sources).unwrap();
-        assert!(diags.iter().any(|d| d.rule == "golang/hit"), "golang should run on .go files");
-        assert!(!diags.iter().any(|d| d.rule == "supreme/hit"), "supreme should be shadowed by golang");
+        assert!(
+            diags.iter().any(|d| d.rule == "golang/hit"),
+            "golang should run on .go files"
+        );
+        assert!(
+            !diags.iter().any(|d| d.rule == "supreme/hit"),
+            "supreme should be shadowed by golang"
+        );
     }
 
     #[test]
@@ -539,10 +548,16 @@ mod tests {
         regime.add_decree(supreme);
 
         let path = Utf8Path::new("main.go");
-        let sources = [Source { path, text: "package main" }];
+        let sources = [Source {
+            path,
+            text: "package main",
+        }];
 
         let diags = regime.enforce(&sources).unwrap();
-        assert!(diags.iter().any(|d| d.rule == "supreme/hit"), "supreme should run when no golang decree loaded");
+        assert!(
+            diags.iter().any(|d| d.rule == "supreme/hit"),
+            "supreme should run when no golang decree loaded"
+        );
     }
 
     #[test]
@@ -575,8 +590,14 @@ mod tests {
             let sources = [Source { path, text: "x" }];
 
             let diags = regime.enforce(&sources).unwrap();
-            assert!(diags.iter().any(|d| d.rule == rule), "{name} should run on .{ext} files");
-            assert!(!diags.iter().any(|d| d.rule == "supreme/hit"), "supreme should be shadowed by {name} on .{ext} files");
+            assert!(
+                diags.iter().any(|d| d.rule == rule),
+                "{name} should run on .{ext} files"
+            );
+            assert!(
+                !diags.iter().any(|d| d.rule == "supreme/hit"),
+                "supreme should be shadowed by {name} on .{ext} files"
+            );
         }
     }
 }
