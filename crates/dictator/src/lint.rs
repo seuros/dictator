@@ -28,11 +28,12 @@ pub fn run_once(args: LintArgs, config_path: Option<Utf8PathBuf>) -> Result<()> 
 
     let file_types = detect_file_types(&files);
 
-    // Load decree configuration
-    let decree_config = config_path
-        .as_ref()
-        .and_then(|p| dictator_core::DictateConfig::from_file(p.as_std_path()).ok())
-        .or_else(dictator_core::DictateConfig::load_default);
+    // Load decree configuration (with validation)
+    let decree_config = if let Some(p) = config_path.as_ref() {
+        Some(dictator_core::DictateConfig::from_file(p.as_std_path())?)
+    } else {
+        dictator_core::DictateConfig::load_default_strict()?
+    };
 
     // Load native decrees based on detected file types
     let mut regime = init_regime_for_files(&file_types, decree_config.as_ref());

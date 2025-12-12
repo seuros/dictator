@@ -259,7 +259,8 @@ async fn handle_sandbox_state_update(
         log_to_file("SANDBOX: sending tools/list_changed notification");
         let notification = serde_json::json!({
             "jsonrpc": "2.0",
-            "method": "notifications/tools/list_changed"
+            "method": "notifications/tools/list_changed",
+            "params": {}
         });
         let _ = notif_tx.send(notification.to_string()).await;
     }
@@ -276,7 +277,7 @@ fn handle_request(
         "initialize" => handle_initialize(id, req.params, Arc::clone(&watcher_state)),
         "tools/list" => handle_list_tools(id, Arc::clone(&watcher_state)),
         "tools/call" => handle_call_tool(id, req.params, watcher_state, notif_tx),
-        "resources/list" => handle_list_resources(id),
+        "resources/list" => handle_list_resources(id, Arc::clone(&watcher_state)),
         "resources/read" => handle_read_resource(id, req.params, watcher_state),
         _ => JsonRpcResponse {
             jsonrpc: "2.0".to_string(),

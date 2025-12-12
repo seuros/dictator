@@ -16,11 +16,13 @@ const NATIVE_DECREES: &[(&str, &[&str])] = &[
     ("frontmatter", &["md", "mdx"]),
 ];
 
-pub fn run_census(args: CensusArgs, config_path: Option<Utf8PathBuf>) {
-    let dictate_config = config_path
-        .as_ref()
-        .and_then(|p| dictator_core::DictateConfig::from_file(p.as_std_path()).ok())
-        .or_else(dictator_core::DictateConfig::load_default);
+pub fn run_census(args: CensusArgs, config_path: Option<Utf8PathBuf>) -> anyhow::Result<()> {
+    // Load decree configuration (with validation)
+    let dictate_config = if let Some(p) = config_path.as_ref() {
+        Some(dictator_core::DictateConfig::from_file(p.as_std_path())?)
+    } else {
+        dictator_core::DictateConfig::load_default_strict()?
+    };
 
     let default_path = Utf8PathBuf::from(".dictate.toml");
     let config_display = config_path.as_ref().unwrap_or(&default_path);
@@ -107,6 +109,8 @@ pub fn run_census(args: CensusArgs, config_path: Option<Utf8PathBuf>) {
             println!("  {status} {command:<12} ({state}, decree: {decree})");
         }
     }
+
+    Ok(())
 }
 
 fn is_command_available(cmd: &str) -> bool {

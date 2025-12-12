@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 
 use super::handlers::{
-    handle_dictator, handle_stalint, handle_stalint_unwatch, handle_stalint_watch,
+    handle_dictator, handle_occupy, handle_stalint, handle_stalint_unwatch, handle_stalint_watch,
 };
 use super::protocol::{
     ClientInfo, Implementation, JsonRpcError, JsonRpcResponse, MIN_CLIENT_VERSIONS,
@@ -140,7 +140,7 @@ pub fn handle_initialize(
             "title": "Dictator Structural Linter",
             "version": env!("CARGO_PKG_VERSION")
         },
-        "instructions": "Dictator is a structural linter that enforces code hygiene rules (trailing whitespace, tabs vs spaces, file size limits, etc.). Use dictator://config to view current configuration and dictator://census for available decrees."
+        "instructions": "Dictator is a pre-linter enforcing structural code hygiene (whitespace, indentation, line endings, file size)."
     });
 
     JsonRpcResponse {
@@ -155,15 +155,47 @@ pub fn handle_initialize(
 pub fn handle_list_tools(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> JsonRpcResponse {
     tracing::info!("Handling tools/list");
 
-    let (is_watching, can_write) = {
-        let state = watcher_state.lock().unwrap();
-        (state.is_watching, state.can_write)
+    let (is_watching, can_write, config_exists) = {
+        let mut state = watcher_state.lock().unwrap();
+        state.ensure_config_loaded();
+        (state.is_watching, state.can_write, state.config.is_some())
     };
+
+    // No config? Only show occupy tool
+    if !config_exists && can_write {
+        let tools = serde_json::json!({
+            "tools": [serde_json::json!({
+                "name": "occupy",
+                "title": "Initialize Config",
+                "description": "Initialize .dictate.toml with default configuration.",
+                "annotations": {
+                    "title": "Initialize Config",
+                    "readOnlyHint": false,
+                    "destructiveHint": false,
+                    "idempotentHint": true,
+                    "openWorldHint": false
+                },
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            })]
+        });
+
+        return JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: Some(tools),
+            error: None,
+        };
+    }
 
     // Watch tool changes based on state
     let watch_tool = if is_watching {
         serde_json::json!({
             "name": "stalint_unwatch",
+            "title": "Stop Watcher",
             "description": "Stop watching for file changes.",
             "annotations": {
                 "title": "Stop Watcher",
@@ -179,6 +211,7 @@ pub fn handle_list_tools(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> J
     } else {
         serde_json::json!({
             "name": "stalint_watch",
+            "title": "File Watcher",
             "description": "Watch paths for file changes. Runs stalint every 60s when changes detected and sends notifications with violations.",
             "annotations": {
                 "title": "File Watcher",
@@ -202,6 +235,7 @@ pub fn handle_list_tools(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> J
     // Build tools list dynamically based on capabilities
     let mut tool_list = vec![serde_json::json!({
         "name": "stalint",
+        "title": "Structural Linter",
         "description": "Check files for structural violations (trailing whitespace, tabs/spaces, line endings, file size). Read-only - returns diagnostics without modifying files.",
         "annotations": {
             "title": "Structural Linter",
@@ -261,6 +295,7 @@ pub fn handle_list_tools(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> J
 
         tool_list.push(serde_json::json!({
             "name": "dictator",
+            "title": "Auto-Fixer",
             "description": if has_supreme {
                 "Auto-fix structural issues. Default mode fixes whitespace/newlines. Mode 'supremecourt' also runs configured external linters."
             } else {
@@ -347,6 +382,7 @@ pub fn handle_call_tool(
         "dictator" => handle_dictator(id, call_params.arguments, watcher_state),
         "stalint_watch" => handle_stalint_watch(id, call_params.arguments, watcher_state, notif_tx),
         "stalint_unwatch" => handle_stalint_unwatch(id, watcher_state, notif_tx),
+        "occupy" => handle_occupy(id, watcher_state, notif_tx),
         _ => JsonRpcResponse {
             jsonrpc: "2.0".to_string(),
             id,
@@ -448,6 +484,10 @@ mod tests {
     #[test]
     fn test_handle_list_tools_not_watching() {
         let state = Arc::new(Mutex::new(ServerState::default()));
+        {
+            let mut s = state.lock().unwrap();
+            s.config = Some(super::super::state::DictateConfig::default());
+        }
         let id = serde_json::json!(1);
 
         let response = handle_list_tools(id, state);
@@ -476,6 +516,7 @@ mod tests {
         {
             let mut s = state.lock().unwrap();
             s.is_watching = true;
+            s.config = Some(super::super::state::DictateConfig::default());
         }
         let id = serde_json::json!(1);
 
@@ -493,6 +534,10 @@ mod tests {
     #[test]
     fn test_handle_list_tools_annotations() {
         let state = Arc::new(Mutex::new(ServerState::default()));
+        {
+            let mut s = state.lock().unwrap();
+            s.config = Some(super::super::state::DictateConfig::default());
+        }
         let id = serde_json::json!(1);
 
         let response = handle_list_tools(id, state);

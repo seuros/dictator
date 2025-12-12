@@ -492,7 +492,8 @@ pub fn handle_stalint_watch(
     // Notify client that tool list changed (stalint_watch -> stalint_unwatch)
     let notification = serde_json::json!({
         "jsonrpc": "2.0",
-        "method": "notifications/tools/list_changed"
+        "method": "notifications/tools/list_changed",
+        "params": {}
     });
     let _ = notif_tx.try_send(notification.to_string());
 
@@ -507,6 +508,89 @@ pub fn handle_stalint_watch(
         id,
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": output }]
+        })),
+        error: None,
+    }
+}
+
+const DEFAULT_CONFIG: &str = include_str!("../../templates/default.dictate.toml");
+
+/// Handle `occupy` tool - initialize .dictate.toml
+pub fn handle_occupy(
+    id: Value,
+    watcher_state: Arc<Mutex<ServerState>>,
+    notif_tx: mpsc::Sender<String>,
+) -> JsonRpcResponse {
+    let cwd = match std::env::current_dir() {
+        Ok(p) => p,
+        Err(e) => {
+            return JsonRpcResponse {
+                jsonrpc: "2.0".to_string(),
+                id,
+                result: None,
+                error: Some(JsonRpcError {
+                    code: -32603,
+                    message: format!("Failed to get current directory: {e}"),
+                    data: None,
+                }),
+            };
+        }
+    };
+
+    let config_path = cwd.join(".dictate.toml");
+
+    // Check if config already exists
+    if config_path.exists() {
+        return JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: Some(serde_json::json!({
+                "content": [{ "type": "text", "text": ".dictate.toml already exists." }]
+            })),
+            error: None,
+        };
+    }
+
+    // Write default config
+    if let Err(e) = std::fs::write(&config_path, DEFAULT_CONFIG) {
+        return JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: None,
+            error: Some(JsonRpcError {
+                code: -32603,
+                message: format!("Failed to write config: {e}"),
+                data: None,
+            }),
+        };
+    }
+
+    // Reload config in state
+    {
+        let mut state = watcher_state.lock().unwrap();
+        state.config = None; // Force reload on next access
+    }
+
+    // Notify client that tool list and resources changed
+    let tools_notification = serde_json::json!({
+        "jsonrpc": "2.0",
+        "method": "notifications/tools/list_changed",
+        "params": {}
+    });
+    let _ = notif_tx.try_send(tools_notification.to_string());
+
+    let resources_notification = serde_json::json!({
+        "jsonrpc": "2.0",
+        "method": "notifications/resources/list_changed",
+        "params": {}
+    });
+    let _ = notif_tx.try_send(resources_notification.to_string());
+
+    JsonRpcResponse {
+        jsonrpc: "2.0".to_string(),
+        id,
+        result: Some(serde_json::json!({
+            "content": [{ "type": "text", "text": "Created .dictate.toml with default configuration." }]
         })),
         error: None,
     }
@@ -530,7 +614,8 @@ pub fn handle_stalint_unwatch(
     // Notify client that tool list changed (stalint_unwatch -> stalint_watch)
     let notification = serde_json::json!({
         "jsonrpc": "2.0",
-        "method": "notifications/tools/list_changed"
+        "method": "notifications/tools/list_changed",
+        "params": {}
     });
     let _ = notif_tx.try_send(notification.to_string());
 

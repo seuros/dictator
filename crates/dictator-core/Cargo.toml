@@ -16,6 +16,7 @@ workspace = true
 dictator-decree-abi = { version = "0.8.0", path = "../dictator-decree-abi" }
 anyhow = { workspace = true }
 camino = { workspace = true }
+garde = { version = "0.22", features = ["derive"] }
 tracing = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

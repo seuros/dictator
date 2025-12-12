@@ -51,10 +51,7 @@ fn main() -> Result<()> {
         Command::Lint(lint) => run_once(lint, config),
         Command::Dictate(dictate) => run_dictate(dictate),
         Command::Watch(watch) => run_watch(watch, config),
-        Command::Census(census) => {
-            run_census(census, config);
-            Ok(())
-        }
+        Command::Census(census) => run_census(census, config),
         Command::Occupy(occupy) => run_occupy(occupy),
     }
 }

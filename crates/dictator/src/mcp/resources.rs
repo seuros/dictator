@@ -31,7 +31,23 @@ const NATIVE_DECREES: &[(&str, &[&str], &[&str])] = &[
 ];
 
 /// Handle resources/list request
-pub fn handle_list_resources(id: Value) -> JsonRpcResponse {
+pub fn handle_list_resources(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> JsonRpcResponse {
+    let config_exists = {
+        let mut state = watcher_state.lock().unwrap();
+        state.ensure_config_loaded();
+        state.config.is_some()
+    };
+
+    // No resources if config doesn't exist
+    if !config_exists {
+        return JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: Some(serde_json::json!({ "resources": [] })),
+            error: None,
+        };
+    }
+
     let resources = serde_json::json!({
         "resources": [
             {
@@ -224,7 +240,14 @@ mod tests {
 
     #[test]
     fn test_handle_list_resources() {
-        let response = handle_list_resources(serde_json::json!(1));
+        // Create state with config loaded
+        let state = Arc::new(Mutex::new(ServerState::default()));
+        {
+            let mut s = state.lock().unwrap();
+            s.config = Some(super::super::state::DictateConfig::default());
+        }
+
+        let response = handle_list_resources(serde_json::json!(1), state);
 
         assert!(response.error.is_none());
         let result = response.result.unwrap();
@@ -233,6 +256,18 @@ mod tests {
         assert_eq!(resources.len(), 2);
         assert_eq!(resources[0]["uri"], CONFIG_URI);
         assert_eq!(resources[1]["uri"], CENSUS_URI);
+    }
+
+    #[test]
+    fn test_handle_list_resources_no_config() {
+        let state = Arc::new(Mutex::new(ServerState::default()));
+        let response = handle_list_resources(serde_json::json!(1), state);
+
+        assert!(response.error.is_none());
+        let result = response.result.unwrap();
+        let resources = result["resources"].as_array().unwrap();
+
+        assert_eq!(resources.len(), 0);
     }
 
     #[test]
