@@ -65,20 +65,21 @@ pub fn command_available(cmd: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// Collect files recursively from a path
+/// Collect files recursively from a path, respecting .gitignore
 pub fn collect_files(path: &std::path::Path) -> Vec<std::path::PathBuf> {
+    use ignore::WalkBuilder;
+
     let mut files = Vec::new();
     if path.is_file() {
         files.push(path.to_path_buf());
-    } else if path.is_dir()
-        && let Ok(entries) = std::fs::read_dir(path)
-    {
-        for entry in entries.flatten() {
-            let p = entry.path();
-            if p.is_file() {
-                files.push(p);
-            } else if p.is_dir() {
-                files.extend(collect_files(&p));
+    } else if path.is_dir() {
+        let walker = WalkBuilder::new(path)
+            .standard_filters(true) // enables .gitignore, .git/info/exclude, global config
+            .build();
+
+        for result in walker.flatten() {
+            if result.file_type().is_some_and(|ft| ft.is_file()) {
+                files.push(result.path().to_path_buf());
             }
         }
     }
@@ -143,13 +144,13 @@ pub fn is_within_cwd(path: &std::path::Path, cwd: &std::path::Path) -> bool {
 
 /// Base64 encode bytes
 pub fn base64_encode(data: &[u8]) -> String {
-    use base64::{Engine, engine::general_purpose::STANDARD};
+    use base64::{engine::general_purpose::STANDARD, Engine};
     STANDARD.encode(data)
 }
 
 /// Base64 decode string
 pub fn base64_decode(s: &str) -> Vec<u8> {
-    use base64::{Engine, engine::general_purpose::STANDARD};
+    use base64::{engine::general_purpose::STANDARD, Engine};
     STANDARD.decode(s).unwrap_or_default()
 }
 
