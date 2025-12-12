@@ -13,6 +13,7 @@ workspace = true
 [dependencies]
 dictator-decree-abi = { version = "0.6.4", path = "../dictator-decree-abi" }
 dictator-core = { version = "0.6.4", path = "../dictator-core" }
+dictator-supreme = { version = "0.6.4", path = "../dictator-supreme" }
 memchr = "2"
 
 [lib]

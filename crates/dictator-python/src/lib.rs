@@ -7,6 +7,7 @@ mod imports;
 mod indentation;
 
 use dictator_decree_abi::{BoxDecree, Decree, Diagnostics};
+use dictator_supreme::SupremeConfig;
 
 pub use imports::{ImportType, classify_module, is_python_stdlib};
 
@@ -44,12 +45,13 @@ pub fn lint_source_with_config(source: &str, config: &PythonConfig) -> Diagnosti
 #[derive(Default)]
 pub struct Python {
     config: PythonConfig,
+    supreme: SupremeConfig,
 }
 
 impl Python {
     #[must_use]
-    pub const fn new(config: PythonConfig) -> Self {
-        Self { config }
+    pub const fn new(config: PythonConfig, supreme: SupremeConfig) -> Self {
+        Self { config, supreme }
     }
 }
 
@@ -59,7 +61,9 @@ impl Decree for Python {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        lint_source_with_config(source, &self.config)
+        let mut diags = dictator_supreme::lint_source_with_owner(source, &self.supreme, "python");
+        diags.extend(lint_source_with_config(source, &self.config));
+        diags
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -82,7 +86,13 @@ pub fn init_decree() -> BoxDecree {
 /// Create decree with custom config
 #[must_use]
 pub fn init_decree_with_config(config: PythonConfig) -> BoxDecree {
-    Box::new(Python::new(config))
+    Box::new(Python::new(config, SupremeConfig::default()))
+}
+
+/// Create decree with custom config + supreme config (merged from decree.supreme + decree.python)
+#[must_use]
+pub fn init_decree_with_configs(config: PythonConfig, supreme: SupremeConfig) -> BoxDecree {
+    Box::new(Python::new(config, supreme))
 }
 
 /// Convert `DecreeSettings` to `PythonConfig`

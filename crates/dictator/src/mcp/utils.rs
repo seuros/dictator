@@ -144,13 +144,13 @@ pub fn is_within_cwd(path: &std::path::Path, cwd: &std::path::Path) -> bool {
 
 /// Base64 encode bytes
 pub fn base64_encode(data: &[u8]) -> String {
-    use base64::{engine::general_purpose::STANDARD, Engine};
+    use base64::{Engine, engine::general_purpose::STANDARD};
     STANDARD.encode(data)
 }
 
 /// Base64 decode string
 pub fn base64_decode(s: &str) -> Vec<u8> {
-    use base64::{engine::general_purpose::STANDARD, Engine};
+    use base64::{Engine, engine::general_purpose::STANDARD};
     STANDARD.decode(s).unwrap_or_default()
 }
 

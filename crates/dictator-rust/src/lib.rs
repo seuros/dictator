@@ -3,6 +3,7 @@
 //! decree.rust - Rust structural rules.
 
 use dictator_decree_abi::{BoxDecree, Decree, Diagnostic, Diagnostics, Span};
+use dictator_supreme::SupremeConfig;
 use memchr::memchr_iter;
 
 /// Configuration for rust decree
@@ -204,12 +205,13 @@ fn is_struct_field_or_impl_item(trimmed: &str) -> bool {
 #[derive(Default)]
 pub struct RustDecree {
     config: RustConfig,
+    supreme: SupremeConfig,
 }
 
 impl RustDecree {
     #[must_use]
-    pub const fn new(config: RustConfig) -> Self {
-        Self { config }
+    pub const fn new(config: RustConfig, supreme: SupremeConfig) -> Self {
+        Self { config, supreme }
     }
 }
 
@@ -219,7 +221,9 @@ impl Decree for RustDecree {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        lint_source_with_config(source, &self.config)
+        let mut diags = dictator_supreme::lint_source_with_owner(source, &self.supreme, "rust");
+        diags.extend(lint_source_with_config(source, &self.config));
+        diags
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -242,7 +246,13 @@ pub fn init_decree() -> BoxDecree {
 /// Create decree with custom config
 #[must_use]
 pub fn init_decree_with_config(config: RustConfig) -> BoxDecree {
-    Box::new(RustDecree::new(config))
+    Box::new(RustDecree::new(config, SupremeConfig::default()))
+}
+
+/// Create decree with custom config + supreme config (merged from decree.supreme + decree.rust)
+#[must_use]
+pub fn init_decree_with_configs(config: RustConfig, supreme: SupremeConfig) -> BoxDecree {
+    Box::new(RustDecree::new(config, supreme))
 }
 
 /// Convert `DecreeSettings` to `RustConfig`

@@ -83,20 +83,32 @@ impl Regime {
     ///
     /// Only runs a decree on files whose extension matches the decree's
     /// `supported_extensions`. Decrees with empty `supported_extensions`
-    /// (like decree.supreme) run on all files.
+    /// (like decree.supreme) run on all files **unless shadowed by a
+    /// language-specific decree** for that file type.
     ///
     /// # Errors
     ///
     /// Returns an error if any decree fails during linting.
     pub fn enforce(&self, sources: &[Source<'_>]) -> Result<Diagnostics> {
         let mut all = Diagnostics::new();
-        for decree in &self.decrees {
-            let supported = &decree.metadata().supported_extensions;
-            for src in sources {
+        for src in sources {
+            // CSS-style specificity: if a language-specific decree is present for this file
+            // type, do not run the catch-all decree.supreme on this file.
+            let is_supreme_shadowed = self.is_supreme_shadowed(src.path);
+
+            for decree in &self.decrees {
+                let supported = &decree.metadata().supported_extensions;
+
                 // Empty supported_extensions means "all files" (e.g., decree.supreme)
-                if supported.is_empty() || Self::extension_matches(src.path, supported) {
-                    all.extend(decree.lint(src.path.as_str(), src.text));
+                if !supported.is_empty() && !Self::extension_matches(src.path, supported) {
+                    continue;
                 }
+
+                if is_supreme_shadowed && supported.is_empty() && decree.name() == "supreme" {
+                    continue;
+                }
+
+                all.extend(decree.lint(src.path.as_str(), src.text));
             }
         }
         Ok(all)
@@ -106,6 +118,26 @@ impl Regime {
     fn extension_matches(path: &Utf8Path, supported: &[String]) -> bool {
         path.extension()
             .is_some_and(|ext| supported.iter().any(|s| s == ext))
+    }
+
+    fn is_supreme_shadowed(&self, path: &Utf8Path) -> bool {
+        // Only language-specific decrees shadow decree.supreme. Other decrees (e.g. frontmatter
+        // or custom plugins) remain additive and run alongside supreme.
+        const SHADOWERS: [&str; 5] = ["ruby", "typescript", "golang", "rust", "python"];
+
+        self.decrees.iter().any(|decree| {
+            let name = decree.name();
+            if !SHADOWERS.contains(&name) {
+                return false;
+            }
+
+            let supported = &decree.metadata().supported_extensions;
+            if supported.is_empty() {
+                return false;
+            }
+
+            Self::extension_matches(path, supported)
+        })
     }
 }
 
@@ -325,10 +357,12 @@ mod loader {
 mod tests {
     use super::*;
     use dictator_decree_abi::{Capability, Decree, DecreeMetadata, Diagnostics};
+    use dictator_decree_abi::{Diagnostic, Span};
 
     struct MockDecree {
         name: &'static str,
         exts: Vec<String>,
+        rule: &'static str,
     }
 
     impl Decree for MockDecree {
@@ -337,7 +371,12 @@ mod tests {
         }
 
         fn lint(&self, _path: &str, _source: &str) -> Diagnostics {
-            Diagnostics::new()
+            vec![Diagnostic {
+                rule: self.rule.to_string(),
+                message: format!("hit {}", self.name),
+                span: Span::new(0, 0),
+                enforced: false,
+            }]
         }
 
         fn metadata(&self) -> DecreeMetadata {
@@ -357,10 +396,12 @@ mod tests {
         let decree_a: BoxDecree = Box::new(MockDecree {
             name: "a",
             exts: vec!["rs".into(), "Rb".into()],
+            rule: "a/hit",
         });
         let decree_b: BoxDecree = Box::new(MockDecree {
             name: "b",
             exts: vec!["ts".into()],
+            rule: "b/hit",
         });
         let mut regime = Regime::new();
         regime.add_decree(decree_a);
@@ -378,10 +419,164 @@ mod tests {
         let sup: BoxDecree = Box::new(MockDecree {
             name: "supreme",
             exts: vec![], // universal decree declares no extensions
+            rule: "supreme/hit",
         });
         let mut regime = Regime::new();
         regime.add_decree(sup);
 
         assert!(regime.watched_extensions().is_none());
+    }
+
+    #[test]
+    fn enforce_skips_supreme_when_language_specific_matches() {
+        let supreme: BoxDecree = Box::new(MockDecree {
+            name: "supreme",
+            exts: vec![],
+            rule: "supreme/hit",
+        });
+        let ruby: BoxDecree = Box::new(MockDecree {
+            name: "ruby",
+            exts: vec!["rb".into()],
+            rule: "ruby/hit",
+        });
+
+        let mut regime = Regime::new();
+        regime.add_decree(supreme);
+        regime.add_decree(ruby);
+
+        let path = Utf8Path::new("test.rb");
+        let sources = [Source { path, text: "x" }];
+
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(diags.iter().any(|d| d.rule == "ruby/hit"));
+        assert!(!diags.iter().any(|d| d.rule == "supreme/hit"));
+    }
+
+    #[test]
+    fn enforce_runs_supreme_when_language_specific_does_not_match() {
+        let supreme: BoxDecree = Box::new(MockDecree {
+            name: "supreme",
+            exts: vec![],
+            rule: "supreme/hit",
+        });
+        let ruby: BoxDecree = Box::new(MockDecree {
+            name: "ruby",
+            exts: vec!["rb".into()],
+            rule: "ruby/hit",
+        });
+
+        let mut regime = Regime::new();
+        regime.add_decree(supreme);
+        regime.add_decree(ruby);
+
+        let path = Utf8Path::new("test.txt");
+        let sources = [Source { path, text: "x" }];
+
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(diags.iter().any(|d| d.rule == "supreme/hit"));
+        assert!(!diags.iter().any(|d| d.rule == "ruby/hit"));
+    }
+
+    #[test]
+    fn enforce_does_not_shadow_supreme_for_non_language_decree() {
+        let supreme: BoxDecree = Box::new(MockDecree {
+            name: "supreme",
+            exts: vec![],
+            rule: "supreme/hit",
+        });
+        let frontmatter: BoxDecree = Box::new(MockDecree {
+            name: "frontmatter",
+            exts: vec!["md".into()],
+            rule: "frontmatter/hit",
+        });
+
+        let mut regime = Regime::new();
+        regime.add_decree(supreme);
+        regime.add_decree(frontmatter);
+
+        let path = Utf8Path::new("README.md");
+        let sources = [Source { path, text: "x" }];
+
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(diags.iter().any(|d| d.rule == "supreme/hit"));
+        assert!(diags.iter().any(|d| d.rule == "frontmatter/hit"));
+    }
+
+    #[test]
+    fn enforce_golang_shadows_supreme_for_go_files() {
+        let supreme: BoxDecree = Box::new(MockDecree {
+            name: "supreme",
+            exts: vec![],
+            rule: "supreme/hit",
+        });
+        let golang: BoxDecree = Box::new(MockDecree {
+            name: "golang",
+            exts: vec!["go".into()],
+            rule: "golang/hit",
+        });
+
+        let mut regime = Regime::new();
+        regime.add_decree(supreme);
+        regime.add_decree(golang);
+
+        let path = Utf8Path::new("main.go");
+        let sources = [Source { path, text: "package main" }];
+
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(diags.iter().any(|d| d.rule == "golang/hit"), "golang should run on .go files");
+        assert!(!diags.iter().any(|d| d.rule == "supreme/hit"), "supreme should be shadowed by golang");
+    }
+
+    #[test]
+    fn enforce_supreme_runs_on_go_files_when_golang_not_loaded() {
+        let supreme: BoxDecree = Box::new(MockDecree {
+            name: "supreme",
+            exts: vec![],
+            rule: "supreme/hit",
+        });
+
+        let mut regime = Regime::new();
+        regime.add_decree(supreme);
+
+        let path = Utf8Path::new("main.go");
+        let sources = [Source { path, text: "package main" }];
+
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(diags.iter().any(|d| d.rule == "supreme/hit"), "supreme should run when no golang decree loaded");
+    }
+
+    #[test]
+    fn enforce_all_shadowers_work() {
+        // Test all language-specific decrees shadow supreme
+        for (name, ext, rule) in [
+            ("ruby", "rb", "ruby/hit"),
+            ("typescript", "ts", "typescript/hit"),
+            ("golang", "go", "golang/hit"),
+            ("rust", "rs", "rust/hit"),
+            ("python", "py", "python/hit"),
+        ] {
+            let supreme: BoxDecree = Box::new(MockDecree {
+                name: "supreme",
+                exts: vec![],
+                rule: "supreme/hit",
+            });
+            let lang: BoxDecree = Box::new(MockDecree {
+                name,
+                exts: vec![ext.into()],
+                rule,
+            });
+
+            let mut regime = Regime::new();
+            regime.add_decree(supreme);
+            regime.add_decree(lang);
+
+            let path_str = format!("test.{ext}");
+            let path = Utf8Path::new(&path_str);
+            let sources = [Source { path, text: "x" }];
+
+            let diags = regime.enforce(&sources).unwrap();
+            assert!(diags.iter().any(|d| d.rule == rule), "{name} should run on .{ext} files");
+            assert!(!diags.iter().any(|d| d.rule == "supreme/hit"), "supreme should be shadowed by {name} on .{ext} files");
+        }
     }
 }

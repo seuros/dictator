@@ -3,6 +3,7 @@
 //! decree.golang - Go structural rules.
 
 use dictator_decree_abi::{BoxDecree, Decree, Diagnostic, Diagnostics, Span};
+use dictator_supreme::{SupremeConfig, TabsOrSpaces};
 use memchr::memchr_iter;
 
 /// Configuration for golang decree
@@ -123,12 +124,13 @@ fn check_indentation_style(source: &str, diags: &mut Diagnostics) {
 #[derive(Default)]
 pub struct Golang {
     config: GolangConfig,
+    supreme: SupremeConfig,
 }
 
 impl Golang {
     #[must_use]
-    pub const fn new(config: GolangConfig) -> Self {
-        Self { config }
+    pub const fn new(config: GolangConfig, supreme: SupremeConfig) -> Self {
+        Self { config, supreme }
     }
 }
 
@@ -138,7 +140,14 @@ impl Decree for Golang {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        lint_source_with_config(source, &self.config)
+        // Go's decree owns indentation style; suppress supreme's tabs/spaces check to avoid
+        // duplicate diagnostics.
+        let mut supreme = self.supreme.clone();
+        supreme.tabs_vs_spaces = TabsOrSpaces::Either;
+
+        let mut diags = dictator_supreme::lint_source_with_owner(source, &supreme, "golang");
+        diags.extend(lint_source_with_config(source, &self.config));
+        diags
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -161,7 +170,13 @@ pub fn init_decree() -> BoxDecree {
 /// Create decree with custom config
 #[must_use]
 pub fn init_decree_with_config(config: GolangConfig) -> BoxDecree {
-    Box::new(Golang::new(config))
+    Box::new(Golang::new(config, SupremeConfig::default()))
+}
+
+/// Create decree with custom config + supreme config (merged from decree.supreme + decree.golang)
+#[must_use]
+pub fn init_decree_with_configs(config: GolangConfig, supreme: SupremeConfig) -> BoxDecree {
+    Box::new(Golang::new(config, supreme))
 }
 
 /// Convert `DecreeSettings` to `GolangConfig`

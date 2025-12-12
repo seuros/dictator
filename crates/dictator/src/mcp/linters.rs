@@ -43,23 +43,38 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
             match decree_name.as_str() {
                 "typescript" => {
                     let ts_config = dictator_typescript::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_typescript::init_decree_with_config(ts_config));
+                    let ts_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_typescript::init_decree_with_configs(
+                        ts_config, ts_supreme,
+                    ));
                 }
                 "python" => {
                     let py_config = dictator_python::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_python::init_decree_with_config(py_config));
+                    let py_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_python::init_decree_with_configs(
+                        py_config, py_supreme,
+                    ));
                 }
                 "golang" => {
                     let go_config = dictator_golang::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_golang::init_decree_with_config(go_config));
+                    let go_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_golang::init_decree_with_configs(
+                        go_config, go_supreme,
+                    ));
                 }
                 "rust" => {
                     let rs_config = dictator_rust::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_rust::init_decree_with_config(rs_config));
+                    let rs_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_rust::init_decree_with_configs(
+                        rs_config, rs_supreme,
+                    ));
                 }
                 "ruby" => {
                     let rb_config = dictator_ruby::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_ruby::init_decree_with_config(rb_config));
+                    let rb_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_ruby::init_decree_with_configs(
+                        rb_config, rb_supreme,
+                    ));
                 }
                 "frontmatter" => {
                     let fm_config = dictator_frontmatter::config_from_decree_settings(settings);
@@ -437,23 +452,38 @@ pub fn init_regime_from_config() -> Regime {
             match decree_name.as_str() {
                 "typescript" => {
                     let ts_config = dictator_typescript::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_typescript::init_decree_with_config(ts_config));
+                    let ts_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_typescript::init_decree_with_configs(
+                        ts_config, ts_supreme,
+                    ));
                 }
                 "python" => {
                     let py_config = dictator_python::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_python::init_decree_with_config(py_config));
+                    let py_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_python::init_decree_with_configs(
+                        py_config, py_supreme,
+                    ));
                 }
                 "golang" => {
                     let go_config = dictator_golang::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_golang::init_decree_with_config(go_config));
+                    let go_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_golang::init_decree_with_configs(
+                        go_config, go_supreme,
+                    ));
                 }
                 "rust" => {
                     let rs_config = dictator_rust::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_rust::init_decree_with_config(rs_config));
+                    let rs_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_rust::init_decree_with_configs(
+                        rs_config, rs_supreme,
+                    ));
                 }
                 "ruby" => {
                     let rb_config = dictator_ruby::config_from_decree_settings(settings);
-                    regime.add_decree(dictator_ruby::init_decree_with_config(rb_config));
+                    let rb_supreme = dictator_supreme::merged_config(supreme_settings, settings);
+                    regime.add_decree(dictator_ruby::init_decree_with_configs(
+                        rb_config, rb_supreme,
+                    ));
                 }
                 "frontmatter" => {
                     let fm_config = dictator_frontmatter::config_from_decree_settings(settings);

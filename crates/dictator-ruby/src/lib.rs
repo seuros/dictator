@@ -1,6 +1,7 @@
 //! Ruby hygiene rules implemented as a Dictator decree.
 
 use dictator_decree_abi::{BoxDecree, Decree, Diagnostic, Diagnostics, Span};
+use dictator_supreme::SupremeConfig;
 use memchr::memchr_iter;
 
 /// Configuration for ruby decree
@@ -18,12 +19,47 @@ impl Default for RubyConfig {
 /// Lint a Ruby source file and emit diagnostics for common hygiene issues.
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
-    lint_source_with_config(source, &RubyConfig::default())
+    lint_source_with_configs(source, &RubyConfig::default(), &SupremeConfig::default())
 }
 
 /// Lint with custom configuration
 #[must_use]
 pub fn lint_source_with_config(source: &str, config: &RubyConfig) -> Diagnostics {
+    let mut diags = Diagnostics::new();
+
+    diags.extend(dictator_supreme::lint_source_with_owner(
+        source,
+        &SupremeConfig::default(),
+        "ruby",
+    ));
+
+    // Ruby-specific rules
+    diags.extend(lint_ruby_specific(source, config));
+
+    diags
+}
+
+#[must_use]
+pub fn lint_source_with_configs(
+    source: &str,
+    ruby_config: &RubyConfig,
+    supreme_config: &SupremeConfig,
+) -> Diagnostics {
+    let mut diags = Diagnostics::new();
+
+    diags.extend(dictator_supreme::lint_source_with_owner(
+        source,
+        supreme_config,
+        "ruby",
+    ));
+
+    // Ruby-specific rules
+    diags.extend(lint_ruby_specific(source, ruby_config));
+
+    diags
+}
+
+fn lint_ruby_specific(source: &str, config: &RubyConfig) -> Diagnostics {
     let mut diags = Diagnostics::new();
 
     // Check file line count
@@ -34,20 +70,14 @@ pub fn lint_source_with_config(source: &str, config: &RubyConfig) -> Diagnostics
     let mut line_idx: usize = 0;
 
     for nl in memchr_iter(b'\n', bytes) {
-        process_line(source, line_start, nl, true, line_idx, &mut diags);
+        process_line(source, line_start, nl, line_idx, &mut diags);
         line_start = nl + 1;
         line_idx += 1;
     }
 
     if line_start < bytes.len() {
         // Final line without trailing newline.
-        process_line(source, line_start, bytes.len(), false, line_idx, &mut diags);
-        diags.push(Diagnostic {
-            rule: "ruby/missing-final-newline".to_string(),
-            message: "File should end with a single newline".to_string(),
-            enforced: true,
-            span: Span::new(bytes.len().saturating_sub(1), bytes.len()),
-        });
+        process_line(source, line_start, bytes.len(), line_idx, &mut diags);
     }
 
     diags
@@ -93,12 +123,13 @@ fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics
 #[derive(Default)]
 pub struct RubyHygiene {
     config: RubyConfig,
+    supreme: SupremeConfig,
 }
 
 impl RubyHygiene {
     #[must_use]
-    pub const fn new(config: RubyConfig) -> Self {
-        Self { config }
+    pub const fn new(config: RubyConfig, supreme: SupremeConfig) -> Self {
+        Self { config, supreme }
     }
 }
 
@@ -108,7 +139,7 @@ impl Decree for RubyHygiene {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        lint_source_with_config(source, &self.config)
+        lint_source_with_configs(source, &self.config, &self.supreme)
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -132,7 +163,13 @@ pub fn init_decree() -> BoxDecree {
 /// Create plugin with custom config
 #[must_use]
 pub fn init_decree_with_config(config: RubyConfig) -> BoxDecree {
-    Box::new(RubyHygiene::new(config))
+    Box::new(RubyHygiene::new(config, SupremeConfig::default()))
+}
+
+/// Create plugin with custom config + supreme config (merged from decree.supreme + decree.ruby)
+#[must_use]
+pub fn init_decree_with_configs(config: RubyConfig, supreme: SupremeConfig) -> BoxDecree {
+    Box::new(RubyHygiene::new(config, supreme))
 }
 
 /// Convert `DecreeSettings` to `RubyConfig`
@@ -143,48 +180,10 @@ pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> 
     }
 }
 
-fn process_line(
-    source: &str,
-    start: usize,
-    end: usize,
-    had_newline: bool,
-    line_idx: usize,
-    diags: &mut Diagnostics,
-) {
+fn process_line(source: &str, start: usize, end: usize, line_idx: usize, diags: &mut Diagnostics) {
     let line = &source[start..end];
 
-    // 1) Trailing whitespace (spaces or tabs) before the newline/end.
-    let trimmed_end = line.trim_end_matches([' ', '\t']).len();
-    if trimmed_end != line.len() {
-        diags.push(Diagnostic {
-            rule: "ruby/trailing-whitespace".to_string(),
-            message: "Remove trailing whitespace".to_string(),
-            enforced: true,
-            span: Span::new(start + trimmed_end, start + line.len()),
-        });
-    }
-
-    // 2) Tabs anywhere in the line (Ruby style guides prefer spaces).
-    if let Some(pos) = line.bytes().position(|b| b == b'\t') {
-        diags.push(Diagnostic {
-            rule: "ruby/tab-indent".to_string(),
-            message: "Use spaces instead of tabs".to_string(),
-            enforced: true,
-            span: Span::new(start + pos, start + pos + 1),
-        });
-    }
-
-    // 2b) Whitespace-only blank lines (spaces/tabs) instead of empty newline.
-    if line.trim().is_empty() && !line.is_empty() {
-        diags.push(Diagnostic {
-            rule: "ruby/blank-line-whitespace".to_string(),
-            message: "Blank lines should not contain spaces or tabs".to_string(),
-            enforced: true,
-            span: Span::new(start, end),
-        });
-    }
-
-    // 3) Comment hygiene: ensure space after '#', except for known directives.
+    // Comment hygiene: ensure space after '#', except for known directives.
     let trimmed = line.trim_start_matches(' ');
     if let Some(stripped) = trimmed.strip_prefix('#')
         && !is_comment_directive(stripped, line_idx)
@@ -199,11 +198,6 @@ fn process_line(
             enforced: true,
             span: Span::new(hash_offset, hash_offset + 1),
         });
-    }
-
-    // 4) Blank line should be exactly newline (no spaces).
-    if line.is_empty() && !had_newline {
-        // Nothing to do for final empty slice.
     }
 }
 
@@ -227,7 +221,7 @@ mod tests {
         let src = "def foo\n  bar \t\nend\n";
         let diags = lint_source(src);
         assert!(diags.iter().any(|d| d.rule == "ruby/trailing-whitespace"));
-        assert!(diags.iter().any(|d| d.rule == "ruby/tab-indent"));
+        assert!(diags.iter().any(|d| d.rule == "ruby/tab-character"));
     }
 
     #[test]

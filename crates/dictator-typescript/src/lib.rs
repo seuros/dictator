@@ -3,6 +3,7 @@
 //! decree.typescript - TypeScript/JavaScript structural rules.
 
 use dictator_decree_abi::{BoxDecree, Decree, Diagnostic, Diagnostics, Span};
+use dictator_supreme::SupremeConfig;
 use memchr::memchr_iter;
 
 /// Lint TypeScript source for structural violations.
@@ -320,12 +321,13 @@ fn count_leading_whitespace(line: &str) -> usize {
 #[derive(Default)]
 pub struct TypeScript {
     config: TypeScriptConfig,
+    supreme: SupremeConfig,
 }
 
 impl TypeScript {
     #[must_use]
-    pub const fn new(config: TypeScriptConfig) -> Self {
-        Self { config }
+    pub const fn new(config: TypeScriptConfig, supreme: SupremeConfig) -> Self {
+        Self { config, supreme }
     }
 }
 
@@ -335,7 +337,10 @@ impl Decree for TypeScript {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        lint_source_with_config(source, &self.config)
+        let mut diags =
+            dictator_supreme::lint_source_with_owner(source, &self.supreme, "typescript");
+        diags.extend(lint_source_with_config(source, &self.config));
+        diags
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -363,7 +368,13 @@ pub fn init_decree() -> BoxDecree {
 /// Create plugin with custom config
 #[must_use]
 pub fn init_decree_with_config(config: TypeScriptConfig) -> BoxDecree {
-    Box::new(TypeScript::new(config))
+    Box::new(TypeScript::new(config, SupremeConfig::default()))
+}
+
+/// Create plugin with custom config + supreme config (merged from decree.supreme + decree.typescript)
+#[must_use]
+pub fn init_decree_with_configs(config: TypeScriptConfig, supreme: SupremeConfig) -> BoxDecree {
+    Box::new(TypeScript::new(config, supreme))
 }
 
 /// Convert `DecreeSettings` to `TypeScriptConfig`

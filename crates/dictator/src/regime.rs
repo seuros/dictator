@@ -23,8 +23,9 @@ fn should_load_decree(config: Option<&DictateConfig>, key: &str) -> bool {
 pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
     let mut regime = Regime::new();
 
-    // decree.supreme ALWAYS runs
-    // Language-specific settings override supreme settings per file type
+    // decree.supreme runs as the default structural decree.
+    // When a language-specific decree is enabled for a file type, it shadows supreme for that
+    // file type; language settings override supreme settings via merged config.
     if let Some(config) = decree_config
         && let Some(supreme_settings) = config.decree.get("supreme")
     {
@@ -53,7 +54,16 @@ pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
             && let Some(ruby_settings) = config.decree.get("ruby")
         {
             let ruby_config = dictator_ruby::config_from_decree_settings(ruby_settings);
-            regime.add_decree(dictator_ruby::init_decree_with_config(ruby_config));
+            let ruby_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(ruby_settings),
+                    |base| dictator_supreme::merged_config(base, ruby_settings),
+                );
+            regime.add_decree(dictator_ruby::init_decree_with_configs(
+                ruby_config,
+                ruby_supreme,
+            ));
         } else {
             regime.add_decree(create_ruby_plugin());
         }
@@ -64,7 +74,15 @@ pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
             && let Some(ts_settings) = config.decree.get("typescript")
         {
             let ts_config = dictator_typescript::config_from_decree_settings(ts_settings);
-            regime.add_decree(dictator_typescript::init_decree_with_config(ts_config));
+            let ts_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(ts_settings),
+                    |base| dictator_supreme::merged_config(base, ts_settings),
+                );
+            regime.add_decree(dictator_typescript::init_decree_with_configs(
+                ts_config, ts_supreme,
+            ));
         } else {
             regime.add_decree(create_typescript_plugin());
         }
@@ -75,7 +93,16 @@ pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
             && let Some(golang_settings) = config.decree.get("golang")
         {
             let golang_config = dictator_golang::config_from_decree_settings(golang_settings);
-            regime.add_decree(dictator_golang::init_decree_with_config(golang_config));
+            let golang_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(golang_settings),
+                    |base| dictator_supreme::merged_config(base, golang_settings),
+                );
+            regime.add_decree(dictator_golang::init_decree_with_configs(
+                golang_config,
+                golang_supreme,
+            ));
         } else {
             regime.add_decree(create_golang_plugin());
         }
@@ -85,7 +112,16 @@ pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
             && let Some(rust_settings) = config.decree.get("rust")
         {
             let rust_config = dictator_rust::config_from_decree_settings(rust_settings);
-            regime.add_decree(dictator_rust::init_decree_with_config(rust_config));
+            let rust_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(rust_settings),
+                    |base| dictator_supreme::merged_config(base, rust_settings),
+                );
+            regime.add_decree(dictator_rust::init_decree_with_configs(
+                rust_config,
+                rust_supreme,
+            ));
         } else {
             regime.add_decree(create_rust_plugin());
         }
@@ -95,7 +131,16 @@ pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
             && let Some(python_settings) = config.decree.get("python")
         {
             let python_config = dictator_python::config_from_decree_settings(python_settings);
-            regime.add_decree(dictator_python::init_decree_with_config(python_config));
+            let python_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(python_settings),
+                    |base| dictator_supreme::merged_config(base, python_settings),
+                );
+            regime.add_decree(dictator_python::init_decree_with_configs(
+                python_config,
+                python_supreme,
+            ));
         } else {
             regime.add_decree(create_python_plugin());
         }
@@ -125,8 +170,9 @@ pub fn init_regime_for_files(
 ) -> Regime {
     let mut regime = Regime::new();
 
-    // decree.supreme ALWAYS runs (on all files)
-    // Language-specific settings override supreme settings per file type
+    // decree.supreme runs as the default structural decree.
+    // When a language-specific decree is enabled for a file type, it shadows supreme for that
+    // file type; language settings override supreme settings via merged config.
     if let Some(config) = decree_config
         && let Some(supreme_settings) = config.decree.get("supreme")
     {
@@ -155,7 +201,16 @@ pub fn init_regime_for_files(
             && let Some(ruby_settings) = config.decree.get("ruby")
         {
             let ruby_config = dictator_ruby::config_from_decree_settings(ruby_settings);
-            regime.add_decree(dictator_ruby::init_decree_with_config(ruby_config));
+            let ruby_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(ruby_settings),
+                    |base| dictator_supreme::merged_config(base, ruby_settings),
+                );
+            regime.add_decree(dictator_ruby::init_decree_with_configs(
+                ruby_config,
+                ruby_supreme,
+            ));
         } else {
             regime.add_decree(create_ruby_plugin());
         }
@@ -165,7 +220,15 @@ pub fn init_regime_for_files(
             && let Some(ts_settings) = config.decree.get("typescript")
         {
             let ts_config = dictator_typescript::config_from_decree_settings(ts_settings);
-            regime.add_decree(dictator_typescript::init_decree_with_config(ts_config));
+            let ts_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(ts_settings),
+                    |base| dictator_supreme::merged_config(base, ts_settings),
+                );
+            regime.add_decree(dictator_typescript::init_decree_with_configs(
+                ts_config, ts_supreme,
+            ));
         } else {
             regime.add_decree(create_typescript_plugin());
         }
@@ -175,7 +238,16 @@ pub fn init_regime_for_files(
             && let Some(golang_settings) = config.decree.get("golang")
         {
             let golang_config = dictator_golang::config_from_decree_settings(golang_settings);
-            regime.add_decree(dictator_golang::init_decree_with_config(golang_config));
+            let golang_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(golang_settings),
+                    |base| dictator_supreme::merged_config(base, golang_settings),
+                );
+            regime.add_decree(dictator_golang::init_decree_with_configs(
+                golang_config,
+                golang_supreme,
+            ));
         } else {
             regime.add_decree(create_golang_plugin());
         }
@@ -185,7 +257,16 @@ pub fn init_regime_for_files(
             && let Some(rust_settings) = config.decree.get("rust")
         {
             let rust_config = dictator_rust::config_from_decree_settings(rust_settings);
-            regime.add_decree(dictator_rust::init_decree_with_config(rust_config));
+            let rust_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(rust_settings),
+                    |base| dictator_supreme::merged_config(base, rust_settings),
+                );
+            regime.add_decree(dictator_rust::init_decree_with_configs(
+                rust_config,
+                rust_supreme,
+            ));
         } else {
             regime.add_decree(create_rust_plugin());
         }
@@ -195,7 +276,16 @@ pub fn init_regime_for_files(
             && let Some(python_settings) = config.decree.get("python")
         {
             let python_config = dictator_python::config_from_decree_settings(python_settings);
-            regime.add_decree(dictator_python::init_decree_with_config(python_config));
+            let python_supreme = decree_config
+                .and_then(|c| c.decree.get("supreme"))
+                .map_or_else(
+                    || dictator_supreme::config_from_decree_settings(python_settings),
+                    |base| dictator_supreme::merged_config(base, python_settings),
+                );
+            regime.add_decree(dictator_python::init_decree_with_configs(
+                python_config,
+                python_supreme,
+            ));
         } else {
             regime.add_decree(create_python_plugin());
         }
