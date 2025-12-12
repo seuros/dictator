@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/seuros/dictator/compare/dictator-decree-abi-v0.7.0...dictator-decree-abi-v0.8.0) (2025-12-12)
+
+
+### Features
+
+* decree territorial expansion and propaganda efficiency reforms ([9c798da](https://github.com/seuros/dictator/commit/9c798dad7e907cc4e995db2fc80806cf1df18bf0))
+
 ## [0.7.0](https://github.com/seuros/dictator/compare/dictator-decree-abi-v0.6.4...dictator-decree-abi-v0.7.0) (2025-12-12)
 
 

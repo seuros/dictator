@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0](https://github.com/seuros/dictator/compare/dictator-core-v0.7.0...dictator-core-v0.8.0) (2025-12-12)
+
+
+### Features
+
+* decree territorial expansion and propaganda efficiency reforms ([9c798da](https://github.com/seuros/dictator/commit/9c798dad7e907cc4e995db2fc80806cf1df18bf0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.7.0 to 0.8.0
+
 ## [0.7.0](https://github.com/seuros/dictator/compare/dictator-core-v0.6.4...dictator-core-v0.7.0) (2025-12-12)
 
 
