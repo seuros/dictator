@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.7.0](https://github.com/seuros/dictator/compare/dictator-core-v0.6.4...dictator-core-v0.7.0) (2025-12-12)
+
+
+### Features
+
+* decree specificity - language-specific decrees inherit and shadow supreme ([e23fa88](https://github.com/seuros/dictator/commit/e23fa88ec04dd93bb6316c7a4a60e38fa2d7f25f))
+
+
+### Bug Fixes
+
+* appease the formatter overlords ([73dfb49](https://github.com/seuros/dictator/commit/73dfb49a63a4d33db4bd10eb2712cde5d30b2b2a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.6.4 to 0.7.0
+
 ## [0.6.4](https://github.com/seuros/dictator/compare/dictator-core-v0.6.3...dictator-core-v0.6.4) (2025-12-12)
 
 
