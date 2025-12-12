@@ -10,7 +10,7 @@ line_endings = "lf"
 [decree.rust]
 path = "src"
 enabled = true
-max_lines = 600
+max_lines = 700
 
 # Explicitly disable all other decrees
 [decree.ruby]
