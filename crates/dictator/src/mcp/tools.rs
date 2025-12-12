@@ -131,6 +131,7 @@ pub fn handle_initialize(
                 "listChanged": true
             },
             "resources": {},
+            "logging": {},
             "experimental": {
                 "codex/sandbox-state": { "version": "1.0.0" }
             }
@@ -393,6 +394,82 @@ pub fn handle_call_tool(
                 data: None,
             }),
         },
+    }
+}
+
+/// Handle logging/setLevel request - set minimum log severity
+pub fn handle_logging_set_level(
+    id: Value,
+    params: Option<Value>,
+    watcher_state: Arc<Mutex<ServerState>>,
+) -> JsonRpcResponse {
+    use super::logging::Severity;
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    struct SetLevelParams {
+        level: String,
+    }
+
+    let Some(params) = params else {
+        return JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: None,
+            error: Some(JsonRpcError {
+                code: -32602,
+                message: "Missing params".to_string(),
+                data: None,
+            }),
+        };
+    };
+
+    let set_level_params: SetLevelParams = match serde_json::from_value(params) {
+        Ok(p) => p,
+        Err(e) => {
+            return JsonRpcResponse {
+                jsonrpc: "2.0".to_string(),
+                id,
+                result: None,
+                error: Some(JsonRpcError {
+                    code: -32602,
+                    message: format!("Invalid params: {e}"),
+                    data: None,
+                }),
+            };
+        }
+    };
+
+    // Parse severity level
+    let severity = match Severity::from_string(&set_level_params.level) {
+        Some(s) => s,
+        None => {
+            return JsonRpcResponse {
+                jsonrpc: "2.0".to_string(),
+                id,
+                result: None,
+                error: Some(JsonRpcError {
+                    code: -32602,
+                    message: format!("Unknown level: {}", set_level_params.level),
+                    data: None,
+                }),
+            };
+        }
+    };
+
+    // Update logger config in state
+    {
+        let mut state = watcher_state.lock().unwrap();
+        state.logger_config.lock().unwrap().min_level = severity;
+    }
+
+    JsonRpcResponse {
+        jsonrpc: "2.0".to_string(),
+        id,
+        result: Some(serde_json::json!({
+            "level": set_level_params.level
+        })),
+        error: None,
     }
 }
 

@@ -4,6 +4,8 @@
 
 mod handlers;
 mod linters;
+mod logging;
+mod progress;
 mod protocol;
 mod resources;
 mod state;
@@ -45,8 +47,8 @@ async fn run_async() -> Result<()> {
     // Channel for notifications from watcher
     let (notif_tx, mut notif_rx) = mpsc::channel::<String>(100);
 
-    // Shared watcher state
-    let watcher_state = Arc::new(Mutex::new(ServerState::default()));
+    // Shared watcher state (initialize with notification channel)
+    let watcher_state = Arc::new(Mutex::new(ServerState::new(notif_tx.clone())));
 
     // Start watcher check task
     let watcher_state_clone = Arc::clone(&watcher_state);
@@ -279,6 +281,7 @@ fn handle_request(
         "tools/call" => handle_call_tool(id, req.params, watcher_state, notif_tx),
         "resources/list" => handle_list_resources(id, Arc::clone(&watcher_state)),
         "resources/read" => handle_read_resource(id, req.params, watcher_state),
+        "logging/setLevel" => tools::handle_logging_set_level(id, req.params, Arc::clone(&watcher_state)),
         _ => JsonRpcResponse {
             jsonrpc: "2.0".to_string(),
             id,

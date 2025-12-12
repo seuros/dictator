@@ -3,8 +3,11 @@
 use notify::RecommendedWatcher;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
+use super::logging::LoggerConfig;
+use super::progress::ProgressTracker;
 use super::protocol::ClientInfo;
 use super::utils::log_to_file;
 
@@ -70,10 +73,24 @@ pub struct ServerState {
     pub stalint_paths: Vec<String>,
     // Linter configuration
     pub config: Option<DictateConfig>,
+    // Logging configuration (client-controlled via logging/setLevel)
+    pub logger_config: Arc<Mutex<LoggerConfig>>,
+    // Progress tracking for long-running operations
+    pub progress_tracker: Arc<ProgressTracker>,
 }
 
 impl Default for ServerState {
     fn default() -> Self {
+        // Create a dummy notification channel for default initialization
+        // This is only used in tests; actual server uses ::new()
+        let (_tx, _rx) = tokio::sync::mpsc::channel(100);
+        Self::new(_tx)
+    }
+}
+
+impl ServerState {
+    /// Create new ServerState with notification channel
+    pub fn new(notif_tx: tokio::sync::mpsc::Sender<String>) -> Self {
         Self {
             paths: HashSet::new(),
             dirty: false,
@@ -87,11 +104,11 @@ impl Default for ServerState {
             can_write: true,
             stalint_paths: Vec::new(),
             config: None,
+            logger_config: Arc::new(Mutex::new(LoggerConfig::default())),
+            progress_tracker: Arc::new(ProgressTracker::new(notif_tx)),
         }
     }
-}
 
-impl ServerState {
     /// Lazily load .dictate.toml after the MCP handshake has completed.
     pub fn ensure_config_loaded(&mut self) {
         if self.config.is_some() {
