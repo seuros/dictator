@@ -130,6 +130,7 @@ pub fn handle_initialize(
             "tools": {
                 "listChanged": true
             },
+            "resources": {},
             "experimental": {
                 "codex/sandbox-state": { "version": "1.0.0" }
             }
@@ -139,7 +140,7 @@ pub fn handle_initialize(
             "title": "Dictator Structural Linter",
             "version": env!("CARGO_PKG_VERSION")
         },
-        "instructions": "Dictator is a structural linter that enforces code hygiene rules (trailing whitespace, tabs vs spaces, file size limits, etc.). Use the tools to check code structure before committing."
+        "instructions": "Dictator is a structural linter that enforces code hygiene rules (trailing whitespace, tabs vs spaces, file size limits, etc.). Use dictator://config to view current configuration and dictator://census for available decrees."
     });
 
     JsonRpcResponse {

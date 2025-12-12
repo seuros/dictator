@@ -5,6 +5,7 @@
 mod handlers;
 mod linters;
 mod protocol;
+mod resources;
 mod state;
 mod tools;
 mod utils;
@@ -19,6 +20,7 @@ use tokio::sync::mpsc;
 
 use linters::run_stalint_check;
 use protocol::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
+use resources::{handle_list_resources, handle_read_resource};
 use state::{STALINT_CHECK_TIMEOUT_SECS, ServerState, WATCHER_CHECK_INTERVAL_SECS};
 use tools::{handle_call_tool, handle_initialize, handle_list_tools};
 use utils::log_to_file;
@@ -274,6 +276,8 @@ fn handle_request(
         "initialize" => handle_initialize(id, req.params, Arc::clone(&watcher_state)),
         "tools/list" => handle_list_tools(id, Arc::clone(&watcher_state)),
         "tools/call" => handle_call_tool(id, req.params, watcher_state, notif_tx),
+        "resources/list" => handle_list_resources(id),
+        "resources/read" => handle_read_resource(id, req.params, watcher_state),
         _ => JsonRpcResponse {
             jsonrpc: "2.0".to_string(),
             id,
