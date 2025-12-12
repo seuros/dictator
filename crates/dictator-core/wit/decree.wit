@@ -24,6 +24,8 @@ interface lints {
     description: string,
     dectauthors: option<string>,
     supported-extensions: list<string>,
+    supported-filenames: list<string>,
+    skip-filenames: list<string>,
     capabilities: list<capability>,
   }
 

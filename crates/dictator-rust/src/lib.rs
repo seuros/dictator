@@ -233,6 +233,17 @@ impl Decree for RustDecree {
             description: "Rust structural rules".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec!["rs".to_string()],
+            supported_filenames: vec![
+                "Cargo.toml".to_string(),
+                "build.rs".to_string(),
+                "rust-toolchain".to_string(),
+                "rust-toolchain.toml".to_string(),
+                ".rustfmt.toml".to_string(),
+                "rustfmt.toml".to_string(),
+                "clippy.toml".to_string(),
+                ".clippy.toml".to_string(),
+            ],
+            skip_filenames: vec!["Cargo.lock".to_string()],
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

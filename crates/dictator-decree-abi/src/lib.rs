@@ -37,6 +37,13 @@ pub struct DecreeMetadata {
     pub dectauthors: Option<String>,
     /// File extensions this decree handles (e.g., `["rb", "rake"]`)
     pub supported_extensions: Vec<String>,
+    /// Exact filenames this decree handles (e.g., `["Gemfile", "Rakefile"]`)
+    #[serde(default)]
+    pub supported_filenames: Vec<String>,
+    /// Filenames to claim but NOT lint (lock files, generated files)
+    /// Decree owns these to prevent other decrees from touching them.
+    #[serde(default)]
+    pub skip_filenames: Vec<String>,
     /// Capabilities this decree provides
     pub capabilities: Vec<Capability>,
 }

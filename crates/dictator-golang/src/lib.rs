@@ -157,6 +157,8 @@ impl Decree for Golang {
             description: "Go structural rules".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec!["go".to_string()],
+            supported_filenames: vec!["go.mod".to_string(), "go.work".to_string()],
+            skip_filenames: vec!["go.sum".to_string()],
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

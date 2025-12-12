@@ -222,6 +222,8 @@ impl Decree for Frontmatter {
             description: "Frontmatter field ordering and validation".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec!["md".to_string(), "mdx".to_string(), "astro".to_string()],
+            supported_filenames: vec![],
+            skip_filenames: vec![],
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

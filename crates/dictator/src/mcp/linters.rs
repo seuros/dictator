@@ -145,6 +145,7 @@ pub fn get_linter_args(command: &str) -> Vec<&'static str> {
 /// Handle kimjongrails auto-fix (whitespace, newlines, line endings)
 pub fn handle_kimjongrails(id: Value, arguments: Option<Value>) -> JsonRpcResponse {
     use serde::Deserialize;
+    use std::collections::HashMap;
 
     #[derive(Deserialize)]
     struct Args {
@@ -167,13 +168,14 @@ pub fn handle_kimjongrails(id: Value, arguments: Option<Value>) -> JsonRpcRespon
         }
     };
 
-    let mut output = String::new();
+    let mut log_output = String::new();
     let mut fixed_count = 0;
+    let mut rule_counts: HashMap<&str, usize> = HashMap::new();
 
     for path in &args.paths {
         let path = std::path::Path::new(path);
         if !path.exists() {
-            let _ = writeln!(output, "! Path not found: {}", path.display());
+            let _ = writeln!(log_output, "! Path not found: {}", path.display());
             continue;
         }
 
@@ -182,7 +184,7 @@ pub fn handle_kimjongrails(id: Value, arguments: Option<Value>) -> JsonRpcRespon
             let text = match std::fs::read_to_string(&file) {
                 Ok(t) => t,
                 Err(e) => {
-                    let _ = writeln!(output, "! Cannot read {}: {}", file.display(), e);
+                    let _ = writeln!(log_output, "! Cannot read {}: {}", file.display(), e);
                     continue;
                 }
             };
@@ -212,20 +214,50 @@ pub fn handle_kimjongrails(id: Value, arguments: Option<Value>) -> JsonRpcRespon
 
             if !changes.is_empty() && fixed != text {
                 if let Err(e) = std::fs::write(&file, &fixed) {
-                    let _ = writeln!(output, "! Cannot write {}: {}", file.display(), e);
+                    let _ = writeln!(log_output, "! Cannot write {}: {}", file.display(), e);
                 } else {
                     fixed_count += 1;
-                    let _ = writeln!(output, "* {} ({})", file.display(), changes.join(", "));
+                    let _ = writeln!(log_output, "* {} ({})", file.display(), changes.join(", "));
+
+                    // Track counts by rule
+                    for change in &changes {
+                        let rule = match *change {
+                            "trailing whitespace" => "supreme/trailing-whitespace",
+                            "final newline" => "supreme/missing-final-newline",
+                            "CRLF->LF" => "supreme/crlf",
+                            _ => "supreme/unknown",
+                        };
+                        *rule_counts.entry(rule).or_default() += 1;
+                    }
                 }
             }
         }
     }
 
-    if fixed_count == 0 {
-        output = "* No fixes needed".to_string();
+    let output = if fixed_count == 0 {
+        "No fixes needed".to_string()
     } else {
-        output = format!("Fixed {fixed_count} file(s):\n{output}");
-    }
+        // Write log file with details
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        let log_path = format!("/tmp/dictator-fixes-{timestamp}.log");
+
+        let log_written = std::fs::write(&log_path, &log_output).is_ok();
+
+        // Build summary grouped by rule
+        let mut summary = format!("Fixed {fixed_count} files:\n");
+        let mut rules: Vec<_> = rule_counts.iter().collect();
+        rules.sort_by_key(|(rule, _)| *rule);
+        for (rule, count) in rules {
+            let _ = writeln!(summary, "  {rule}: {count}");
+        }
+        if log_written {
+            let _ = write!(summary, "Details: {log_path}");
+        }
+        summary
+    };
 
     JsonRpcResponse {
         jsonrpc: "2.0".to_string(),

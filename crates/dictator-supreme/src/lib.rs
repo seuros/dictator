@@ -330,6 +330,8 @@ impl Decree for Supreme {
             description: "Supreme structural rules (universal)".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec![],
+            supported_filenames: vec![],
+            skip_filenames: vec![],
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

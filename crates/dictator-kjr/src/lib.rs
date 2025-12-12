@@ -119,6 +119,8 @@ impl Decree for KimJongRails {
                 "py".to_string(),
                 "rs".to_string(),
             ],
+            supported_filenames: vec![],
+            skip_filenames: vec![],
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }
@@ -171,6 +173,8 @@ impl exports::dictator::decree::lints::Guest for PluginImpl {
             description: meta.description,
             dectauthors: meta.dectauthors,
             supported_extensions: meta.supported_extensions,
+            supported_filenames: meta.supported_filenames,
+            skip_filenames: meta.skip_filenames,
             capabilities: meta
                 .capabilities
                 .into_iter()

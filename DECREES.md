@@ -2,6 +2,10 @@
 
 Decrees are structural enforcement rules for Dictator. This guide shows how to build your own.
 
+**Don't know Rust?** No problem. Decrees can be written in any language that compiles to WASM: Go, Python, Ruby, C, AssemblyScript, etc. Dictator is the runtime—it doesn't care how you built the decree.
+
+**Vibe-coding works too.** Just ask Claude or another LLM to implement the `Decree` trait for your use case. The interface is minimal: `name()`, `lint()`, and `metadata()`. Show them the WIT interface below and describe what you want to lint.
+
 ## Quick Start
 
 ```bash
@@ -58,6 +62,8 @@ impl Decree for MyDecree {
             description: "My custom decree for enforcement".to_string(),
             dectauthors: Some("Your Name <you@example.com>".to_string()),
             supported_extensions: vec!["txt".to_string()],
+            supported_filenames: vec![], // Exact filenames to match
+            skip_filenames: vec![],      // Files to own but not lint
             capabilities: vec![Capability::Lint],
         }
     }
@@ -83,6 +89,8 @@ Every decree must provide metadata for ABI compatibility checking. This ensures 
 - `description`: Human-readable description
 - `author`: Who authored the decree (optional)
 - `supported_extensions`: File extensions this decree handles (e.g., `["rb", "rake"]`)
+- `supported_filenames`: Exact filenames to match (e.g., `["Gemfile", "Rakefile"]`)
+- `skip_filenames`: Files to own but NOT lint (lock files, generated files)
 - `capabilities`: Declare supported features (usually just `[Capability::Lint]` for now)
 
 **Example:**
@@ -94,10 +102,30 @@ fn metadata(&self) -> DecreeMetadata {
         description: "Ruby hygiene and structure rules".to_string(),
         dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
         supported_extensions: vec!["rb".to_string(), "rake".to_string()],
+        supported_filenames: vec!["Gemfile".to_string(), "Rakefile".to_string()],
+        skip_filenames: vec!["Gemfile.lock".to_string()],
         capabilities: vec![Capability::Lint],
     }
 }
 ```
+
+## File Matching
+
+Decrees match files using three mechanisms:
+
+1. **Extensions** (`supported_extensions`): Match by file extension (e.g., `.rb`, `.go`)
+2. **Filenames** (`supported_filenames`): Match exact filenames (e.g., `Gemfile`, `go.mod`)
+3. **Skip** (`skip_filenames`): Claim ownership but don't lint (lock files, generated)
+
+**Matching Priority:**
+1. If `skip_filenames` matches → decree owns file, returns empty diagnostics
+2. If `supported_filenames` matches → lint the file
+3. If `supported_extensions` matches → lint the file
+4. If both lists empty → universal decree (matches all files)
+
+**Why Skip Files?**
+Lock files (`Gemfile.lock`, `package-lock.json`, `Cargo.lock`) are auto-generated.
+Without `skip_filenames`, the universal `supreme` decree would complain about line length, trailing whitespace, etc. By claiming ownership with skip, the language decree prevents this.
 
 ## The `enforced` Field
 
@@ -165,14 +193,14 @@ cargo build --target wasm32-wasip1 --release
 
 Native decrees are compiled into the Dictator binary:
 
-| Decree | Crate | Files |
-|--------|-------|-------|
-| supreme | `dictator-supreme` | ALL |
-| ruby | `dictator-ruby` | `*.rb` |
-| typescript | `dictator-typescript` | `*.ts`, `*.js` |
-| golang | `dictator-golang` | `*.go` |
-| rust | `dictator-rust` | `*.rs` |
-| python | `dictator-python` | `*.py` |
-| frontmatter | `dictator-frontmatter` | `*.md`, `*.mdx` |
+| Decree | Crate | Extensions | Filenames | Skip |
+|--------|-------|------------|-----------|------|
+| supreme | `dictator-supreme` | ALL | - | - |
+| ruby | `dictator-ruby` | `rb`, `rake`, `gemspec` | `Gemfile`, `Rakefile`, `Guardfile`, etc. | `Gemfile.lock` |
+| typescript | `dictator-typescript` | `ts`, `tsx`, `js`, `jsx`, `mjs`, `cjs` | `package.json`, `tsconfig.json`, etc. | `package-lock.json`, `yarn.lock`, etc. |
+| golang | `dictator-golang` | `go` | `go.mod`, `go.work` | `go.sum` |
+| rust | `dictator-rust` | `rs` | `Cargo.toml`, `build.rs`, etc. | `Cargo.lock` |
+| python | `dictator-python` | `py`, `pyi`, `pyw` | `pyproject.toml`, `setup.py`, `Pipfile`, etc. | `Pipfile.lock`, `poetry.lock`, `uv.lock` |
+| frontmatter | `dictator-frontmatter` | `md`, `mdx`, `astro` | - | - |
 
 These serve as implementation references. Check their source for patterns.

@@ -72,7 +72,25 @@ impl Decree for Python {
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "Python structural rules".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
-            supported_extensions: vec!["py".to_string()],
+            supported_extensions: vec!["py".to_string(), "pyi".to_string(), "pyw".to_string()],
+            supported_filenames: vec![
+                "pyproject.toml".to_string(),
+                "setup.py".to_string(),
+                "setup.cfg".to_string(),
+                "Pipfile".to_string(),
+                "requirements.txt".to_string(),
+                "requirements-dev.txt".to_string(),
+                "constraints.txt".to_string(),
+                ".python-version".to_string(),
+                "pyrightconfig.json".to_string(),
+                "mypy.ini".to_string(),
+            ],
+            skip_filenames: vec![
+                "Pipfile.lock".to_string(),
+                "poetry.lock".to_string(),
+                "uv.lock".to_string(),
+                "pdm.lock".to_string(),
+            ],
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }
