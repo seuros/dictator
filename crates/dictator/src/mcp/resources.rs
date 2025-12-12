@@ -4,7 +4,7 @@ use serde_json::Value;
 use std::sync::{Arc, Mutex};
 
 use super::protocol::{JsonRpcError, JsonRpcResponse};
-use super::state::{ServerState, CONFIG_FILE};
+use super::state::{CONFIG_FILE, ServerState};
 
 /// URI for the config resource
 pub const CONFIG_URI: &str = "dictator://config";
