@@ -2,11 +2,13 @@
 //!
 //! Implements MCP 2025-06-18 spec over JSON-RPC 2.0 stdio transport.
 
+mod fixers;
 mod handlers;
 mod linters;
 mod logging;
 mod progress;
 mod protocol;
+mod regime;
 mod resources;
 mod state;
 mod tools;
@@ -20,7 +22,7 @@ use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::mpsc;
 
-use linters::run_stalint_check;
+use regime::run_stalint_check;
 use protocol::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 use resources::{handle_list_resources, handle_read_resource};
 use state::{STALINT_CHECK_TIMEOUT_SECS, ServerState, WATCHER_CHECK_INTERVAL_SECS};
@@ -103,13 +105,15 @@ async fn run_async() -> Result<()> {
 
                 // Handle notifications (no response needed)
                 if request.id.is_none() {
-                    handle_notification(&request, Arc::clone(&watcher_state), notif_tx.clone()).await;
+                    let state = Arc::clone(&watcher_state);
+                    handle_notification(&request, state, notif_tx.clone()).await;
                     line.clear();
                     continue;
                 }
 
                 // Handle requests (response required)
-                let response = handle_request(request, Arc::clone(&watcher_state), notif_tx.clone());
+                let state = Arc::clone(&watcher_state);
+                let response = handle_request(request, state, notif_tx.clone());
                 let response_json = serde_json::to_string(&response)?;
 
                 tracing::debug!("Sending: {}", response_json);
@@ -159,7 +163,10 @@ async fn watcher_check_loop(state: Arc<Mutex<ServerState>>, notif_tx: mpsc::Send
                         "level": "warning",
                         "logger": "stalint_watch",
                         "data": {
-                            "message": format!("Found {} structural violation(s)", violations.len()),
+                            "message": format!(
+                                "Found {} structural violation(s)",
+                                violations.len()
+                            ),
                             "violations": violations
                         }
                     }
