@@ -66,7 +66,7 @@ fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics
         diags.push(Diagnostic {
             rule: "golang/file-too-long".to_string(),
             message: format!(
-                "File has {code_lines} code lines (max {max_lines}, excluding comments and blank lines)"
+                "File has {code_lines} code lines (max {max_lines}, excl. comments/blanks)"
             ),
             enforced: false,
             span: Span::new(0, source.len().min(100)),
@@ -80,15 +80,26 @@ fn is_comment_only_line(trimmed: &str) -> bool {
 }
 
 /// Rule 2: Indentation style - Go requires tabs, not spaces
+/// Skips lines inside raw string literals (backtick strings)
 fn check_indentation_style(source: &str, diags: &mut Diagnostics) {
     let bytes = source.as_bytes();
     let mut line_start = 0;
+    let mut in_raw_string = false;
 
     for nl in memchr_iter(b'\n', bytes) {
         let line = &source[line_start..nl];
 
-        // Skip empty lines
-        if line.trim().is_empty() {
+        // Count backticks in this line to track raw string state
+        let backtick_count = line.bytes().filter(|&b| b == b'`').count();
+        let was_in_raw_string = in_raw_string;
+
+        // Toggle state for each backtick (odd count flips state)
+        if backtick_count % 2 == 1 {
+            in_raw_string = !in_raw_string;
+        }
+
+        // Skip empty lines and lines inside raw strings
+        if line.trim().is_empty() || was_in_raw_string {
             line_start = nl + 1;
             continue;
         }
@@ -110,7 +121,7 @@ fn check_indentation_style(source: &str, diags: &mut Diagnostics) {
     // Handle last line without newline
     if line_start < bytes.len() {
         let line = &source[line_start..];
-        if !line.trim().is_empty() && line.starts_with(' ') {
+        if !line.trim().is_empty() && !in_raw_string && line.starts_with(' ') {
             diags.push(Diagnostic {
                 rule: "golang/spaces-instead-of-tabs".to_string(),
                 message: "Go requires tabs for indentation, not spaces".to_string(),
@@ -306,6 +317,72 @@ mod tests {
                 .iter()
                 .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
             "Should allow blank lines"
+        );
+    }
+
+    #[test]
+    fn allows_spaces_inside_raw_string_literals() {
+        // Simulates Cobra command help text with intentional space indentation
+        let src = concat!(
+            "package main\n\nvar cmd = &cobra.Command{\n",
+            "\tUse:   \"test\",\n",
+            "\tExample: `\n    test foo bar\n    test baz qux`,\n}\n"
+        );
+        let diags = lint_source(src);
+        assert!(
+            !diags
+                .iter()
+                .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+            "Should allow spaces inside raw string literals (backtick strings)"
+        );
+    }
+
+    #[test]
+    fn allows_spaces_in_multiline_raw_string() {
+        let src = "package main\n\nvar help = `\n  Usage:\n    command [flags]\n`\n";
+        let diags = lint_source(src);
+        assert!(
+            !diags
+                .iter()
+                .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+            "Should allow spaces in multiline raw string"
+        );
+    }
+
+    #[test]
+    fn detects_spaces_after_raw_string_closes() {
+        let src = "package main\n\nvar x = `raw`\n  y := 1\n";
+        let diags = lint_source(src);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+            "Should detect spaces after raw string closes"
+        );
+    }
+
+    #[test]
+    fn handles_multiple_raw_strings() {
+        let src = "package main\n\nvar a = `\n  first\n`\nvar b = `\n  second\n`\n";
+        let diags = lint_source(src);
+        assert!(
+            !diags
+                .iter()
+                .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+            "Should handle multiple raw strings correctly"
+        );
+    }
+
+    #[test]
+    fn handles_raw_string_with_backticks_inline() {
+        // Two backticks on same line = opens and closes
+        let src = "package main\n\nvar x = `inline`\n  y := 1\n";
+        let diags = lint_source(src);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+            "Inline raw strings should not affect next line"
         );
     }
 }
