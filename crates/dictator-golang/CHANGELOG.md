@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.11.0](https://github.com/seuros/dictator/compare/dictator-golang-v0.10.1...dictator-golang-v0.11.0) (2025-12-13)
+
+
+### Features
+
+* the Dictator grants amnesty to spaces trapped inside raw string literals ([53fd5e1](https://github.com/seuros/dictator/commit/53fd5e132f14860e5cd7b6078de9d63e90c237c8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.10.1 to 0.11.0
+    * dictator-core bumped from 0.10.1 to 0.11.0
+    * dictator-supreme bumped from 0.10.1 to 0.11.0
+
 ## [0.10.1](https://github.com/seuros/dictator/compare/dictator-golang-v0.10.0...dictator-golang-v0.10.1) (2025-12-13)
 
 
