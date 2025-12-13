@@ -259,7 +259,8 @@ pub fn handle_list_tools(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> J
                     "type": "string",
                     "description": "Pagination cursor from previous response"
                 }
-            }
+            },
+            "required": ["paths"]
         }
     })];
 
