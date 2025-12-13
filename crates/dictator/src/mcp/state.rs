@@ -30,14 +30,14 @@ pub struct LinterConfig {
 }
 
 /// Decree configuration from .dictate.toml
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct DictateConfig {
     #[serde(default)]
     pub decree: HashMap<String, DecreeSettings>,
 }
 
 /// Settings for a specific decree (language)
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct DecreeSettings {
     #[serde(default)]
     pub linter: Option<LinterConfig>,

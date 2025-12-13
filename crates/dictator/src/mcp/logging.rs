@@ -296,12 +296,18 @@ mod tests {
         let config = Arc::new(Mutex::new(LoggerConfig::default()));
         let logger = Logger::new(config, tx);
 
-        // Change to notice level
-        logger.set_level(Severity::Notice);
-        assert_eq!(logger.current_level(), Severity::Notice);
+        // Default is Warning (4)
+        assert_eq!(logger.current_level(), Severity::Warning);
 
-        // Now Debug should be sent (7 > 5)
+        // Change to Debug level (7) - most verbose
+        logger.set_level(Severity::Debug);
+        assert_eq!(logger.current_level(), Severity::Debug);
+
+        // Now all messages should be sent (Debug allows everything)
         let sent = logger.log(Severity::Debug, "Debug msg", None);
+        assert!(sent);
+
+        let sent = logger.log(Severity::Notice, "Notice msg", None);
         assert!(sent);
     }
 }

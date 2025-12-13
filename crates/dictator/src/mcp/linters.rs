@@ -143,7 +143,11 @@ pub fn get_linter_args(command: &str) -> Vec<&'static str> {
 }
 
 /// Handle kimjongrails auto-fix (whitespace, newlines, line endings)
-pub fn handle_kimjongrails(id: Value, arguments: Option<Value>) -> JsonRpcResponse {
+pub fn handle_kimjongrails(
+    id: Value,
+    arguments: Option<Value>,
+    watcher_state: Arc<Mutex<ServerState>>,
+) -> JsonRpcResponse {
     use serde::Deserialize;
     use std::collections::HashMap;
 
@@ -172,66 +176,84 @@ pub fn handle_kimjongrails(id: Value, arguments: Option<Value>) -> JsonRpcRespon
     let mut fixed_count = 0;
     let mut rule_counts: HashMap<&str, usize> = HashMap::new();
 
-    for path in &args.paths {
-        let path = std::path::Path::new(path);
-        if !path.exists() {
-            let _ = writeln!(log_output, "! Path not found: {}", path.display());
-            continue;
+    // Collect all files first for progress tracking
+    let all_files: Vec<std::path::PathBuf> = args
+        .paths
+        .iter()
+        .map(|p| std::path::Path::new(p))
+        .filter(|p| p.exists())
+        .flat_map(|p| collect_files(p))
+        .collect();
+
+    // Start progress tracking
+    let progress_token = {
+        let state = watcher_state.lock().unwrap();
+        state.progress_tracker.start("dictator", all_files.len() as u32)
+    };
+
+    for (file_idx, file) in all_files.iter().enumerate() {
+        // Update progress
+        {
+            let state = watcher_state.lock().unwrap();
+            state.progress_tracker.progress(&progress_token, (file_idx + 1) as u32);
         }
 
-        let files = collect_files(path);
-        for file in files {
-            let text = match std::fs::read_to_string(&file) {
-                Ok(t) => t,
-                Err(e) => {
-                    let _ = writeln!(log_output, "! Cannot read {}: {}", file.display(), e);
-                    continue;
-                }
-            };
-
-            let mut fixed = text.clone();
-            let mut changes = Vec::new();
-
-            // Fix trailing whitespace
-            let lines: Vec<&str> = fixed.lines().collect();
-            let trimmed: Vec<String> = lines.iter().map(|l| l.trim_end().to_string()).collect();
-            if lines.iter().zip(trimmed.iter()).any(|(a, b)| *a != b) {
-                fixed = trimmed.join("\n");
-                changes.push("trailing whitespace");
+        let text = match std::fs::read_to_string(file) {
+            Ok(t) => t,
+            Err(e) => {
+                let _ = writeln!(log_output, "! Cannot read {}: {}", file.display(), e);
+                continue;
             }
+        };
 
-            // Ensure final newline
-            if !fixed.ends_with('\n') {
-                fixed.push('\n');
-                changes.push("final newline");
-            }
+        let mut fixed = text.clone();
+        let mut changes = Vec::new();
 
-            // Normalize line endings to LF
-            if fixed.contains("\r\n") {
-                fixed = fixed.replace("\r\n", "\n");
-                changes.push("CRLF->LF");
-            }
+        // Fix trailing whitespace
+        let lines: Vec<&str> = fixed.lines().collect();
+        let trimmed: Vec<String> = lines.iter().map(|l| l.trim_end().to_string()).collect();
+        if lines.iter().zip(trimmed.iter()).any(|(a, b)| *a != b) {
+            fixed = trimmed.join("\n");
+            changes.push("trailing whitespace");
+        }
 
-            if !changes.is_empty() && fixed != text {
-                if let Err(e) = std::fs::write(&file, &fixed) {
-                    let _ = writeln!(log_output, "! Cannot write {}: {}", file.display(), e);
-                } else {
-                    fixed_count += 1;
-                    let _ = writeln!(log_output, "* {} ({})", file.display(), changes.join(", "));
+        // Ensure final newline
+        if !fixed.ends_with('\n') {
+            fixed.push('\n');
+            changes.push("final newline");
+        }
 
-                    // Track counts by rule
-                    for change in &changes {
-                        let rule = match *change {
-                            "trailing whitespace" => "supreme/trailing-whitespace",
-                            "final newline" => "supreme/missing-final-newline",
-                            "CRLF->LF" => "supreme/crlf",
-                            _ => "supreme/unknown",
-                        };
-                        *rule_counts.entry(rule).or_default() += 1;
-                    }
+        // Normalize line endings to LF
+        if fixed.contains("\r\n") {
+            fixed = fixed.replace("\r\n", "\n");
+            changes.push("CRLF->LF");
+        }
+
+        if !changes.is_empty() && fixed != text {
+            if let Err(e) = std::fs::write(file, &fixed) {
+                let _ = writeln!(log_output, "! Cannot write {}: {}", file.display(), e);
+            } else {
+                fixed_count += 1;
+                let _ = writeln!(log_output, "* {} ({})", file.display(), changes.join(", "));
+
+                // Track counts by rule
+                for change in &changes {
+                    let rule = match *change {
+                        "trailing whitespace" => "supreme/trailing-whitespace",
+                        "final newline" => "supreme/missing-final-newline",
+                        "CRLF->LF" => "supreme/crlf",
+                        _ => "supreme/unknown",
+                    };
+                    *rule_counts.entry(rule).or_default() += 1;
                 }
             }
         }
+    }
+
+    // Finish progress tracking
+    {
+        let state = watcher_state.lock().unwrap();
+        state.progress_tracker.finish(&progress_token);
     }
 
     let output = if fixed_count == 0 {
@@ -298,9 +320,11 @@ pub fn handle_supremecourt(
         }
     };
 
-    // Load config to get linter configurations
-    let state = watcher_state.lock().unwrap();
-    let config = state.config.as_ref();
+    // Load config to get linter configurations (clone to release lock early)
+    let config = {
+        let state = watcher_state.lock().unwrap();
+        state.config.clone()
+    };
 
     if config.is_none() {
         return JsonRpcResponse {
@@ -312,6 +336,7 @@ pub fn handle_supremecourt(
             error: None,
         };
     }
+    let config = config.unwrap();
 
     // Map file extensions to decree names
     let ext_to_decree: HashMap<&str, &str> = HashMap::from([
@@ -343,9 +368,21 @@ pub fn handle_supremecourt(
     let mut output = String::new();
     let paths_str: Vec<&str> = args.paths.iter().map(std::string::String::as_str).collect();
 
+    // Start progress tracking
+    let progress_token = {
+        let state = watcher_state.lock().unwrap();
+        state.progress_tracker.start("supremecourt", decrees_with_files.len() as u32)
+    };
+
     // Run configured linters for each detected decree
-    for decree_name in &decrees_with_files {
-        if let Some(decree) = config.unwrap().decree.get(decree_name)
+    for (decree_idx, decree_name) in decrees_with_files.iter().enumerate() {
+        // Update progress
+        {
+            let state = watcher_state.lock().unwrap();
+            state.progress_tracker.progress(&progress_token, (decree_idx + 1) as u32);
+        }
+
+        if let Some(decree) = config.decree.get(decree_name)
             && let Some(linter) = &decree.linter
         {
             // Dictator controls the args based on linter type
@@ -438,7 +475,11 @@ pub fn handle_supremecourt(
         }
     }
 
-    drop(state);
+    // Finish progress tracking
+    {
+        let state = watcher_state.lock().unwrap();
+        state.progress_tracker.finish(&progress_token);
+    }
 
     if output.is_empty() {
         output = "No configured linters for detected file types".to_string();

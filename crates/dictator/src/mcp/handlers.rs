@@ -121,53 +121,70 @@ pub fn handle_stalint(
     // Single file optimization: omit "file" field when targeting one file
     let single_file = resolved_paths.len() == 1 && resolved_paths[0].is_file();
 
-    for path in &resolved_paths {
-        if !path.exists() {
-            log_to_file(&format!("STALINT: path not found: {}", path.display()));
-            continue;
+    // Collect all files first for progress tracking
+    let all_files: Vec<std::path::PathBuf> = resolved_paths
+        .iter()
+        .filter(|p| p.exists())
+        .flat_map(|p| collect_files(p))
+        .collect();
+
+    // Start progress tracking
+    let progress_token = {
+        let state = watcher_state.lock().unwrap();
+        state.progress_tracker.start("stalint", all_files.len() as u32)
+    };
+
+    for (file_idx, file) in all_files.iter().enumerate() {
+        // Update progress
+        {
+            let state = watcher_state.lock().unwrap();
+            state.progress_tracker.progress(&progress_token, (file_idx + 1) as u32);
         }
 
-        let files = collect_files(path);
-        for file in files {
-            let Ok(text) = std::fs::read_to_string(&file) else {
-                continue;
-            };
+        let Ok(text) = std::fs::read_to_string(file) else {
+            continue;
+        };
 
-            // Use relative path if within cwd (saves tokens)
-            let relative = file.strip_prefix(&cwd).unwrap_or(&file);
-            let path_str = relative.to_str().unwrap_or("<invalid>");
-            let source = Source {
-                path: Utf8Path::new(path_str),
-                text: &text,
-            };
+        // Use relative path if within cwd (saves tokens)
+        let relative = file.strip_prefix(&cwd).unwrap_or(file);
+        let path_str = relative.to_str().unwrap_or("<invalid>");
+        let source = Source {
+            path: Utf8Path::new(path_str),
+            text: &text,
+        };
 
-            if let Ok(diags) = regime.enforce(&[source]) {
-                for diag in &diags {
-                    let (line, col) = byte_to_line_col(&text, diag.span.start);
-                    let snippet = make_snippet(&text, &diag.span, 160);
-                    if single_file {
-                        all_violations.push(serde_json::json!({
-                            "line": line,
-                            "col": col,
-                            "rule": diag.rule,
-                            "message": diag.message,
-                            "enforced": diag.enforced,
-                            "snippet": snippet,
-                        }));
-                    } else {
-                        all_violations.push(serde_json::json!({
-                            "file": path_str,
-                            "line": line,
-                            "col": col,
-                            "rule": diag.rule,
-                            "message": diag.message,
-                            "enforced": diag.enforced,
-                            "snippet": snippet,
-                        }));
-                    }
+        if let Ok(diags) = regime.enforce(&[source]) {
+            for diag in &diags {
+                let (line, col) = byte_to_line_col(&text, diag.span.start);
+                let snippet = make_snippet(&text, &diag.span, 160);
+                if single_file {
+                    all_violations.push(serde_json::json!({
+                        "line": line,
+                        "col": col,
+                        "rule": diag.rule,
+                        "message": diag.message,
+                        "enforced": diag.enforced,
+                        "snippet": snippet,
+                    }));
+                } else {
+                    all_violations.push(serde_json::json!({
+                        "file": path_str,
+                        "line": line,
+                        "col": col,
+                        "rule": diag.rule,
+                        "message": diag.message,
+                        "enforced": diag.enforced,
+                        "snippet": snippet,
+                    }));
                 }
             }
         }
+    }
+
+    // Finish progress tracking
+    {
+        let state = watcher_state.lock().unwrap();
+        state.progress_tracker.finish(&progress_token);
     }
 
     let total = all_violations.len();
@@ -316,10 +333,10 @@ pub fn handle_dictator(
     let mode = args.mode.unwrap_or_else(|| "kimjongrails".to_string());
 
     match mode.as_str() {
-        "kimjongrails" => handle_kimjongrails(id, Some(paths_json)),
+        "kimjongrails" => handle_kimjongrails(id, Some(paths_json), Arc::clone(&watcher_state)),
         "supremecourt" => {
             // Run kimjongrails first, then supremecourt
-            let kim_result = handle_kimjongrails(serde_json::json!(0), Some(paths_json.clone()));
+            let kim_result = handle_kimjongrails(serde_json::json!(0), Some(paths_json.clone()), Arc::clone(&watcher_state));
             let supreme_result = handle_supremecourt(
                 serde_json::json!(0),
                 Some(paths_json),
