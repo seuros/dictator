@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.10.0](https://github.com/seuros/dictator/compare/dictator-v0.9.0...dictator-v0.10.0) (2025-12-13)
+
+
+### Features
+
+* decree mandatory occupation protocols for unclaimed territories ([04ddd9c](https://github.com/seuros/dictator/commit/04ddd9c57f9e78e5624f983fd5e2e3eeebb07e06))
+
+
+### Bug Fixes
+
+* suppress dead_code warnings for logging/progress infrastructure ([350b5f4](https://github.com/seuros/dictator/commit/350b5f4ec2b3b12c89fdc690d521deeb45f3daf8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.9.0 to 0.10.0
+    * dictator-frontmatter bumped from 0.9.0 to 0.10.0
+    * dictator-golang bumped from 0.9.0 to 0.10.0
+    * dictator-decree-abi bumped from 0.9.0 to 0.10.0
+    * dictator-python bumped from 0.9.0 to 0.10.0
+    * dictator-ruby bumped from 0.9.0 to 0.10.0
+    * dictator-rust bumped from 0.9.0 to 0.10.0
+    * dictator-supreme bumped from 0.9.0 to 0.10.0
+    * dictator-typescript bumped from 0.9.0 to 0.10.0
+
 ## [0.9.0](https://github.com/seuros/dictator/compare/dictator-v0.8.0...dictator-v0.9.0) (2025-12-13)
 
 
