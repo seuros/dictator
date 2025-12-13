@@ -178,8 +178,7 @@ fn run_json_linter(command: &str, args: &[&str], paths: &[&str], output: &mut St
     match Command::new(command).args(args).args(paths).output() {
         Ok(o) => {
             let stdout = String::from_utf8_lossy(&o.stdout);
-            let diagnostics =
-                dictator_core::linter_output::parse_linter_output(command, &stdout);
+            let diagnostics = dictator_core::linter_output::parse_linter_output(command, &stdout);
 
             if diagnostics.is_empty() {
                 output.push_str("* No issues found\n");

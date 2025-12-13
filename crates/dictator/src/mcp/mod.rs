@@ -22,8 +22,8 @@ use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::mpsc;
 
-use regime::run_stalint_check;
 use protocol::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
+use regime::run_stalint_check;
 use resources::{handle_list_resources, handle_read_resource};
 use state::{STALINT_CHECK_TIMEOUT_SECS, ServerState, WATCHER_CHECK_INTERVAL_SECS};
 use tools::{handle_call_tool, handle_initialize, handle_list_tools};
