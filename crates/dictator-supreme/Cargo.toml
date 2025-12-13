@@ -3,6 +3,7 @@ name = "dictator-supreme"
 version = "0.11.0"
 description = "Supreme decree - universal structural rules for Dictator"
 edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 documentation = "https://docs.rs/dictator-supreme"

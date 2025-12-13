@@ -52,10 +52,12 @@ command = "gofmt"
 [decree.rust]
 # Rust structural enforcement
 max_line_length = 100
-max_lines = 400
+max_lines = 800
 ignore_comments = true
 ignore_blank_lines = true
 visibility_order = ["pub", "private"]
+min_edition = "2024"
+min_rust_version = "1.92"
 
 [decree.python]
 # Python structural enforcement

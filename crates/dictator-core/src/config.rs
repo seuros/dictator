@@ -69,6 +69,12 @@ pub struct DecreeSettings {
     #[garde(skip)]
     pub visibility_order: Option<Vec<String>>,
 
+    // Rust-specific settings
+    #[garde(custom(validate_rust_edition))]
+    pub min_edition: Option<String>,
+    #[garde(custom(validate_rust_version))]
+    pub min_rust_version: Option<String>,
+
     // Frontmatter decree settings
     #[garde(skip)]
     pub order: Option<Vec<String>>,
@@ -234,6 +240,50 @@ fn validate_max_lines(value: &Option<usize>, _ctx: &()) -> garde::Result {
     } else {
         Ok(())
     }
+}
+
+#[allow(
+    clippy::ref_option,
+    clippy::trivially_copy_pass_by_ref,
+    clippy::option_if_let_else
+)]
+fn validate_rust_edition(value: &Option<String>, _ctx: &()) -> garde::Result {
+    if let Some(v) = value {
+        match v.as_str() {
+            "2015" | "2018" | "2021" | "2024" => Ok(()),
+            _ => Err(garde::Error::new(format!(
+                "'{v}' is not a valid Rust edition - use '2015', '2018', '2021', or '2024'"
+            ))),
+        }
+    } else {
+        Ok(())
+    }
+}
+
+#[allow(
+    clippy::ref_option,
+    clippy::trivially_copy_pass_by_ref,
+    clippy::option_if_let_else
+)]
+fn validate_rust_version(value: &Option<String>, _ctx: &()) -> garde::Result {
+    let Some(v) = value else {
+        return Ok(());
+    };
+    // Accept semver-like versions: 1.70, 1.70.0, 1.83.1
+    let parts: Vec<&str> = v.split('.').collect();
+    if parts.len() < 2 || parts.len() > 3 {
+        return Err(garde::Error::new(format!(
+            "'{v}' is not a valid Rust version - use format like '1.83' or '1.83.0'"
+        )));
+    }
+    for part in parts {
+        if part.parse::<u32>().is_err() {
+            return Err(garde::Error::new(format!(
+                "'{v}' is not a valid Rust version - use format like '1.83' or '1.83.0'"
+            )));
+        }
+    }
+    Ok(())
 }
 
 // ============================================================================

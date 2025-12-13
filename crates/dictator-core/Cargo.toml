@@ -3,6 +3,7 @@ name = "dictator-core"
 version = "0.11.0"
 description = "Core plugin loading and regime management for Dictator"
 edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 repository = "https://github.com/seuros/dictator"

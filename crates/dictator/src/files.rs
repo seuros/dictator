@@ -47,6 +47,46 @@ pub fn collect_all_files(paths: &[Utf8PathBuf]) -> Result<Vec<Utf8PathBuf>> {
 pub fn detect_file_types(files: &[Utf8PathBuf]) -> FileTypes {
     let mut types = FileTypes::default();
     for file in files {
+        // Check by filename first (for files like Cargo.toml, Gemfile, etc.)
+        if let Some(filename) = file.file_name() {
+            match filename {
+                // Rust-specific filenames
+                "Cargo.toml"
+                | "build.rs"
+                | "rust-toolchain"
+                | "rust-toolchain.toml"
+                | ".rustfmt.toml"
+                | "rustfmt.toml"
+                | "clippy.toml"
+                | ".clippy.toml" => {
+                    types.has_rust = true;
+                    continue;
+                }
+                // Ruby-specific filenames
+                "Gemfile" | "Rakefile" | ".rubocop.yml" | ".ruby-version" => {
+                    types.has_ruby = true;
+                    continue;
+                }
+                // Python-specific filenames
+                "pyproject.toml" | "setup.py" | "requirements.txt" | ".python-version" => {
+                    types.has_python = true;
+                    continue;
+                }
+                // Go-specific filenames
+                "go.mod" | "go.sum" => {
+                    types.has_golang = true;
+                    continue;
+                }
+                // TypeScript-specific filenames
+                "tsconfig.json" | "package.json" | ".eslintrc.json" => {
+                    types.has_typescript = true;
+                    continue;
+                }
+                _ => {}
+            }
+        }
+
+        // Then check by extension
         match file.extension() {
             Some("rb" | "rake") => types.has_ruby = true,
             Some("ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs") => types.has_typescript = true,

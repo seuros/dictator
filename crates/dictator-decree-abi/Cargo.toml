@@ -3,6 +3,7 @@ name = "dictator-decree-abi"
 version = "0.11.0"
 description = "ABI and trait definitions for Dictator structural linter decree plugins"
 edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 repository = "https://github.com/seuros/dictator"

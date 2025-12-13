@@ -3,6 +3,7 @@ name = "dictator-ruby"
 version = "0.11.0"
 description = "Ruby language decree for Dictator structural linter"
 edition.workspace = true
+rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 documentation = "https://docs.rs/dictator-ruby"
