@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.9.0](https://github.com/seuros/dictator/compare/dictator-core-v0.8.0...dictator-core-v0.9.0) (2025-12-13)
+
+
+### Features
+
+* decree strict config validation and bootstrap occupation ([d59221c](https://github.com/seuros/dictator/commit/d59221ce4a42f8b2bcd52defd2b26f1a183fb064))
+
+
+### Bug Fixes
+
+* allow decree-level per-rule ignores for structural enforcement ([b8ebab7](https://github.com/seuros/dictator/commit/b8ebab7a5179277877fce3672d61e5c397974dc8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.8.0 to 0.9.0
+
 ## [0.8.0](https://github.com/seuros/dictator/compare/dictator-core-v0.7.0...dictator-core-v0.8.0) (2025-12-12)
 
 

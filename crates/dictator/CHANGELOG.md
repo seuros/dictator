@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.9.0](https://github.com/seuros/dictator/compare/dictator-v0.8.0...dictator-v0.9.0) (2025-12-13)
+
+
+### Features
+
+* broadcast regime intelligence via MCP resource channels ([1c1455a](https://github.com/seuros/dictator/commit/1c1455afcdca930808b07cdc1e3257d899a70c17))
+* decree strict config validation and bootstrap occupation ([d59221c](https://github.com/seuros/dictator/commit/d59221ce4a42f8b2bcd52defd2b26f1a183fb064))
+* instrument operations with progress surveillance ([6ac24be](https://github.com/seuros/dictator/commit/6ac24be4ca3cfb29fbea5bb869a704975d2da936))
+* the Dictator establishes accountability through MCP logging ([2c39592](https://github.com/seuros/dictator/commit/2c3959294eceab94e93ca7adcc9e3e5cfeebd493))
+
+
+### Bug Fixes
+
+* allow decree-level per-rule ignores for structural enforcement ([b8ebab7](https://github.com/seuros/dictator/commit/b8ebab7a5179277877fce3672d61e5c397974dc8))
+* defer .dictator/ creation until config exists ([68bf95d](https://github.com/seuros/dictator/commit/68bf95dfe230a1ce1da05f4c0976d9cc5c44dd96))
+* stalint schema declares required fields for border compliance ([f6aa48f](https://github.com/seuros/dictator/commit/f6aa48f1b4b11dd407e06a5e1f0a6c986f3fd381))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.8.0 to 0.9.0
+    * dictator-frontmatter bumped from 0.8.0 to 0.9.0
+    * dictator-golang bumped from 0.8.0 to 0.9.0
+    * dictator-decree-abi bumped from 0.8.0 to 0.9.0
+    * dictator-python bumped from 0.8.0 to 0.9.0
+    * dictator-ruby bumped from 0.8.0 to 0.9.0
+    * dictator-rust bumped from 0.8.0 to 0.9.0
+    * dictator-supreme bumped from 0.8.0 to 0.9.0
+    * dictator-typescript bumped from 0.8.0 to 0.9.0
+
 ## [0.8.0](https://github.com/seuros/dictator/compare/dictator-v0.7.0...dictator-v0.8.0) (2025-12-12)
 
 
