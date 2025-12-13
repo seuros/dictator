@@ -83,13 +83,13 @@ impl Default for ServerState {
     fn default() -> Self {
         // Create a dummy notification channel for default initialization
         // This is only used in tests; actual server uses ::new()
-        let (_tx, _rx) = tokio::sync::mpsc::channel(100);
-        Self::new(_tx)
+        let (tx, _rx) = tokio::sync::mpsc::channel(100);
+        Self::new(tx)
     }
 }
 
 impl ServerState {
-    /// Create new ServerState with notification channel
+    /// Create new `ServerState` with notification channel
     pub fn new(notif_tx: tokio::sync::mpsc::Sender<String>) -> Self {
         Self {
             paths: HashSet::new(),

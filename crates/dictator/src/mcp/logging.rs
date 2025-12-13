@@ -39,30 +39,30 @@ impl Severity {
     #[allow(dead_code)]
     pub fn from_string(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
-            "emergency" => Some(Severity::Emergency),
-            "alert" => Some(Severity::Alert),
-            "critical" => Some(Severity::Critical),
-            "error" => Some(Severity::Error),
-            "warning" => Some(Severity::Warning),
-            "notice" => Some(Severity::Notice),
-            "info" => Some(Severity::Info),
-            "debug" => Some(Severity::Debug),
+            "emergency" => Some(Self::Emergency),
+            "alert" => Some(Self::Alert),
+            "critical" => Some(Self::Critical),
+            "error" => Some(Self::Error),
+            "warning" => Some(Self::Warning),
+            "notice" => Some(Self::Notice),
+            "info" => Some(Self::Info),
+            "debug" => Some(Self::Debug),
             _ => None,
         }
     }
 
     /// Get string representation of severity level
     #[allow(dead_code)]
-    pub fn as_str(&self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
-            Severity::Emergency => "emergency",
-            Severity::Alert => "alert",
-            Severity::Critical => "critical",
-            Severity::Error => "error",
-            Severity::Warning => "warning",
-            Severity::Notice => "notice",
-            Severity::Info => "info",
-            Severity::Debug => "debug",
+            Self::Emergency => "emergency",
+            Self::Alert => "alert",
+            Self::Critical => "critical",
+            Self::Error => "error",
+            Self::Warning => "warning",
+            Self::Notice => "notice",
+            Self::Info => "info",
+            Self::Debug => "debug",
         }
     }
 }
@@ -95,13 +95,15 @@ impl RateLimiter {
     #[allow(dead_code)]
     pub fn try_log(&self) -> bool {
         // Refill tokens if window has passed
-        let mut last = self.last_refill.lock().unwrap();
-        let now = Instant::now();
-        let elapsed = now.duration_since(*last);
+        {
+            let mut last = self.last_refill.lock().unwrap();
+            let now = Instant::now();
+            let elapsed = now.duration_since(*last);
 
-        if elapsed >= Duration::from_secs(self.window_secs) {
-            self.tokens.store(self.capacity, Ordering::SeqCst);
-            *last = now;
+            if elapsed >= Duration::from_secs(self.window_secs) {
+                self.tokens.store(self.capacity, Ordering::SeqCst);
+                *last = now;
+            }
         }
 
         // Try to consume a token
@@ -148,14 +150,17 @@ impl Default for LoggerConfig {
 }
 
 /// Logger for sending structured log messages via MCP notifications
+/// (Will be used when integrating logging calls into operation handlers)
+#[allow(dead_code)]
 pub struct Logger {
     config: Arc<Mutex<LoggerConfig>>,
     notif_tx: tokio::sync::mpsc::Sender<String>,
 }
 
+#[allow(dead_code)]
 impl Logger {
     /// Create new logger
-    pub fn new(
+    pub const fn new(
         config: Arc<Mutex<LoggerConfig>>,
         notif_tx: tokio::sync::mpsc::Sender<String>,
     ) -> Self {
@@ -165,24 +170,23 @@ impl Logger {
     /// Log a message with severity and optional structured details
     /// Returns true if message was sent, false if rate-limited or severity filtered
     pub fn log(&self, severity: Severity, message: &str, details: Option<Value>) -> bool {
-        let config = self.config.lock().unwrap();
+        // Check thresholds with lock, then release
+        {
+            let config = self.config.lock().unwrap();
 
-        // Check if severity meets minimum threshold
-        if severity > config.min_level {
-            return false;
-        }
+            // Check if severity meets minimum threshold
+            if severity > config.min_level {
+                return false;
+            }
 
-        // Check rate limit
-        if !config.rate_limiter.try_log() {
-            return false;
+            // Check rate limit
+            if !config.rate_limiter.try_log() {
+                return false;
+            }
         }
 
         // Build log notification
-        let mut data = if let Some(d) = details {
-            d.clone()
-        } else {
-            serde_json::json!({})
-        };
+        let mut data = details.unwrap_or_else(|| serde_json::json!({}));
 
         // Add message if it's a JSON object
         if let Some(obj) = data.as_object_mut() {

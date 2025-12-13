@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// Tracks state of an active operation
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct OperationState {
     /// Operation type: "stalint", "dictator", "supremecourt"
@@ -32,6 +33,7 @@ pub struct ProgressTracker {
     /// Active operations: token -> state
     operations: Arc<Mutex<HashMap<String, OperationState>>>,
     /// Last cleanup time
+    #[allow(dead_code)]
     last_cleanup: Arc<Mutex<Instant>>,
     /// Notification channel sender
     notif_tx: tokio::sync::mpsc::Sender<String>,
@@ -55,7 +57,7 @@ impl ProgressTracker {
             .duration_since(UNIX_EPOCH)
             .unwrap_or_default()
             .as_secs();
-        format!("{}-{}-{}", op_type, timestamp, counter)
+        format!("{op_type}-{timestamp}-{counter}")
     }
 
     /// Start a new operation and return its unique progress token
@@ -103,8 +105,14 @@ impl ProgressTracker {
 
     /// Mark operation complete (final notification at 100%)
     pub fn finish(&self, token: &str) {
-        if let Some(op) = self.operations.lock().unwrap().remove(token) {
-            self.send_notification(token, op.total, op.total);
+        let total = self
+            .operations
+            .lock()
+            .unwrap()
+            .remove(token)
+            .map(|op| op.total);
+        if let Some(t) = total {
+            self.send_notification(token, t, t);
         }
     }
 
@@ -125,16 +133,18 @@ impl ProgressTracker {
 
     /// Clean up stale operations (older than 10 minutes)
     /// Call periodically from watcher loop
+    #[allow(dead_code)]
     pub fn cleanup_stale(&self) {
-        let mut last_cleanup = self.last_cleanup.lock().unwrap();
         let now = Instant::now();
 
         // Only cleanup every 60 seconds
-        if now.duration_since(*last_cleanup) < Duration::from_secs(60) {
-            return;
+        {
+            let mut last_cleanup = self.last_cleanup.lock().unwrap();
+            if now.duration_since(*last_cleanup) < Duration::from_secs(60) {
+                return;
+            }
+            *last_cleanup = now;
         }
-
-        *last_cleanup = now;
 
         let timeout = Duration::from_secs(600); // 10 minutes
         self.operations

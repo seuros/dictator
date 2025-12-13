@@ -281,7 +281,9 @@ fn handle_request(
         "tools/call" => handle_call_tool(id, req.params, watcher_state, notif_tx),
         "resources/list" => handle_list_resources(id, Arc::clone(&watcher_state)),
         "resources/read" => handle_read_resource(id, req.params, watcher_state),
-        "logging/setLevel" => tools::handle_logging_set_level(id, req.params, Arc::clone(&watcher_state)),
+        "logging/setLevel" => {
+            tools::handle_logging_set_level(id, req.params, Arc::clone(&watcher_state))
+        }
         _ => JsonRpcResponse {
             jsonrpc: "2.0".to_string(),
             id,

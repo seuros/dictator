@@ -220,7 +220,10 @@ impl Regime {
         let Some(ext) = path.extension() else {
             return false;
         };
-        ignore.extensions.iter().any(|e| e.eq_ignore_ascii_case(ext))
+        ignore
+            .extensions
+            .iter()
+            .any(|e| e.eq_ignore_ascii_case(ext))
     }
 }
 
@@ -619,8 +622,11 @@ mod tests {
 
     #[test]
     fn enforce_does_not_ignore_unconfigured_rules() {
-        let supreme: BoxDecree =
-            Box::new(MockDecree::simple("supreme", vec![], "supreme/trailing-whitespace"));
+        let supreme: BoxDecree = Box::new(MockDecree::simple(
+            "supreme",
+            vec![],
+            "supreme/trailing-whitespace",
+        ));
 
         let mut settings = DecreeSettings::default();
         settings.ignore.insert(
@@ -641,7 +647,9 @@ mod tests {
         let sources = [Source { path, text: "x" }];
         let diags = regime.enforce(&sources).unwrap();
         assert!(
-            diags.iter().any(|d| d.rule == "supreme/trailing-whitespace"),
+            diags
+                .iter()
+                .any(|d| d.rule == "supreme/trailing-whitespace"),
             "unconfigured rules should still be reported"
         );
     }

@@ -131,14 +131,16 @@ pub fn handle_stalint(
     // Start progress tracking
     let progress_token = {
         let state = watcher_state.lock().unwrap();
-        state.progress_tracker.start("stalint", all_files.len() as u32)
+        let total = u32::try_from(all_files.len()).unwrap_or(u32::MAX);
+        state.progress_tracker.start("stalint", total)
     };
 
     for (file_idx, file) in all_files.iter().enumerate() {
         // Update progress
         {
             let state = watcher_state.lock().unwrap();
-            state.progress_tracker.progress(&progress_token, (file_idx + 1) as u32);
+            let current = u32::try_from(file_idx + 1).unwrap_or(u32::MAX);
+            state.progress_tracker.progress(&progress_token, current);
         }
 
         let Ok(text) = std::fs::read_to_string(file) else {
@@ -336,7 +338,11 @@ pub fn handle_dictator(
         "kimjongrails" => handle_kimjongrails(id, Some(paths_json), Arc::clone(&watcher_state)),
         "supremecourt" => {
             // Run kimjongrails first, then supremecourt
-            let kim_result = handle_kimjongrails(serde_json::json!(0), Some(paths_json.clone()), Arc::clone(&watcher_state));
+            let kim_result = handle_kimjongrails(
+                serde_json::json!(0),
+                Some(paths_json.clone()),
+                Arc::clone(&watcher_state),
+            );
             let supreme_result = handle_supremecourt(
                 serde_json::json!(0),
                 Some(paths_json),

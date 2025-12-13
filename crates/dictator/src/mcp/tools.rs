@@ -442,20 +442,17 @@ pub fn handle_logging_set_level(
     };
 
     // Parse severity level
-    let severity = match Severity::from_string(&set_level_params.level) {
-        Some(s) => s,
-        None => {
-            return JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
-                result: None,
-                error: Some(JsonRpcError {
-                    code: -32602,
-                    message: format!("Unknown level: {}", set_level_params.level),
-                    data: None,
-                }),
-            };
-        }
+    let Some(severity) = Severity::from_string(&set_level_params.level) else {
+        return JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id,
+            result: None,
+            error: Some(JsonRpcError {
+                code: -32602,
+                message: format!("Unknown level: {}", set_level_params.level),
+                data: None,
+            }),
+        };
     };
 
     // Update logger config in state

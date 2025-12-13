@@ -183,22 +183,24 @@ pub fn handle_kimjongrails(
     let all_files: Vec<std::path::PathBuf> = args
         .paths
         .iter()
-        .map(|p| std::path::Path::new(p))
+        .map(std::path::Path::new)
         .filter(|p| p.exists())
-        .flat_map(|p| collect_files(p))
+        .flat_map(collect_files)
         .collect();
 
     // Start progress tracking
     let progress_token = {
         let state = watcher_state.lock().unwrap();
-        state.progress_tracker.start("dictator", all_files.len() as u32)
+        let total = u32::try_from(all_files.len()).unwrap_or(u32::MAX);
+        state.progress_tracker.start("dictator", total)
     };
 
     for (file_idx, file) in all_files.iter().enumerate() {
         // Update progress
         {
             let state = watcher_state.lock().unwrap();
-            state.progress_tracker.progress(&progress_token, (file_idx + 1) as u32);
+            let current = u32::try_from(file_idx + 1).unwrap_or(u32::MAX);
+            state.progress_tracker.progress(&progress_token, current);
         }
 
         let text = match std::fs::read_to_string(file) {
@@ -374,7 +376,8 @@ pub fn handle_supremecourt(
     // Start progress tracking
     let progress_token = {
         let state = watcher_state.lock().unwrap();
-        state.progress_tracker.start("supremecourt", decrees_with_files.len() as u32)
+        let total = u32::try_from(decrees_with_files.len()).unwrap_or(u32::MAX);
+        state.progress_tracker.start("supremecourt", total)
     };
 
     // Run configured linters for each detected decree
@@ -382,7 +385,8 @@ pub fn handle_supremecourt(
         // Update progress
         {
             let state = watcher_state.lock().unwrap();
-            state.progress_tracker.progress(&progress_token, (decree_idx + 1) as u32);
+            let current = u32::try_from(decree_idx + 1).unwrap_or(u32::MAX);
+            state.progress_tracker.progress(&progress_token, current);
         }
 
         if let Some(decree) = config.decree.get(decree_name)
