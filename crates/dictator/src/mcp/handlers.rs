@@ -521,7 +521,7 @@ pub fn handle_stalint_watch(
     let _ = notif_tx.try_send(notification.to_string());
 
     let output = format!(
-        "Watching {} path(s) for changes. Will notify every 60s when violations detected.\nPaths: {}",
+        "Watching {} path(s). Notifying every 60s on violations.\nPaths: {}",
         watched.len(),
         watched.join(", ")
     );
@@ -609,11 +609,31 @@ pub fn handle_occupy(
     });
     let _ = notif_tx.try_send(resources_notification.to_string());
 
+    // Get client name to determine issue URL
+    let client_name = {
+        let state = watcher_state.lock().unwrap();
+        state.client.name.clone()
+    };
+
+    let issue_url = match client_name.as_str() {
+        "claude-code" => "https://github.com/anthropics/claude-code/issues",
+        "codex-mcp-client" => "https://github.com/openai/codex/issues",
+        _ => "https://github.com/seuros/dictator/issues",
+    };
+
+    let message = format!(
+        "Created .dictate.toml with default configuration.\n\n\
+         Next steps:\n\
+         1. Read .dictate.toml and customize for your project\n\
+         2. Tools list should refresh automatically\n\
+         3. If tools don't refresh, report at {issue_url}"
+    );
+
     JsonRpcResponse {
         jsonrpc: "2.0".to_string(),
         id,
         result: Some(serde_json::json!({
-            "content": [{ "type": "text", "text": "Created .dictate.toml with default configuration." }]
+            "content": [{ "type": "text", "text": message }]
         })),
         error: None,
     }

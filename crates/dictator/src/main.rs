@@ -53,5 +53,6 @@ fn main() -> Result<()> {
         Command::Watch(watch) => run_watch(watch, config),
         Command::Census(census) => run_census(census, config),
         Command::Occupy(occupy) => run_occupy(occupy),
+        Command::Mcp => mcp::run(),
     }
 }

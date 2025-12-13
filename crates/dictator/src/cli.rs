@@ -15,7 +15,12 @@ pub enum OutputFormat {
 }
 
 #[derive(Debug, Parser)]
-#[command(name = "dictator", version, about = "Multi-regime linter")]
+#[command(
+    name = "dictator",
+    version,
+    about = "Multi-regime linter",
+    disable_version_flag = true
+)]
 pub struct Args {
     /// Optional config file (TOML only). Default: .dictate.toml if present.
     #[arg(short, long, global = true)]
@@ -23,6 +28,10 @@ pub struct Args {
 
     #[command(subcommand)]
     pub command: Command,
+
+    /// Print version
+    #[arg(short = 'v', long = "version", action = clap::ArgAction::Version)]
+    version: (),
 }
 
 #[derive(Debug, Parser)]
@@ -40,6 +49,8 @@ pub enum Command {
     /// Initialize .dictate.toml with default configuration
     #[command(visible_alias = "init")]
     Occupy(OccupyArgs),
+    /// Run as MCP (Model Context Protocol) server
+    Mcp,
 }
 
 #[derive(Debug, Parser)]

@@ -103,11 +103,13 @@ pub fn handle_initialize(
         };
     }
 
-    // Store client info
-    {
+    // Store client info and check config
+    let config_exists = {
         let mut state = server_state.lock().unwrap();
         state.client = client;
-    }
+        state.ensure_config_loaded();
+        state.config.is_some()
+    };
 
     // Write client info to file for debugging
     let client_log = format!(
@@ -122,6 +124,15 @@ pub fn handle_initialize(
         init_params.client_info.name,
         init_params.client_info.version
     );
+
+    // Build instructions based on config presence
+    let instructions = if config_exists {
+        "Dictator enforces structural code hygiene \
+         (whitespace, indentation, line endings, file size)."
+    } else {
+        "Dictator enforces structural code hygiene. No .dictate.toml found - \
+         run 'occupy' tool to initialize, then customize for your project."
+    };
 
     // Respond with server capabilities
     let result = serde_json::json!({
@@ -141,7 +152,7 @@ pub fn handle_initialize(
             "title": "Dictator Structural Linter",
             "version": env!("CARGO_PKG_VERSION")
         },
-        "instructions": "Dictator is a pre-linter enforcing structural code hygiene (whitespace, indentation, line endings, file size)."
+        "instructions": instructions
     });
 
     JsonRpcResponse {
