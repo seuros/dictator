@@ -1,6 +1,6 @@
 [package]
 name = "dictator"
-version = "0.10.1"
+version = "0.11.0"
 description = "Dictator - structural linter framework with native and WASM decree support"
 readme = "../../README.md"
 edition.workspace = true
@@ -17,15 +17,15 @@ workspace = true
 anyhow = { workspace = true }
 clap = { workspace = true }
 camino = { workspace = true }
-dictator-core = { version = "0.10.1", path = "../dictator-core" }
-dictator-frontmatter = { version = "0.10.1", path = "../dictator-frontmatter" }
-dictator-golang = { version = "0.10.1", path = "../dictator-golang" }
-dictator-decree-abi = { version = "0.10.1", path = "../dictator-decree-abi" }
-dictator-python = { version = "0.10.1", path = "../dictator-python" }
-dictator-ruby = { version = "0.10.1", path = "../dictator-ruby" }
-dictator-rust = { version = "0.10.1", path = "../dictator-rust" }
-dictator-supreme = { version = "0.10.1", path = "../dictator-supreme" }
-dictator-typescript = { version = "0.10.1", path = "../dictator-typescript" }
+dictator-core = { version = "0.11.0", path = "../dictator-core" }
+dictator-frontmatter = { version = "0.11.0", path = "../dictator-frontmatter" }
+dictator-golang = { version = "0.11.0", path = "../dictator-golang" }
+dictator-decree-abi = { version = "0.11.0", path = "../dictator-decree-abi" }
+dictator-python = { version = "0.11.0", path = "../dictator-python" }
+dictator-ruby = { version = "0.11.0", path = "../dictator-ruby" }
+dictator-rust = { version = "0.11.0", path = "../dictator-rust" }
+dictator-supreme = { version = "0.11.0", path = "../dictator-supreme" }
+dictator-typescript = { version = "0.11.0", path = "../dictator-typescript" }
 walkdir = { workspace = true }
 ignore = { workspace = true }
 tracing = { workspace = true }

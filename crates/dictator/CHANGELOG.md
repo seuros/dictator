@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.11.0](https://github.com/seuros/dictator/compare/dictator-v0.10.1...dictator-v0.11.0) (2025-12-13)
+
+
+### Miscellaneous Chores
+
+* **dictator:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.10.1 to 0.11.0
+    * dictator-frontmatter bumped from 0.10.1 to 0.11.0
+    * dictator-golang bumped from 0.10.1 to 0.11.0
+    * dictator-decree-abi bumped from 0.10.1 to 0.11.0
+    * dictator-python bumped from 0.10.1 to 0.11.0
+    * dictator-ruby bumped from 0.10.1 to 0.11.0
+    * dictator-rust bumped from 0.10.1 to 0.11.0
+    * dictator-supreme bumped from 0.10.1 to 0.11.0
+    * dictator-typescript bumped from 0.10.1 to 0.11.0
+
 ## [0.10.1](https://github.com/seuros/dictator/compare/dictator-v0.10.0...dictator-v0.10.1) (2025-12-13)
 
 

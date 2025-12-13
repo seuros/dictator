@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.11.0](https://github.com/seuros/dictator/compare/dictator-ruby-v0.10.1...dictator-ruby-v0.11.0) (2025-12-13)
+
+
+### Miscellaneous Chores
+
+* **dictator-ruby:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.10.1 to 0.11.0
+    * dictator-core bumped from 0.10.1 to 0.11.0
+    * dictator-supreme bumped from 0.10.1 to 0.11.0
+
 ## [0.10.1](https://github.com/seuros/dictator/compare/dictator-ruby-v0.10.0...dictator-ruby-v0.10.1) (2025-12-13)
 
 
