@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.10.1](https://github.com/seuros/dictator/compare/dictator-v0.10.0...dictator-v0.10.1) (2025-12-13)
+
+
+### Bug Fixes
+
+* appease clippy's non-exhaustive paranoia ([e8e8cb8](https://github.com/seuros/dictator/commit/e8e8cb863f78b17af7f4d0e12f886f331bf66122))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.10.0 to 0.10.1
+    * dictator-frontmatter bumped from 0.10.0 to 0.10.1
+    * dictator-golang bumped from 0.10.0 to 0.10.1
+    * dictator-decree-abi bumped from 0.10.0 to 0.10.1
+    * dictator-python bumped from 0.10.0 to 0.10.1
+    * dictator-ruby bumped from 0.10.0 to 0.10.1
+    * dictator-rust bumped from 0.10.0 to 0.10.1
+    * dictator-supreme bumped from 0.10.0 to 0.10.1
+    * dictator-typescript bumped from 0.10.0 to 0.10.1
+
 ## [0.10.0](https://github.com/seuros/dictator/compare/dictator-v0.9.0...dictator-v0.10.0) (2025-12-13)
 
 

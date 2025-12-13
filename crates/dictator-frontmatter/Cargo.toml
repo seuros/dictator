@@ -1,6 +1,6 @@
 [package]
 name = "dictator-frontmatter"
-version = "0.10.0"
+version = "0.10.1"
 description = "Markdown frontmatter decree for Dictator structural linter"
 edition.workspace = true
 authors.workspace = true
@@ -11,8 +11,8 @@ documentation = "https://docs.rs/dictator-frontmatter"
 workspace = true
 
 [dependencies]
-dictator-decree-abi = { version = "0.10.0", path = "../dictator-decree-abi" }
-dictator-core = { version = "0.10.0", path = "../dictator-core" }
+dictator-decree-abi = { version = "0.10.1", path = "../dictator-decree-abi" }
+dictator-core = { version = "0.10.1", path = "../dictator-core" }
 serde.workspace = true
 serde_yaml.workspace = true
 
