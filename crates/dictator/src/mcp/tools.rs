@@ -460,7 +460,7 @@ pub fn handle_logging_set_level(
 
     // Update logger config in state
     {
-        let mut state = watcher_state.lock().unwrap();
+        let state = watcher_state.lock().unwrap();
         state.logger_config.lock().unwrap().min_level = severity;
     }
 

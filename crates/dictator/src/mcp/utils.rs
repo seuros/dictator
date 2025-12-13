@@ -6,18 +6,23 @@ use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 
 /// Get per-worktree cache directory: `.dictator/cache` under the current working dir.
-/// Falls back to XDG cache if cwd cannot be determined.
+/// Only uses local `.dictator/` if `.dictate.toml` config exists (repo is occupied).
+/// Falls back to XDG cache otherwise to avoid polluting unoccupied repos.
 pub fn get_cache_dir() -> std::path::PathBuf {
     if let Ok(cwd) = std::env::current_dir() {
-        let cache = cwd.join(".dictator").join("cache");
-        let _ = std::fs::create_dir_all(&cache);
-        // Restrict to user only; ignore errors quietly.
-        #[cfg(unix)]
-        let _ = std::fs::set_permissions(&cache, std::fs::Permissions::from_mode(0o700));
-        return cache;
+        let config_file = cwd.join(".dictate.toml");
+        // Only use local cache if config exists (repo is occupied)
+        if config_file.exists() {
+            let cache = cwd.join(".dictator").join("cache");
+            let _ = std::fs::create_dir_all(&cache);
+            // Restrict to user only; ignore errors quietly.
+            #[cfg(unix)]
+            let _ = std::fs::set_permissions(&cache, std::fs::Permissions::from_mode(0o700));
+            return cache;
+        }
     }
 
-    // Fallback to XDG_CACHE_HOME / $HOME/.cache when cwd unavailable
+    // Fallback to XDG_CACHE_HOME / $HOME/.cache when not occupied
     let cache_dir = std::env::var("XDG_CACHE_HOME")
         .ok()
         .or_else(|| std::env::var("HOME").ok().map(|h| format!("{h}/.cache")))
@@ -144,13 +149,13 @@ pub fn is_within_cwd(path: &std::path::Path, cwd: &std::path::Path) -> bool {
 
 /// Base64 encode bytes
 pub fn base64_encode(data: &[u8]) -> String {
-    use base64::{Engine, engine::general_purpose::STANDARD};
+    use base64::{engine::general_purpose::STANDARD, Engine};
     STANDARD.encode(data)
 }
 
 /// Base64 decode string
 pub fn base64_decode(s: &str) -> Vec<u8> {
-    use base64::{Engine, engine::general_purpose::STANDARD};
+    use base64::{engine::general_purpose::STANDARD, Engine};
     STANDARD.decode(s).unwrap_or_default()
 }
 
