@@ -334,6 +334,12 @@ final_newline = "require"
 line_endings = "lf"
 max_line_length = 120
 
+# Ignore specific rules for specific files/extensions
+# (Makefiles require tabs; Markdown code blocks may contain tabs)
+[decree.supreme.ignore.tab-character]
+filenames = ["Makefile", "GNUmakefile", "makefile"]
+extensions = ["md", "mdx"]
+
 [decree.ruby]
 # Ruby-specific structural enforcement
 max_lines = 300
@@ -350,6 +356,8 @@ required = ["title", "slug"]
 ```
 
 **Language overrides.** Language decrees can override supreme settings. Go files use tabs even when supreme says spaces. The override applies per-file based on extension.
+
+**Rule ignores.** Any decree can ignore specific rules for specific filenames/extensions via `[decree.<name>.ignore.<rule>]`. This is useful for cases like `Makefile` (tab-indented recipes) or documentation files that embed code blocks.
 
 **Decrees are WASM components.** Each decree enforces structural boundaries for its domain. `decree.supreme` applies universally. Language decrees handle specific conventions.
 

@@ -5,8 +5,8 @@ pub mod linter_output;
 
 use anyhow::Result;
 use camino::Utf8Path;
-use dictator_decree_abi::{BoxDecree, Diagnostics};
-use std::collections::HashSet;
+use dictator_decree_abi::{BoxDecree, Diagnostic, Diagnostics};
+use std::collections::{HashMap, HashSet};
 
 pub use config::{DecreeSettings, DictateConfig};
 
@@ -19,6 +19,7 @@ pub struct Source<'a> {
 /// The Regime: owns decree instances and enforces them over sources.
 pub struct Regime {
     decrees: Vec<BoxDecree>,
+    rule_ignores: HashMap<String, HashMap<String, config::RuleIgnore>>,
 }
 
 impl Default for Regime {
@@ -32,6 +33,7 @@ impl Regime {
     pub fn new() -> Self {
         Self {
             decrees: Vec::new(),
+            rule_ignores: HashMap::new(),
         }
     }
 
@@ -43,6 +45,26 @@ impl Regime {
 
     pub fn add_decree(&mut self, decree: BoxDecree) {
         self.decrees.push(decree);
+    }
+
+    /// Configure per-rule ignores from a loaded `.dictate.toml`.
+    ///
+    /// Ignores are keyed by decree name (`decree.<name>`) and rule name (the
+    /// portion after `{decree}/` in diagnostic rule identifiers).
+    pub fn set_rule_ignores_from_config(&mut self, config: Option<&DictateConfig>) {
+        self.rule_ignores.clear();
+
+        let Some(cfg) = config else {
+            return;
+        };
+
+        for (decree_name, settings) in &cfg.decree {
+            if settings.ignore.is_empty() {
+                continue;
+            }
+            self.rule_ignores
+                .insert(decree_name.clone(), settings.ignore.clone());
+        }
     }
 
     /// Return the union of supported extensions for all loaded decrees.
@@ -120,7 +142,13 @@ impl Regime {
                     continue;
                 }
 
-                all.extend(decree.lint(src.path.as_str(), src.text));
+                let diags = decree.lint(src.path.as_str(), src.text);
+                for diag in diags {
+                    if self.is_rule_ignored_for_path(src.path, &diag) {
+                        continue;
+                    }
+                    all.push(diag);
+                }
             }
         }
         Ok(all)
@@ -166,6 +194,33 @@ impl Regime {
             // Check if this shadower handles this file
             Self::decree_matches(path, &meta)
         })
+    }
+
+    fn is_rule_ignored_for_path(&self, path: &Utf8Path, diag: &Diagnostic) -> bool {
+        if self.rule_ignores.is_empty() {
+            return false;
+        }
+
+        let Some((decree, rule_name)) = diag.rule.split_once('/') else {
+            return false;
+        };
+
+        let Some(rules) = self.rule_ignores.get(decree) else {
+            return false;
+        };
+        let Some(ignore) = rules.get(rule_name) else {
+            return false;
+        };
+
+        let filename = path.file_name().unwrap_or("");
+        if ignore.filenames.iter().any(|f| f == filename) {
+            return true;
+        }
+
+        let Some(ext) = path.extension() else {
+            return false;
+        };
+        ignore.extensions.iter().any(|e| e.eq_ignore_ascii_case(ext))
     }
 }
 
@@ -497,6 +552,98 @@ mod tests {
         let diags = regime.enforce(&sources).unwrap();
         assert!(diags.iter().any(|d| d.rule == "supreme/hit"));
         assert!(!diags.iter().any(|d| d.rule == "ruby/hit"));
+    }
+
+    #[test]
+    fn enforce_ignores_configured_rules_by_filename() {
+        let supreme: BoxDecree = Box::new(MockDecree::simple(
+            "supreme",
+            vec![],
+            "supreme/tab-character",
+        ));
+
+        let mut settings = DecreeSettings::default();
+        settings.ignore.insert(
+            "tab-character".to_string(),
+            crate::config::RuleIgnore {
+                filenames: vec!["Makefile".to_string()],
+                extensions: vec![],
+            },
+        );
+        let mut config = DictateConfig::default();
+        config.decree.insert("supreme".to_string(), settings);
+
+        let mut regime = Regime::new();
+        regime.set_rule_ignores_from_config(Some(&config));
+        regime.add_decree(supreme);
+
+        let path = Utf8Path::new("Makefile");
+        let sources = [Source { path, text: "x" }];
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(diags.is_empty(), "rule should be ignored for Makefile");
+    }
+
+    #[test]
+    fn enforce_ignores_configured_rules_by_extension() {
+        let supreme: BoxDecree = Box::new(MockDecree::simple(
+            "supreme",
+            vec![],
+            "supreme/tab-character",
+        ));
+
+        let mut settings = DecreeSettings::default();
+        settings.ignore.insert(
+            "tab-character".to_string(),
+            crate::config::RuleIgnore {
+                filenames: vec![],
+                extensions: vec!["md".to_string(), "MDX".to_string()],
+            },
+        );
+        let mut config = DictateConfig::default();
+        config.decree.insert("supreme".to_string(), settings);
+
+        let mut regime = Regime::new();
+        regime.set_rule_ignores_from_config(Some(&config));
+        regime.add_decree(supreme);
+
+        let path = Utf8Path::new("README.md");
+        let sources = [Source { path, text: "x" }];
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(diags.is_empty(), "rule should be ignored for .md");
+
+        let path = Utf8Path::new("doc.mdx");
+        let sources = [Source { path, text: "x" }];
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(diags.is_empty(), "rule should be ignored for .mdx");
+    }
+
+    #[test]
+    fn enforce_does_not_ignore_unconfigured_rules() {
+        let supreme: BoxDecree =
+            Box::new(MockDecree::simple("supreme", vec![], "supreme/trailing-whitespace"));
+
+        let mut settings = DecreeSettings::default();
+        settings.ignore.insert(
+            "tab-character".to_string(),
+            crate::config::RuleIgnore {
+                filenames: vec!["Makefile".to_string()],
+                extensions: vec!["md".to_string()],
+            },
+        );
+        let mut config = DictateConfig::default();
+        config.decree.insert("supreme".to_string(), settings);
+
+        let mut regime = Regime::new();
+        regime.set_rule_ignores_from_config(Some(&config));
+        regime.add_decree(supreme);
+
+        let path = Utf8Path::new("README.md");
+        let sources = [Source { path, text: "x" }];
+        let diags = regime.enforce(&sources).unwrap();
+        assert!(
+            diags.iter().any(|d| d.rule == "supreme/trailing-whitespace"),
+            "unconfigured rules should still be reported"
+        );
     }
 
     #[test]

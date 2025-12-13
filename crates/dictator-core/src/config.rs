@@ -4,6 +4,22 @@ use garde::Validate;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Per-rule ignore configuration.
+///
+/// Ignores are evaluated by the host (Regime) after decrees emit diagnostics.
+/// The match is based on:
+/// - `filenames`: exact filename match (e.g. `Makefile`)
+/// - `extensions`: file extension match (e.g. `md`, `mdx`)
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct RuleIgnore {
+    /// Exact filenames to ignore this rule for.
+    #[serde(default)]
+    pub filenames: Vec<String>,
+    /// File extensions to ignore this rule for (case-insensitive).
+    #[serde(default)]
+    pub extensions: Vec<String>,
+}
+
 /// Root configuration from .dictate.toml
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct DictateConfig {
@@ -62,6 +78,18 @@ pub struct DecreeSettings {
     // Linter integration (for supremecourt mode)
     #[garde(skip)]
     pub linter: Option<LinterConfig>,
+
+    /// Ignore specific rules for specific files/extensions.
+    ///
+    /// Example:
+    /// ```toml
+    /// [decree.supreme.ignore.tab-character]
+    /// filenames = ["Makefile"]
+    /// extensions = ["md", "mdx"]
+    /// ```
+    #[serde(default)]
+    #[garde(skip)]
+    pub ignore: HashMap<String, RuleIgnore>,
 }
 
 /// External linter configuration
@@ -306,6 +334,10 @@ line_endings = "lf"
 max_line_length = 120
 blank_line_whitespace = "deny"
 
+[decree.supreme.ignore.tab-character]
+filenames = ["Makefile"]
+extensions = ["md", "mdx"]
+
 [decree.ruby]
 max_lines = 300
 ignore_comments = true
@@ -336,6 +368,10 @@ import_order = ["system", "external", "internal"]
         let supreme = config.decree.get("supreme").unwrap();
         assert_eq!(supreme.max_line_length, Some(120));
         assert_eq!(supreme.tabs_vs_spaces, Some("spaces".to_string()));
+        assert!(supreme.ignore.contains_key("tab-character"));
+        let ignore = supreme.ignore.get("tab-character").unwrap();
+        assert_eq!(ignore.filenames, vec!["Makefile".to_string()]);
+        assert_eq!(ignore.extensions, vec!["md".to_string(), "mdx".to_string()]);
 
         let ruby = config.decree.get("ruby").unwrap();
         assert_eq!(ruby.max_lines, Some(300));
@@ -361,10 +397,10 @@ import_order = ["system", "external", "internal"]
     #[test]
     fn rejects_negative_max_line_length_at_parse() {
         // Negative values fail at TOML parse for usize
-        let toml = r#"
+        let toml = r"
 [decree.supreme]
 max_line_length = -340
-"#;
+";
         let result: Result<DictateConfig, _> = toml::from_str(toml);
         assert!(result.is_err());
     }

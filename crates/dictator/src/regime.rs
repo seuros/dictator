@@ -22,6 +22,7 @@ fn should_load_decree(config: Option<&DictateConfig>, key: &str) -> bool {
 /// Initialize regime with all decrees for watch mode (all file types supported)
 pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
     let mut regime = Regime::new();
+    regime.set_rule_ignores_from_config(decree_config);
 
     // decree.supreme runs as the default structural decree.
     // When a language-specific decree is enabled for a file type, it shadows supreme for that
@@ -169,6 +170,7 @@ pub fn init_regime_for_files(
     decree_config: Option<&DictateConfig>,
 ) -> Regime {
     let mut regime = Regime::new();
+    regime.set_rule_ignores_from_config(decree_config);
 
     // decree.supreme runs as the default structural decree.
     // When a language-specific decree is enabled for a file type, it shadows supreme for that

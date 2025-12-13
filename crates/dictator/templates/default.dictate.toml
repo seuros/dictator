@@ -12,6 +12,13 @@ line_endings = "lf"
 blank_line_whitespace = "deny"
 # max_line_length: opt-in per language (uncomment to enforce globally)
 
+# Per-rule ignores (decree-level, not language-level)
+# - Makefiles require tabs for recipes
+# - Markdown can contain tabs inside code blocks
+[decree.supreme.ignore.tab-character]
+filenames = ["Makefile", "GNUmakefile", "makefile"]
+extensions = ["md", "mdx"]
+
 # Language-specific decrees (uncomment to enable)
 # Remove the '#' from '[decree.LANGUAGE]' and its settings to activate
 

@@ -17,9 +17,12 @@ use super::utils::collect_files;
 pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
     let mut regime = Regime::new();
 
+    let config = dictator_core::DictateConfig::load_default();
+    regime.set_rule_ignores_from_config(config.as_ref());
+
     // Load decree configuration and apply to supreme plugin
     // Language-specific settings override supreme settings per file type
-    if let Some(config) = dictator_core::DictateConfig::load_default()
+    if let Some(config) = config
         && let Some(supreme_settings) = config.decree.get("supreme")
     {
         let supreme_config = dictator_supreme::config_from_decree_settings(supreme_settings);
@@ -499,9 +502,12 @@ pub fn handle_supremecourt(
 pub fn init_regime_from_config() -> Regime {
     let mut regime = Regime::new();
 
+    let config = dictator_core::DictateConfig::load_default();
+    regime.set_rule_ignores_from_config(config.as_ref());
+
     // Load decree configuration and apply to supreme plugin
     // Language-specific settings override supreme settings per file type
-    if let Some(config) = dictator_core::DictateConfig::load_default()
+    if let Some(config) = config
         && let Some(supreme_settings) = config.decree.get("supreme")
     {
         let supreme_config = dictator_supreme::config_from_decree_settings(supreme_settings);
