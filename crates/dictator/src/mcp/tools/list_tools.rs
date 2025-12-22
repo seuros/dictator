@@ -95,7 +95,10 @@ pub fn handle_list_tools(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> J
         "title": "Structural Linter",
         "description": "Check files for structural violations \
                         (trailing whitespace, tabs/spaces, line endings, file size). \
-                        Read-only - returns diagnostics without modifying files.",
+                        Read-only - returns diagnostics without modifying files. \
+                        To fix: use dictator tool (default mode handles supreme/* rules). \
+                        Use mode=supremecourt only for external linter auto-fix \
+                        (rubocop -a, ruff --fix, eslint --fix, clippy --fix).",
         "annotations": {
             "title": "Structural Linter",
             "readOnlyHint": true,
@@ -140,30 +143,18 @@ pub fn handle_list_tools(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> J
         });
         drop(state);
 
-        // Build mode enum and description based on available tools
-        let (modes, mode_desc) = if has_supreme {
-            (
-                vec!["kimjongrails", "supremecourt"],
-                "kimjongrails (default): basic fixes. \
-                 supremecourt: basic + configured external linters",
-            )
+        // Build mode enum based on available external linters
+        let modes: Vec<&str> = if has_supreme {
+            vec!["kimjongrails", "supremecourt"]
         } else {
-            (
-                vec!["kimjongrails"],
-                "kimjongrails: basic structural fixes (whitespace, newlines, line endings)",
-            )
+            vec!["kimjongrails"]
         };
 
         tool_list.push(serde_json::json!({
             "name": "dictator",
             "title": "Auto-Fixer",
-            "description": if has_supreme {
-                "Auto-fix structural issues. Default mode fixes whitespace/newlines. \
-                 Mode 'supremecourt' also runs configured external linters."
-            } else {
-                "Auto-fix structural issues (whitespace, newlines, line endings). \
-                 Requires git repository."
-            },
+            "description": "Auto-fix structural issues (whitespace, newlines, line endings). \
+                           Requires git repository.",
             "annotations": {
                 "title": "Auto-Fixer",
                 "readOnlyHint": false,
@@ -182,7 +173,8 @@ pub fn handle_list_tools(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> J
                     "mode": {
                         "type": "string",
                         "enum": modes,
-                        "description": mode_desc
+                        "description": "kimjongrails (default): basic fixes. \
+                                       supremecourt: basic + external linter auto-fix"
                     }
                 },
                 "required": ["paths"]
