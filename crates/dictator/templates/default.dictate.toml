@@ -62,6 +62,7 @@ extensions = ["md", "mdx"]
 
 # [decree.rust]
 # # Rust structural enforcement
+# tab_width = 4
 # max_line_length = 100
 # max_lines = 400
 # ignore_comments = true
@@ -74,7 +75,8 @@ extensions = ["md", "mdx"]
 
 # [decree.python]
 # # Python structural enforcement
-# max_line_length = 88  # Black's default
+# tab_width = 4
+# max_line_length = 88
 # max_lines = 380
 # ignore_comments = true
 # ignore_blank_lines = true
