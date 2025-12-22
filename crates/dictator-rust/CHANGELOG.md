@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.12.0](https://github.com/seuros/dictator/compare/dictator-rust-v0.11.0...dictator-rust-v0.12.0) (2025-12-22)
+
+
+### Features
+
+* the Dictator condemns fossil editions and prehistoric rust-versions ([f07581e](https://github.com/seuros/dictator/commit/f07581e0eb9288e91f67227ca07cdadbdae9fb65))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.11.0 to 0.12.0
+    * dictator-core bumped from 0.11.0 to 0.12.0
+    * dictator-supreme bumped from 0.11.0 to 0.12.0
+
 ## [0.11.0](https://github.com/seuros/dictator/compare/dictator-rust-v0.10.1...dictator-rust-v0.11.0) (2025-12-13)
 
 

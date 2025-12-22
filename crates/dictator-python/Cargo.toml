@@ -1,6 +1,6 @@
 [package]
 name = "dictator-python"
-version = "0.11.0"
+version = "0.12.0"
 description = "Python language decree for Dictator structural linter"
 edition.workspace = true
 rust-version.workspace = true
@@ -12,9 +12,9 @@ documentation = "https://docs.rs/dictator-python"
 workspace = true
 
 [dependencies]
-dictator-decree-abi = { version = "0.11.0", path = "../dictator-decree-abi" }
-dictator-core = { version = "0.11.0", path = "../dictator-core" }
-dictator-supreme = { version = "0.11.0", path = "../dictator-supreme" }
+dictator-decree-abi = { version = "0.12.0", path = "../dictator-decree-abi" }
+dictator-core = { version = "0.12.0", path = "../dictator-core" }
+dictator-supreme = { version = "0.12.0", path = "../dictator-supreme" }
 memchr = "2"
 
 [lib]
