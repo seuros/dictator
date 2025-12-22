@@ -1,6 +1,6 @@
 [package]
 name = "dictator-core"
-version = "0.11.0"
+version = "0.12.0"
 description = "Core plugin loading and regime management for Dictator"
 edition.workspace = true
 rust-version.workspace = true
@@ -14,7 +14,7 @@ documentation = "https://docs.rs/dictator-core"
 workspace = true
 
 [dependencies]
-dictator-decree-abi = { version = "0.11.0", path = "../dictator-decree-abi" }
+dictator-decree-abi = { version = "0.12.0", path = "../dictator-decree-abi" }
 anyhow = { workspace = true }
 camino = { workspace = true }
 garde = { version = "0.22", features = ["derive"] }

@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.12.0](https://github.com/seuros/dictator/compare/dictator-v0.11.0...dictator-v0.12.0) (2025-12-22)
+
+
+### Features
+
+* the Dictator condemns fossil editions and prehistoric rust-versions ([f07581e](https://github.com/seuros/dictator/commit/f07581e0eb9288e91f67227ca07cdadbdae9fb65))
+* the Dictator enlightens LLMs on proper mode selection protocol ([c17d720](https://github.com/seuros/dictator/commit/c17d7200dc8de0c87a3259277a77c8737f437b10))
+
+
+### Bug Fixes
+
+* the Dictator enforces proper indentation doctrine per language ([0a94aab](https://github.com/seuros/dictator/commit/0a94aab96c3c3c0ab5296e517f4aad8d81946200))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.11.0 to 0.12.0
+    * dictator-frontmatter bumped from 0.11.0 to 0.12.0
+    * dictator-golang bumped from 0.11.0 to 0.12.0
+    * dictator-decree-abi bumped from 0.11.0 to 0.12.0
+    * dictator-python bumped from 0.11.0 to 0.12.0
+    * dictator-ruby bumped from 0.11.0 to 0.12.0
+    * dictator-rust bumped from 0.11.0 to 0.12.0
+    * dictator-supreme bumped from 0.11.0 to 0.12.0
+    * dictator-typescript bumped from 0.11.0 to 0.12.0
+
 ## [0.11.0](https://github.com/seuros/dictator/compare/dictator-v0.10.1...dictator-v0.11.0) (2025-12-13)
 
 

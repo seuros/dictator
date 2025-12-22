@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/seuros/dictator/compare/dictator-decree-abi-v0.11.0...dictator-decree-abi-v0.12.0) (2025-12-22)
+
+
+### Features
+
+* the Dictator condemns fossil editions and prehistoric rust-versions ([f07581e](https://github.com/seuros/dictator/commit/f07581e0eb9288e91f67227ca07cdadbdae9fb65))
+
 ## [0.11.0](https://github.com/seuros/dictator/compare/dictator-decree-abi-v0.10.1...dictator-decree-abi-v0.11.0) (2025-12-13)
 
 
