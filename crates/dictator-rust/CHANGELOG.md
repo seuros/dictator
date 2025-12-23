@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.13.1](https://github.com/seuros/dictator/compare/dictator-rust-v0.13.0...dictator-rust-v0.13.1) (2025-12-23)
+
+
+### Bug Fixes
+
+* the Dictator orders alphabetical import compliance ([f7f319a](https://github.com/seuros/dictator/commit/f7f319a2d408499a076b126ce6a56d34d12ff8b8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.13.0 to 0.13.1
+    * dictator-core bumped from 0.13.0 to 0.13.1
+    * dictator-supreme bumped from 0.13.0 to 0.13.1
+
 ## [0.13.0](https://github.com/seuros/dictator/compare/dictator-rust-v0.12.0...dictator-rust-v0.13.0) (2025-12-23)
 
 

@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.13.1](https://github.com/seuros/dictator/compare/dictator-v0.13.0...dictator-v0.13.1) (2025-12-23)
+
+
+### Bug Fixes
+
+* the Dictator orders alphabetical import compliance ([f7f319a](https://github.com/seuros/dictator/commit/f7f319a2d408499a076b126ce6a56d34d12ff8b8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.13.0 to 0.13.1
+    * dictator-frontmatter bumped from 0.13.0 to 0.13.1
+    * dictator-golang bumped from 0.13.0 to 0.13.1
+    * dictator-decree-abi bumped from 0.13.0 to 0.13.1
+    * dictator-python bumped from 0.13.0 to 0.13.1
+    * dictator-ruby bumped from 0.13.0 to 0.13.1
+    * dictator-rust bumped from 0.13.0 to 0.13.1
+    * dictator-supreme bumped from 0.13.0 to 0.13.1
+    * dictator-typescript bumped from 0.13.0 to 0.13.1
+
 ## [0.13.0](https://github.com/seuros/dictator/compare/dictator-v0.12.0...dictator-v0.13.0) (2025-12-23)
 
 
