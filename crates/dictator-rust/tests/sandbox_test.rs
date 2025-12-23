@@ -1,4 +1,4 @@
-use dictator_rust::{lint_cargo_toml, lint_source, RustConfig};
+use dictator_rust::{RustConfig, lint_cargo_toml, lint_source};
 use std::fs;
 
 #[test]
