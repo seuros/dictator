@@ -25,7 +25,7 @@ use tokio::sync::mpsc;
 use protocol::{JsonRpcError, JsonRpcRequest, JsonRpcResponse};
 use regime::run_stalint_check;
 use resources::{handle_list_resources, handle_read_resource};
-use state::{STALINT_CHECK_TIMEOUT_SECS, ServerState, WATCHER_CHECK_INTERVAL_SECS};
+use state::{CONFIG_FILE, STALINT_CHECK_TIMEOUT_SECS, ServerState, WATCHER_CHECK_INTERVAL_SECS};
 use tools::{handle_call_tool, handle_initialize, handle_list_tools};
 use utils::log_to_file;
 
@@ -57,6 +57,13 @@ async fn run_async() -> Result<()> {
     let notif_tx_clone = notif_tx.clone();
     tokio::spawn(async move {
         watcher_check_loop(watcher_state_clone, notif_tx_clone).await;
+    });
+
+    // Start config file watcher
+    let watcher_state_clone = Arc::clone(&watcher_state);
+    let notif_tx_clone = notif_tx.clone();
+    tokio::spawn(async move {
+        config_watcher_loop(watcher_state_clone, notif_tx_clone).await;
     });
 
     let mut line = String::new();
@@ -127,6 +134,89 @@ async fn run_async() -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Background loop that watches .dictate.toml for changes
+async fn config_watcher_loop(state: Arc<Mutex<ServerState>>, notif_tx: mpsc::Sender<String>) {
+    use notify::{RecursiveMode, Watcher};
+
+    let Ok(cwd) = std::env::current_dir() else {
+        return;
+    };
+    let config_path = cwd.join(CONFIG_FILE);
+
+    // Set up file watcher for config
+    let state_clone = Arc::clone(&state);
+    let watcher = notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
+        if let Ok(event) = res
+            && (event.kind.is_modify() || event.kind.is_create() || event.kind.is_remove())
+        {
+            if let Ok(mut s) = state_clone.lock() {
+                s.config_dirty = true;
+            }
+        }
+    });
+
+    let mut watcher = match watcher {
+        Ok(w) => w,
+        Err(e) => {
+            log_to_file(&format!("Failed to create config watcher: {e}"));
+            return;
+        }
+    };
+
+    // Watch the config file (or parent dir if it doesn't exist yet)
+    let watch_path = if config_path.exists() {
+        config_path.clone()
+    } else {
+        cwd.clone()
+    };
+
+    if let Err(e) = watcher.watch(&watch_path, RecursiveMode::NonRecursive) {
+        log_to_file(&format!("Failed to watch config: {e}"));
+        return;
+    }
+
+    log_to_file(&format!("Watching config: {}", watch_path.display()));
+
+    // Check for config changes periodically
+    loop {
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        let is_dirty = {
+            let s = state.lock().unwrap();
+            s.config_dirty
+        };
+
+        if is_dirty {
+            // Reload config
+            {
+                let mut s = state.lock().unwrap();
+                s.config_dirty = false;
+                s.reload_config();
+            }
+
+            // Send tools/list_changed notification
+            let tools_notification = serde_json::json!({
+                "jsonrpc": "2.0",
+                "method": "notifications/tools/list_changed",
+                "params": {}
+            });
+            let _ = notif_tx.send(tools_notification.to_string()).await;
+
+            // Send resources/updated notification for config resource
+            let resources_notification = serde_json::json!({
+                "jsonrpc": "2.0",
+                "method": "notifications/resources/updated",
+                "params": {
+                    "uri": "dictate://config"
+                }
+            });
+            let _ = notif_tx.send(resources_notification.to_string()).await;
+
+            log_to_file("Config changed: sent tools/list_changed and resources/updated");
+        }
+    }
 }
 
 /// Background loop that checks watched paths

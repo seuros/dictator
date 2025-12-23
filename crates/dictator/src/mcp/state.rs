@@ -57,6 +57,7 @@ pub fn load_config() -> Option<DictateConfig> {
 }
 
 /// Server state shared between handlers
+#[allow(clippy::struct_excessive_bools)]
 pub struct ServerState {
     // Watcher state
     pub paths: HashSet<String>,
@@ -73,6 +74,8 @@ pub struct ServerState {
     pub stalint_paths: Vec<String>,
     // Linter configuration
     pub config: Option<DictateConfig>,
+    // Config file change detection
+    pub config_dirty: bool,
     // Logging configuration (client-controlled via logging/setLevel)
     pub logger_config: Arc<Mutex<LoggerConfig>>,
     // Progress tracking for long-running operations
@@ -104,8 +107,39 @@ impl ServerState {
             can_write: true,
             stalint_paths: Vec::new(),
             config: None,
+            config_dirty: false,
             logger_config: Arc::new(Mutex::new(LoggerConfig::default())),
             progress_tracker: Arc::new(ProgressTracker::new(notif_tx)),
+        }
+    }
+
+    /// Reload configuration from disk
+    pub fn reload_config(&mut self) {
+        let old_config = self.config.take();
+        self.config = load_config();
+
+        if let Some(ref cfg) = self.config {
+            log_to_file(&format!(
+                "Reloaded config with {} decrees",
+                cfg.decree.len()
+            ));
+        } else {
+            log_to_file("Config removed or invalid");
+        }
+
+        // Check if linter availability changed (affects tool list)
+        let old_has_linter = old_config
+            .as_ref()
+            .is_some_and(|c| c.decree.values().any(|d| d.linter.is_some()));
+        let new_has_linter = self
+            .config
+            .as_ref()
+            .is_some_and(|c| c.decree.values().any(|d| d.linter.is_some()));
+
+        if old_has_linter != new_has_linter {
+            log_to_file(&format!(
+                "Linter availability changed: {old_has_linter} -> {new_has_linter}"
+            ));
         }
     }
 
