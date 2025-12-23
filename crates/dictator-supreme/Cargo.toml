@@ -1,6 +1,6 @@
 [package]
 name = "dictator-supreme"
-version = "0.12.0"
+version = "0.13.0"
 description = "Supreme decree - universal structural rules for Dictator"
 edition.workspace = true
 rust-version.workspace = true
@@ -12,8 +12,8 @@ documentation = "https://docs.rs/dictator-supreme"
 workspace = true
 
 [dependencies]
-dictator-decree-abi = { version = "0.12.0", path = "../dictator-decree-abi" }
-dictator-core = { version = "0.12.0", path = "../dictator-core" }
+dictator-decree-abi = { version = "0.13.0", path = "../dictator-decree-abi" }
+dictator-core = { version = "0.13.0", path = "../dictator-core" }
 memchr = "2"
 
 [lib]

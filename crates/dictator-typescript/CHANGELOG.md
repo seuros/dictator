@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.13.0](https://github.com/seuros/dictator/compare/dictator-typescript-v0.12.0...dictator-typescript-v0.13.0) (2025-12-23)
+
+
+### Miscellaneous Chores
+
+* **dictator-typescript:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.12.0 to 0.13.0
+    * dictator-core bumped from 0.12.0 to 0.13.0
+    * dictator-supreme bumped from 0.12.0 to 0.13.0
+
 ## [0.12.0](https://github.com/seuros/dictator/compare/dictator-typescript-v0.11.0...dictator-typescript-v0.12.0) (2025-12-22)
 
 

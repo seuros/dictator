@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.13.0](https://github.com/seuros/dictator/compare/dictator-v0.12.0...dictator-v0.13.0) (2025-12-23)
+
+
+### Features
+
+* the Dictator surveils config changes and notifies loyal subjects ([8928a01](https://github.com/seuros/dictator/commit/8928a0130e898b0fbb8bd84cb01041a609412aa0))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.12.0 to 0.13.0
+    * dictator-frontmatter bumped from 0.12.0 to 0.13.0
+    * dictator-golang bumped from 0.12.0 to 0.13.0
+    * dictator-decree-abi bumped from 0.12.0 to 0.13.0
+    * dictator-python bumped from 0.12.0 to 0.13.0
+    * dictator-ruby bumped from 0.12.0 to 0.13.0
+    * dictator-rust bumped from 0.12.0 to 0.13.0
+    * dictator-supreme bumped from 0.12.0 to 0.13.0
+    * dictator-typescript bumped from 0.12.0 to 0.13.0
+
 ## [0.12.0](https://github.com/seuros/dictator/compare/dictator-v0.11.0...dictator-v0.12.0) (2025-12-22)
 
 
