@@ -56,6 +56,7 @@ pub fn log_to_file(msg: &str) {
 }
 
 /// Check if current directory is a git repository
+#[allow(dead_code)]
 pub fn is_git_repo() -> bool {
     let cwd = std::env::current_dir().unwrap_or_default();
     cwd.join(".git").exists()
@@ -70,93 +71,13 @@ pub fn command_available(cmd: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// Collect files recursively from a path, respecting .gitignore
-pub fn collect_files(path: &std::path::Path) -> Vec<std::path::PathBuf> {
-    use ignore::WalkBuilder;
-
-    let mut files = Vec::new();
-    if path.is_file() {
-        files.push(path.to_path_buf());
-    } else if path.is_dir() {
-        let walker = WalkBuilder::new(path)
-            .standard_filters(true) // enables .gitignore, .git/info/exclude, global config
-            .build();
-
-        for result in walker.flatten() {
-            if result.file_type().is_some_and(|ft| ft.is_file()) {
-                files.push(result.path().to_path_buf());
-            }
-        }
-    }
-    files
-}
-
-/// Convert byte offset to line and column numbers
-pub fn byte_to_line_col(src: &str, byte_idx: usize) -> (usize, usize) {
-    let mut line = 1;
-    let mut col = 1;
-    for (i, ch) in src.char_indices() {
-        if i == byte_idx {
-            return (line, col);
-        }
-        if ch == '\n' {
-            line += 1;
-            col = 1;
-        } else {
-            col += 1;
-        }
-    }
-    (line, col)
-}
+// Re-export mcp-host utilities
+pub use mcp_host::utils::{base64_decode, base64_encode, byte_to_line_col, collect_files};
 
 /// Check if a path is within the current working directory (security boundary)
+/// Wrapper around mcp-host's `is_safe_path` for dictator-specific naming
 pub fn is_within_cwd(path: &std::path::Path, cwd: &std::path::Path) -> bool {
-    let resolved = if path.is_absolute() {
-        path.to_path_buf()
-    } else {
-        cwd.join(path)
-    };
-
-    // Try canonicalize first (handles symlinks and ..)
-    if let (Ok(resolved_canon), Ok(cwd_canon)) = (resolved.canonicalize(), cwd.canonicalize()) {
-        return resolved_canon.starts_with(&cwd_canon);
-    }
-
-    // For non-existent paths, do basic check:
-    // - Absolute paths outside cwd are rejected
-    // - Relative paths with .. that escape are rejected
-    if path.is_absolute() {
-        if let Ok(cwd_canon) = cwd.canonicalize() {
-            return resolved.starts_with(&cwd_canon);
-        }
-        return false;
-    }
-
-    // Relative path - check it doesn't start with .. that would escape
-    let mut depth: i32 = 0;
-    for component in path.components() {
-        match component {
-            std::path::Component::ParentDir => depth -= 1,
-            std::path::Component::Normal(_) => depth += 1,
-            _ => {}
-        }
-        if depth < 0 {
-            return false; // Escapes cwd with ..
-        }
-    }
-    true // Relative path stays within cwd
-}
-
-/// Base64 encode bytes
-pub fn base64_encode(data: &[u8]) -> String {
-    use base64::{Engine, engine::general_purpose::STANDARD};
-    STANDARD.encode(data)
-}
-
-/// Base64 decode string
-pub fn base64_decode(s: &str) -> Vec<u8> {
-    use base64::{Engine, engine::general_purpose::STANDARD};
-    STANDARD.decode(s).unwrap_or_default()
+    mcp_host::utils::is_safe_path(path, cwd)
 }
 
 /// Build a sanitized single-line snippet around the diagnostic span.
@@ -194,101 +115,4 @@ pub fn make_snippet(source: &str, span: &dictator_decree_abi::Span, max_len: usi
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // ========== is_within_cwd tests ==========
-
-    #[test]
-    fn test_is_within_cwd_relative_path() {
-        let cwd = std::env::current_dir().unwrap();
-        assert!(is_within_cwd(std::path::Path::new("foo"), &cwd));
-        assert!(is_within_cwd(std::path::Path::new("foo/bar"), &cwd));
-        assert!(is_within_cwd(std::path::Path::new("./foo"), &cwd));
-    }
-
-    #[test]
-    fn test_is_within_cwd_parent_escape() {
-        let cwd = std::env::current_dir().unwrap();
-        assert!(!is_within_cwd(std::path::Path::new("../foo"), &cwd));
-        assert!(!is_within_cwd(std::path::Path::new("foo/../../bar"), &cwd));
-        assert!(!is_within_cwd(std::path::Path::new(".."), &cwd));
-    }
-
-    #[test]
-    fn test_is_within_cwd_absolute_outside() {
-        let cwd = std::env::current_dir().unwrap();
-        assert!(!is_within_cwd(std::path::Path::new("/tmp"), &cwd));
-        assert!(!is_within_cwd(std::path::Path::new("/etc/passwd"), &cwd));
-        assert!(!is_within_cwd(std::path::Path::new("/home"), &cwd));
-    }
-
-    // ========== Cursor pagination tests ==========
-
-    #[test]
-    fn test_base64_encode_decode_roundtrip() {
-        let original = "42";
-        let encoded = base64_encode(original.as_bytes());
-        let decoded = String::from_utf8(base64_decode(&encoded)).unwrap();
-        assert_eq!(original, decoded);
-    }
-
-    #[test]
-    fn test_base64_encode_decode_offset() {
-        let offsets = [0, 10, 100, 12345];
-        for offset in offsets {
-            let encoded = base64_encode(offset.to_string().as_bytes());
-            let decoded: usize = String::from_utf8(base64_decode(&encoded))
-                .unwrap()
-                .parse()
-                .unwrap();
-            assert_eq!(offset, decoded);
-        }
-    }
-
-    #[test]
-    fn test_base64_decode_invalid() {
-        // Invalid base64 should return empty vec
-        let result = base64_decode("!!!invalid!!!");
-        assert!(result.is_empty());
-    }
-
-    // ========== byte_to_line_col tests ==========
-
-    #[test]
-    fn test_byte_to_line_col_start() {
-        let src = "hello\nworld\n";
-        let (line, col) = byte_to_line_col(src, 0);
-        assert_eq!((line, col), (1, 1));
-    }
-
-    #[test]
-    fn test_byte_to_line_col_middle_first_line() {
-        let src = "hello\nworld\n";
-        let (line, col) = byte_to_line_col(src, 2);
-        assert_eq!((line, col), (1, 3)); // 'l' at position 2
-    }
-
-    #[test]
-    fn test_byte_to_line_col_second_line() {
-        let src = "hello\nworld\n";
-        let (line, col) = byte_to_line_col(src, 6);
-        assert_eq!((line, col), (2, 1)); // 'w' at start of line 2
-    }
-
-    #[test]
-    fn test_byte_to_line_col_end() {
-        let src = "hello\nworld\n";
-        let (line, col) = byte_to_line_col(src, 11);
-        assert_eq!((line, col), (2, 6)); // newline at end of 'world'
-    }
-
-    #[test]
-    fn test_byte_to_line_col_beyond_end() {
-        let src = "hi";
-        let (line, col) = byte_to_line_col(src, 100);
-        // Should return last position
-        assert_eq!((line, col), (1, 3));
-    }
-}
+// Tests for moved functions are now in mcp-host crate

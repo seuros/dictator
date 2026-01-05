@@ -1,12 +1,12 @@
 //! Dictator tool handler for auto-fixing structural issues.
 
+use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use serde::Deserialize;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 
 use crate::mcp::fixers::handle_kimjongrails;
 use crate::mcp::linters::handle_supremecourt;
-use crate::mcp::protocol::{JsonRpcError, JsonRpcResponse};
 use crate::mcp::state::ServerState;
 use crate::mcp::utils::is_within_cwd;
 

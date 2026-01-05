@@ -37,9 +37,6 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
     // Load native decrees
     let mut regime = init_regime_for_watch(decree_config.as_ref());
 
-    // Extensions actually covered by loaded decrees (empty/None = watch all)
-    let watched_exts = regime.watched_extensions();
-
     // Load custom WASM decrees from config
     if let Some(ref config) = decree_config {
         for (name, settings) in &config.decree {
@@ -61,9 +58,13 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
     }
 
     // Load any additional decrees from CLI
+    #[cfg(feature = "wasm-loader")]
     for p in &args.plugin {
         regime.add_wasm_decree(p)?;
     }
+
+    // Extensions actually covered by loaded decrees (empty/None = watch all)
+    let watched_exts = regime.watched_extensions();
 
     let (tx, rx) = mpsc::channel();
     let mut watcher: RecommendedWatcher =

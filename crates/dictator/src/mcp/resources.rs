@@ -1,10 +1,10 @@
 //! MCP resource handlers for dictator.
 
+use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 
-use super::protocol::{JsonRpcError, JsonRpcResponse};
-use super::state::{CONFIG_FILE, ServerState};
+use super::state::{ServerState, CONFIG_FILE};
 
 /// URI for the config resource
 pub const CONFIG_URI: &str = "dictator://config";
@@ -31,6 +31,7 @@ const NATIVE_DECREES: &[(&str, &[&str], &[&str])] = &[
 ];
 
 /// Handle resources/list request
+#[allow(dead_code)]
 pub fn handle_list_resources(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> JsonRpcResponse {
     let config_exists = {
         let mut state = watcher_state.lock().unwrap();

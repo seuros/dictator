@@ -16,6 +16,7 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
+async-trait = "0.1"
 clap = { workspace = true }
 camino = { workspace = true }
 dictator-core = { version = "0.14.0", path = "../dictator-core" }
@@ -27,6 +28,7 @@ dictator-ruby = { version = "0.14.0", path = "../dictator-ruby" }
 dictator-rust = { version = "0.14.0", path = "../dictator-rust" }
 dictator-supreme = { version = "0.14.0", path = "../dictator-supreme" }
 dictator-typescript = { version = "0.14.0", path = "../dictator-typescript" }
+mcp-host = "0.0.3"
 walkdir = { workspace = true }
 ignore = { workspace = true }
 tracing = { workspace = true }
