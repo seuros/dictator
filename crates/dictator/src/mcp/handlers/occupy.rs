@@ -1,10 +1,10 @@
 //! Occupy tool handler for initializing .dictate.toml.
 
+use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 
-use crate::mcp::protocol::{JsonRpcError, JsonRpcResponse};
 use crate::mcp::state::ServerState;
 
 const DEFAULT_CONFIG: &str = include_str!("../../../templates/default.dictate.toml");

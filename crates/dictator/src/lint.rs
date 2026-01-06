@@ -59,6 +59,7 @@ pub fn run_once(args: LintArgs, config_path: Option<Utf8PathBuf>) -> Result<()> 
     }
 
     // Load any additional decrees from CLI
+    #[cfg(feature = "wasm-loader")]
     for p in &args.plugin {
         regime.add_wasm_decree(p)?;
     }

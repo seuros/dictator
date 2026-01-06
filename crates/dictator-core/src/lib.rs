@@ -95,10 +95,16 @@ impl Regime {
     ///
     /// Returns an error if the file cannot be loaded, if it's not a valid WASM/native decree,
     /// or if the decree's ABI version is incompatible with the host.
+    #[cfg(feature = "wasm-loader")]
     pub fn add_wasm_decree<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<()> {
         let decree = loader::load_decree(path.as_ref())?;
         self.decrees.push(decree);
         Ok(())
+    }
+
+    #[cfg(not(feature = "wasm-loader"))]
+    pub fn add_wasm_decree<P: AsRef<std::path::Path>>(&mut self, _path: P) -> Result<()> {
+        anyhow::bail!("WASM loader disabled; enable the `wasm-loader` feature to load decrees");
     }
 
     /// Enforce all decrees over provided sources.
@@ -227,6 +233,7 @@ impl Regime {
     }
 }
 
+#[cfg(feature = "wasm-loader")]
 mod loader {
     use anyhow::{Context, Result};
     use dictator_decree_abi::{BoxDecree, Diagnostics, Span};

@@ -13,6 +13,7 @@ mod dictate;
 mod files;
 mod lint;
 mod mcp;
+mod mcp_host;
 mod occupy;
 mod output;
 mod regime;
@@ -41,7 +42,7 @@ fn main() -> Result<()> {
             .with_writer(std::io::stderr)
             .with_ansi(false)
             .init();
-        return mcp::run();
+        return mcp_host::run();
     }
 
     tracing_subscriber::fmt::init();
@@ -53,6 +54,6 @@ fn main() -> Result<()> {
         Command::Watch(watch) => run_watch(watch, config),
         Command::Census(census) => run_census(census, config),
         Command::Occupy(occupy) => run_occupy(occupy),
-        Command::Mcp => mcp::run(),
+        Command::Mcp => mcp_host::run(),
     }
 }

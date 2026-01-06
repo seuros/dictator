@@ -1,5 +1,6 @@
 //! Watch/unwatch tool handlers for file monitoring.
 
+use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use notify::{RecursiveMode, Watcher};
 use notify_types::event::Event;
 use serde::Deserialize;
@@ -8,7 +9,6 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
-use crate::mcp::protocol::{JsonRpcError, JsonRpcResponse};
 use crate::mcp::state::ServerState;
 use crate::mcp::utils::is_within_cwd;
 

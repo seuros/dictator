@@ -1,12 +1,12 @@
 //! Auto-fix handlers for MCP tools.
 
+use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::sync::{Arc, Mutex};
 
-use super::protocol::{JsonRpcError, JsonRpcResponse};
 use super::state::ServerState;
 use super::utils::collect_files;
 
