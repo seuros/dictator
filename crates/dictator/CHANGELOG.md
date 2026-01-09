@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.15.0](https://github.com/seuros/dictator/compare/dictator-v0.14.0...dictator-v0.15.0) (2026-01-09)
+
+
+### Features
+
+* consolidate MCP infrastructure using mcp-host 0.0.3 ([#23](https://github.com/seuros/dictator/issues/23)) ([2525967](https://github.com/seuros/dictator/commit/252596706a01cd9bc072756060db40199b3817cb))
+* the Dictator decrees dynamic visibility and MCP prompts ([#25](https://github.com/seuros/dictator/issues/25)) ([9cafd62](https://github.com/seuros/dictator/commit/9cafd62853ff53398c86080ad693c93279dc041d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.14.0 to 0.15.0
+    * dictator-frontmatter bumped from 0.14.0 to 0.15.0
+    * dictator-golang bumped from 0.14.0 to 0.15.0
+    * dictator-decree-abi bumped from 0.14.0 to 0.15.0
+    * dictator-python bumped from 0.14.0 to 0.15.0
+    * dictator-ruby bumped from 0.14.0 to 0.15.0
+    * dictator-rust bumped from 0.14.0 to 0.15.0
+    * dictator-supreme bumped from 0.14.0 to 0.15.0
+    * dictator-typescript bumped from 0.14.0 to 0.15.0
+
 ## [0.14.0](https://github.com/seuros/dictator/compare/dictator-v0.13.0...dictator-v0.14.0) (2025-12-30)
 
 
