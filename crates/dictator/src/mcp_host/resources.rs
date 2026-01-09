@@ -1,25 +1,32 @@
-//! Resource implementations using mcp-host framework
+//! Resource implementations with dynamic visibility based on config state
 
 use async_trait::async_trait;
 use mcp_host::prelude::*;
 use std::sync::{Arc, Mutex};
 
+use super::config_exists;
 use crate::mcp::resources::{handle_read_resource, CONFIG_URI, CENSUS_URI};
 use crate::mcp::state::ServerState;
 
 /// Config resource - .dictate.toml configuration
 pub struct ConfigResource {
-    pub state: Arc<Mutex<ServerState>>,
+    state: Arc<Mutex<ServerState>>,
+}
+
+impl ConfigResource {
+    pub fn new(state: Arc<Mutex<ServerState>>) -> Self {
+        Self { state }
+    }
 }
 
 #[async_trait]
 impl Resource for ConfigResource {
-    fn uri(&self) -> &str {
-        CONFIG_URI
+    fn name(&self) -> &str {
+        "Config"
     }
 
-    fn name(&self) -> &'static str {
-        "Config"
+    fn uri(&self) -> &str {
+        CONFIG_URI
     }
 
     fn description(&self) -> Option<&str> {
@@ -30,7 +37,12 @@ impl Resource for ConfigResource {
         Some("application/json")
     }
 
-    async fn read(&self, _ctx: ExecutionContext<'_>) -> Result<Vec<ResourceContent>, ResourceError> {
+    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
+        config_exists()
+    }
+
+    async fn read(&self, _ctx: ExecutionContext<'_>) -> Result<Vec<ResourceContent>, ResourceError>
+    {
         let params = serde_json::json!({"uri": CONFIG_URI});
         let response = handle_read_resource(
             serde_json::Value::Null,
@@ -46,7 +58,6 @@ impl Resource for ConfigResource {
             ResourceError::Read("No result from config resource handler".to_string())
         })?;
 
-        // Extract text from contents array with safe navigation
         let text = result
             .get("contents")
             .and_then(|c| c.get(0))
@@ -61,17 +72,23 @@ impl Resource for ConfigResource {
 
 /// Census resource - list of available decrees
 pub struct CensusResource {
-    pub state: Arc<Mutex<ServerState>>,
+    state: Arc<Mutex<ServerState>>,
+}
+
+impl CensusResource {
+    pub fn new(state: Arc<Mutex<ServerState>>) -> Self {
+        Self { state }
+    }
 }
 
 #[async_trait]
 impl Resource for CensusResource {
-    fn uri(&self) -> &str {
-        CENSUS_URI
+    fn name(&self) -> &str {
+        "Census"
     }
 
-    fn name(&self) -> &'static str {
-        "Census"
+    fn uri(&self) -> &str {
+        CENSUS_URI
     }
 
     fn description(&self) -> Option<&str> {
@@ -82,7 +99,12 @@ impl Resource for CensusResource {
         Some("application/json")
     }
 
-    async fn read(&self, _ctx: ExecutionContext<'_>) -> Result<Vec<ResourceContent>, ResourceError> {
+    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
+        config_exists()
+    }
+
+    async fn read(&self, _ctx: ExecutionContext<'_>) -> Result<Vec<ResourceContent>, ResourceError>
+    {
         let params = serde_json::json!({"uri": CENSUS_URI});
         let response = handle_read_resource(
             serde_json::Value::Null,
@@ -98,7 +120,6 @@ impl Resource for CensusResource {
             ResourceError::Read("No result from census resource handler".to_string())
         })?;
 
-        // Extract text from contents array with safe navigation
         let text = result
             .get("contents")
             .and_then(|c| c.get(0))
