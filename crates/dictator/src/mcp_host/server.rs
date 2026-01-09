@@ -6,12 +6,15 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::mpsc;
 
-use crate::mcp::state::{CONFIG_FILE, STALINT_CHECK_TIMEOUT_SECS, ServerState, WATCHER_CHECK_INTERVAL_SECS};
+use crate::mcp::state::{
+    ServerState, CONFIG_FILE, STALINT_CHECK_TIMEOUT_SECS, WATCHER_CHECK_INTERVAL_SECS,
+};
 use crate::mcp::regime::run_stalint_check;
 use crate::mcp::utils::log_to_file;
 
-use super::tools::{StalintTool, DictatorTool, StalintWatchTool, OccupyTool};
-use super::resources::{ConfigResource, CensusResource};
+use super::prompts::{ExplainViolationPrompt, OnboardPrompt, PreCommitPrompt};
+use super::resources::{CensusResource, ConfigResource};
+use super::tools::{DictatorTool, OccupyTool, StalintTool, StalintWatchTool};
 
 /// Run the MCP server with mcp-host framework
 pub fn run() -> Result<()> {
@@ -40,62 +43,43 @@ async fn run_async() -> Result<()> {
     // Create shared state with proper notification channel
     let watcher_state = Arc::new(Mutex::new(ServerState::new(notification_tx.clone())));
 
-    // Check if .dictate.toml exists
-    let config_path = std::env::current_dir()
-        .unwrap_or_default()
-        .join(CONFIG_FILE);
-    let config_exists = config_path.exists();
+    // Register all tools - visibility controlled by is_visible()
+    server.tool_registry().register(StalintTool {
+        state: Arc::clone(&watcher_state),
+    });
+    server.tool_registry().register(DictatorTool {
+        state: Arc::clone(&watcher_state),
+    });
+    server.tool_registry().register(StalintWatchTool {
+        state: Arc::clone(&watcher_state),
+        notification_tx: notification_tx.clone(),
+    });
+    server.tool_registry().register(OccupyTool {
+        state: Arc::clone(&watcher_state),
+        notification_tx: notification_tx.clone(),
+    });
 
-    // Dynamic tool registration based on configuration state
-    if config_exists {
-        // Configuration exists - register linting tools
-        server.tool_registry().register(StalintTool {
-            state: Arc::clone(&watcher_state),
-        });
+    // Register all resources - visibility controlled by is_visible()
+    server.resource_manager().register(ConfigResource::new(Arc::clone(&watcher_state)));
+    server.resource_manager().register(CensusResource::new(Arc::clone(&watcher_state)));
 
-        server.tool_registry().register(DictatorTool {
-            state: Arc::clone(&watcher_state),
-        });
-
-        // Register watch tool (unwatch will be swapped in dynamically)
-        server.tool_registry().register(StalintWatchTool {
-            state: Arc::clone(&watcher_state),
-            notification_tx: notification_tx.clone(),
-        });
-    } else {
-        // No configuration - only show occupy tool
-        server.tool_registry().register(OccupyTool {
-            state: Arc::clone(&watcher_state),
-            notification_tx: notification_tx.clone(),
-        });
-    }
-
-    // Register resources - conditional on config existence
-    let config_exists = {
-        let mut state = watcher_state.lock().unwrap();
-        state.ensure_config_loaded();
-        state.config.is_some()
-    };
-
-    if config_exists {
-        server.resource_manager().register(ConfigResource {
-            state: Arc::clone(&watcher_state),
-        });
-
-        server.resource_manager().register(CensusResource {
-            state: Arc::clone(&watcher_state),
-        });
-    }
+    // Register all prompts - visibility controlled by is_visible()
+    server.prompt_manager().register(OnboardPrompt::new(Arc::clone(&watcher_state)));
+    server.prompt_manager().register(PreCommitPrompt::new(Arc::clone(&watcher_state)));
+    server.prompt_manager().register(ExplainViolationPrompt::new(Arc::clone(&watcher_state)));
 
     // Update capabilities
     let caps = ServerCapabilities {
         tools: Some(mcp_host::protocol::capabilities::ToolsCapability {
-            list_changed: Some(true), // Tools change based on sandbox mode
+            list_changed: Some(true),
         }),
         resources: Some(mcp_host::protocol::capabilities::ResourcesCapability {
             subscribe: Some(false),
-            list_changed: Some(true), // Resources change when config changes
+            list_changed: Some(true),
             list_templates: Some(false),
+        }),
+        prompts: Some(mcp_host::protocol::capabilities::PromptsCapability {
+            list_changed: Some(true),
         }),
         ..Default::default()
     };
@@ -113,7 +97,10 @@ async fn run_async() -> Result<()> {
 }
 
 /// Background loop that watches .dictate.toml for changes
-fn start_config_watcher(state: Arc<Mutex<ServerState>>, notif_tx: mpsc::UnboundedSender<JsonRpcNotification>) {
+fn start_config_watcher(
+    state: Arc<Mutex<ServerState>>,
+    notif_tx: mpsc::UnboundedSender<JsonRpcNotification>,
+) {
     tokio::spawn(async move {
         use notify::{RecursiveMode, Watcher};
 
@@ -178,24 +165,33 @@ fn start_config_watcher(state: Arc<Mutex<ServerState>>, notif_tx: mpsc::Unbounde
                 };
                 let _ = notif_tx.send(tools_notification);
 
-                // Send resources/updated notification
+                // Send resources/list_changed notification
                 let resources_notification = JsonRpcNotification {
                     jsonrpc: "2.0".to_string(),
-                    method: "notifications/resources/updated".to_string(),
-                    params: Some(serde_json::json!({
-                        "uri": "dictate://config"
-                    })),
+                    method: "notifications/resources/list_changed".to_string(),
+                    params: Some(serde_json::json!({})),
                 };
                 let _ = notif_tx.send(resources_notification);
 
-                log_to_file("Config changed: sent tools/list_changed and resources/updated");
+                // Send prompts/list_changed notification
+                let prompts_notification = JsonRpcNotification {
+                    jsonrpc: "2.0".to_string(),
+                    method: "notifications/prompts/list_changed".to_string(),
+                    params: Some(serde_json::json!({})),
+                };
+                let _ = notif_tx.send(prompts_notification);
+
+                log_to_file("Config changed: sent list_changed for tools/resources/prompts");
             }
         }
     });
 }
 
 /// Background loop that checks watched paths
-fn start_watcher_check_loop(state: Arc<Mutex<ServerState>>, notif_tx: mpsc::UnboundedSender<JsonRpcNotification>) {
+fn start_watcher_check_loop(
+    state: Arc<Mutex<ServerState>>,
+    notif_tx: mpsc::UnboundedSender<JsonRpcNotification>,
+) {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(WATCHER_CHECK_INTERVAL_SECS)).await;

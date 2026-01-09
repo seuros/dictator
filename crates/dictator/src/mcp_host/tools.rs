@@ -1,4 +1,4 @@
-//! Tool implementations using mcp-host framework
+//! Tool implementations with dynamic visibility based on config state
 
 use async_trait::async_trait;
 use mcp_host::prelude::*;
@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 
+use super::config_exists;
 use crate::mcp::handlers::{
     handle_dictator, handle_occupy, handle_stalint, handle_stalint_unwatch, handle_stalint_watch,
 };
@@ -18,7 +19,7 @@ pub struct StalintTool {
 
 #[async_trait]
 impl Tool for StalintTool {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "stalint"
     }
 
@@ -29,22 +30,13 @@ impl Tool for StalintTool {
     fn input_schema(&self) -> Value {
         serde_json::json!({
             "type": "object",
-            "properties": {
-                "paths": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "File or directory paths to check"
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "Maximum violations to return per page (default: 100)"
-                },
-                "cursor": {
-                    "type": "string",
-                    "description": "Pagination cursor from previous response"
-                }
-            }
+            "properties": {},
+            "required": []
         })
+    }
+
+    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
+        config_exists()
     }
 
     async fn execute(&self, ctx: ExecutionContext<'_>) -> Result<Vec<Box<dyn Content>>, ToolError> {
@@ -70,7 +62,7 @@ pub struct DictatorTool {
 
 #[async_trait]
 impl Tool for DictatorTool {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "dictator"
     }
 
@@ -81,19 +73,16 @@ impl Tool for DictatorTool {
     fn input_schema(&self) -> Value {
         serde_json::json!({
             "type": "object",
-            "properties": {
-                "paths": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "File or directory paths to fix"
-                }
-            },
-            "required": ["paths"]
+            "properties": {},
+            "required": []
         })
     }
 
+    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
+        config_exists()
+    }
+
     async fn execute(&self, ctx: ExecutionContext<'_>) -> Result<Vec<Box<dyn Content>>, ToolError> {
-        // Check write permission
         let can_write = self.state.lock().unwrap().can_write;
         if !can_write {
             return Err(ToolError::Execution(
@@ -124,7 +113,7 @@ pub struct StalintWatchTool {
 
 #[async_trait]
 impl Tool for StalintWatchTool {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "stalint_watch"
     }
 
@@ -135,30 +124,24 @@ impl Tool for StalintWatchTool {
     fn input_schema(&self) -> Value {
         serde_json::json!({
             "type": "object",
-            "properties": {
-                "paths": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Paths to watch"
-                }
-            },
-            "required": ["paths"]
+            "properties": {},
+            "required": []
         })
     }
 
+    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
+        config_exists()
+    }
+
     async fn execute(&self, ctx: ExecutionContext<'_>) -> Result<Vec<Box<dyn Content>>, ToolError> {
-        // Log the operation
         ctx.logger.info("Starting path watch...");
 
-        // Convert mcp-host notification channel to old-style string channel
         let (string_tx, mut string_rx) = tokio::sync::mpsc::channel::<String>(100);
 
-        // Spawn task to convert string notifications to JsonRpcNotification
         let notification_tx = self.notification_tx.clone();
         tokio::spawn(async move {
             while let Some(notif_str) = string_rx.recv().await {
                 if let Ok(notif) = serde_json::from_str::<JsonRpcNotification>(&notif_str) {
-                    // Break if downstream channel is closed to prevent resource leak
                     if notification_tx.send(notif).is_err() {
                         break;
                     }
@@ -201,7 +184,7 @@ pub struct StalintUnwatchTool {
 
 #[async_trait]
 impl Tool for StalintUnwatchTool {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "stalint_unwatch"
     }
 
@@ -211,12 +194,17 @@ impl Tool for StalintUnwatchTool {
 
     fn input_schema(&self) -> Value {
         serde_json::json!({
-            "type": "object"
+            "type": "object",
+            "properties": {},
+            "required": []
         })
     }
 
+    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
+        config_exists()
+    }
+
     async fn execute(&self, ctx: ExecutionContext<'_>) -> Result<Vec<Box<dyn Content>>, ToolError> {
-        // Log the operation
         ctx.logger.info("Stopping path watch...");
 
         let (string_tx, mut string_rx) = tokio::sync::mpsc::channel::<String>(100);
@@ -225,7 +213,6 @@ impl Tool for StalintUnwatchTool {
         tokio::spawn(async move {
             while let Some(notif_str) = string_rx.recv().await {
                 if let Ok(notif) = serde_json::from_str::<JsonRpcNotification>(&notif_str) {
-                    // Break if downstream channel is closed to prevent resource leak
                     if notification_tx.send(notif).is_err() {
                         break;
                     }
@@ -264,7 +251,7 @@ pub struct OccupyTool {
 
 #[async_trait]
 impl Tool for OccupyTool {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         "occupy"
     }
 
@@ -274,8 +261,14 @@ impl Tool for OccupyTool {
 
     fn input_schema(&self) -> Value {
         serde_json::json!({
-            "type": "object"
+            "type": "object",
+            "properties": {},
+            "required": []
         })
+    }
+
+    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
+        !config_exists()
     }
 
     async fn execute(&self, ctx: ExecutionContext<'_>) -> Result<Vec<Box<dyn Content>>, ToolError> {
@@ -294,7 +287,6 @@ impl Tool for OccupyTool {
         tokio::spawn(async move {
             while let Some(notif_str) = string_rx.recv().await {
                 if let Ok(notif) = serde_json::from_str::<JsonRpcNotification>(&notif_str) {
-                    // Break if downstream channel is closed to prevent resource leak
                     if notification_tx.send(notif).is_err() {
                         break;
                     }
