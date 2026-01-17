@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.16.0](https://github.com/seuros/dictator/compare/dictator-v0.15.0...dictator-v0.16.0) (2026-01-17)
+
+
+### Features
+
+* wasm caching ([#26](https://github.com/seuros/dictator/issues/26)) ([98b2812](https://github.com/seuros/dictator/commit/98b2812dab098888aa69befda60dd5219d499336))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.15.0 to 0.16.0
+    * dictator-frontmatter bumped from 0.15.0 to 0.16.0
+    * dictator-golang bumped from 0.15.0 to 0.16.0
+    * dictator-decree-abi bumped from 0.15.0 to 0.16.0
+    * dictator-python bumped from 0.15.0 to 0.16.0
+    * dictator-ruby bumped from 0.15.0 to 0.16.0
+    * dictator-rust bumped from 0.15.0 to 0.16.0
+    * dictator-supreme bumped from 0.15.0 to 0.16.0
+    * dictator-typescript bumped from 0.15.0 to 0.16.0
+
 ## [0.15.0](https://github.com/seuros/dictator/compare/dictator-v0.14.0...dictator-v0.15.0) (2026-01-09)
 
 
