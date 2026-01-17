@@ -22,6 +22,7 @@ tracing = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 toml = { workspace = true }
+dashmap = { workspace = true }
 wasmtime = { workspace = true, optional = true, features = ["component-model"] }
 wasmtime-wasi = { workspace = true, optional = true }
 libloading = { workspace = true, optional = true }
@@ -29,3 +30,6 @@ libloading = { workspace = true, optional = true }
 [features]
 default = ["wasm-loader"]
 wasm-loader = ["wasmtime", "wasmtime-wasi", "libloading"]
+
+[dev-dependencies]
+tempfile = { workspace = true }

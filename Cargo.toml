@@ -18,8 +18,8 @@ resolver = "2"
 
 [workspace.package]
 edition = "2024"
-rust-version = "1.85"
-authors = ["Abdelkader Boudih <terminale@gmail.com>"]
+rust-version = "1.92"
+authors = ["Abdelkader Boudih <oss@seuros.com>"]
 license = "MIT"
 repository = "https://github.com/seuros/dictator"
 homepage = "https://github.com/seuros/dictator"
@@ -63,8 +63,6 @@ unused_must_use = "warn"
 
 [workspace.lints.clippy]
 all = "warn"
-pedantic = "warn"
-nursery = "warn"
 
 [workspace.metadata]
 # Placeholder for tool config.

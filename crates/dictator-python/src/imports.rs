@@ -59,7 +59,8 @@ pub fn check_import_ordering(source: &str, diags: &mut Diagnostics) {
                 diags.push(Diagnostic {
                     rule: "python/import-order".to_string(),
                     message: format!(
-                        "Import order violation: {import_type:?} import after {last_type:?} import. Expected order: stdlib -> third_party -> local"
+                        "Import order violation: {import_type:?} import after \
+                         {last_type:?} import. Expected: stdlib -> third_party -> local"
                     ),
                     enforced: false,
                     span: Span::new(*start, *end),

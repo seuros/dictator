@@ -1,14 +1,20 @@
 #![warn(rust_2024_compatibility, clippy::all)]
 
 pub mod config;
+mod decree_matching;
+pub mod error;
 pub mod linter_output;
+mod rule_ignoring;
+pub mod wasm_cache;
 
 use anyhow::Result;
 use camino::Utf8Path;
-use dictator_decree_abi::{BoxDecree, Diagnostic, Diagnostics};
-use std::collections::{HashMap, HashSet};
+use dictator_decree_abi::{BoxDecree, Diagnostics};
+use std::collections::HashSet;
 
 pub use config::{DecreeSettings, DictateConfig};
+pub use error::{DictatorContext, DictatorError, suggestions};
+pub use wasm_cache::WasmCacheStats;
 
 /// In-memory source file for the Regime to enforce.
 pub struct Source<'a> {
@@ -19,7 +25,7 @@ pub struct Source<'a> {
 /// The Regime: owns decree instances and enforces them over sources.
 pub struct Regime {
     decrees: Vec<BoxDecree>,
-    rule_ignores: HashMap<String, HashMap<String, config::RuleIgnore>>,
+    rule_ignores: rule_ignoring::RuleIgnores,
 }
 
 impl Default for Regime {
@@ -33,7 +39,23 @@ impl Regime {
     pub fn new() -> Self {
         Self {
             decrees: Vec::new(),
-            rule_ignores: HashMap::new(),
+            rule_ignores: rule_ignoring::RuleIgnores::new(),
+        }
+    }
+
+    /// Get WASM cache statistics if available
+    #[must_use]
+    pub fn wasm_cache_stats(&self) -> Option<WasmCacheStats> {
+        #[cfg(feature = "wasm-loader")]
+        {
+            use loader::get_wasm_engine_cache;
+            let (_, cache) = get_wasm_engine_cache();
+            Some(cache.stats())
+        }
+        #[cfg(not(feature = "wasm-loader"))]
+        {
+            let _ = self; // suppress unused variable warning
+            None
         }
     }
 
@@ -48,23 +70,8 @@ impl Regime {
     }
 
     /// Configure per-rule ignores from a loaded `.dictate.toml`.
-    ///
-    /// Ignores are keyed by decree name (`decree.<name>`) and rule name (the
-    /// portion after `{decree}/` in diagnostic rule identifiers).
     pub fn set_rule_ignores_from_config(&mut self, config: Option<&DictateConfig>) {
-        self.rule_ignores.clear();
-
-        let Some(cfg) = config else {
-            return;
-        };
-
-        for (decree_name, settings) in &cfg.decree {
-            if settings.ignore.is_empty() {
-                continue;
-            }
-            self.rule_ignores
-                .insert(decree_name.clone(), settings.ignore.clone());
-        }
+        self.rule_ignores = rule_ignoring::build_rule_ignores(config);
     }
 
     /// Return the union of supported extensions for all loaded decrees.
@@ -125,7 +132,7 @@ impl Regime {
 
             // CSS-style specificity: if a language-specific decree is present for this file
             // type, do not run the catch-all decree.supreme on this file.
-            let is_supreme_shadowed = self.is_supreme_shadowed(src.path);
+            let is_supreme_shadowed = decree_matching::is_supreme_shadowed(&self.decrees, src.path);
 
             for decree in &self.decrees {
                 let meta = decree.metadata();
@@ -136,7 +143,7 @@ impl Regime {
                 }
 
                 // Check if decree matches this file
-                let matches = Self::decree_matches(src.path, &meta);
+                let matches = decree_matching::decree_matches(src.path, &meta);
                 if !matches {
                     continue;
                 }
@@ -150,7 +157,8 @@ impl Regime {
 
                 let diags = decree.lint(src.path.as_str(), src.text);
                 for diag in diags {
-                    if self.is_rule_ignored_for_path(src.path, &diag) {
+                    let ignores = &self.rule_ignores;
+                    if rule_ignoring::is_rule_ignored_for_path(ignores, src.path, &diag) {
                         continue;
                     }
                     all.push(diag);
@@ -159,94 +167,40 @@ impl Regime {
         }
         Ok(all)
     }
-
-    /// Check if a decree matches a file (by extension or filename).
-    fn decree_matches(path: &Utf8Path, meta: &dictator_decree_abi::DecreeMetadata) -> bool {
-        let filename = path.file_name().unwrap_or("");
-
-        // Universal decree (empty lists) matches everything
-        if meta.supported_extensions.is_empty() && meta.supported_filenames.is_empty() {
-            return true;
-        }
-
-        // Check filename match
-        if meta.supported_filenames.iter().any(|s| s == filename) {
-            return true;
-        }
-
-        // Check extension match
-        Self::extension_matches(path, &meta.supported_extensions)
-    }
-
-    /// Check if a file's extension matches any in the supported list.
-    fn extension_matches(path: &Utf8Path, supported: &[String]) -> bool {
-        path.extension()
-            .is_some_and(|ext| supported.iter().any(|s| s == ext))
-    }
-
-    fn is_supreme_shadowed(&self, path: &Utf8Path) -> bool {
-        // Only language-specific decrees shadow decree.supreme. Other decrees (e.g. frontmatter
-        // or custom plugins) remain additive and run alongside supreme.
-        const SHADOWERS: [&str; 5] = ["ruby", "typescript", "golang", "rust", "python"];
-
-        self.decrees.iter().any(|decree| {
-            let name = decree.name();
-            if !SHADOWERS.contains(&name) {
-                return false;
-            }
-
-            let meta = decree.metadata();
-
-            // Check if this shadower handles this file
-            Self::decree_matches(path, &meta)
-        })
-    }
-
-    fn is_rule_ignored_for_path(&self, path: &Utf8Path, diag: &Diagnostic) -> bool {
-        if self.rule_ignores.is_empty() {
-            return false;
-        }
-
-        let Some((decree, rule_name)) = diag.rule.split_once('/') else {
-            return false;
-        };
-
-        let Some(rules) = self.rule_ignores.get(decree) else {
-            return false;
-        };
-        let Some(ignore) = rules.get(rule_name) else {
-            return false;
-        };
-
-        let filename = path.file_name().unwrap_or("");
-        if ignore.filenames.iter().any(|f| f == filename) {
-            return true;
-        }
-
-        let Some(ext) = path.extension() else {
-            return false;
-        };
-        ignore
-            .extensions
-            .iter()
-            .any(|e| e.eq_ignore_ascii_case(ext))
-    }
 }
 
 #[cfg(feature = "wasm-loader")]
-mod loader {
+pub(crate) mod loader {
+    use crate::wasm_cache::WasmCache;
     use anyhow::{Context, Result};
     use dictator_decree_abi::{BoxDecree, Diagnostics, Span};
     use libloading::Library;
     use std::path::Path;
-    use std::sync::Mutex;
-    use wasmtime::component::{Component, Linker, ResourceTable};
-    use wasmtime::{Config, Engine, Store};
+    use std::sync::{Arc, Mutex, OnceLock};
+
+    use wasmtime::component::{Linker, ResourceTable};
+    use wasmtime::{Engine, Store};
     use wasmtime_wasi::p2::add_to_linker_sync;
     use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiCtxView, WasiView};
 
     mod bindings {
         wasmtime::component::bindgen!({ path: "wit/decree.wit", world: "decree" });
+    }
+
+    /// Global WASM engine and cache instance
+    static WASM_ENGINE_CACHE: OnceLock<(Engine, Arc<WasmCache>)> = OnceLock::new();
+
+    /// Get or create the global WASM engine and cache
+    pub fn get_wasm_engine_cache() -> (Engine, Arc<WasmCache>) {
+        WASM_ENGINE_CACHE
+            .get_or_init(|| {
+                let mut config = wasmtime::Config::new();
+                config.wasm_component_model(true);
+                let engine = Engine::new(&config).expect("Failed to create WASM engine");
+                let cache = Arc::new(WasmCache::new().expect("Failed to create WASM cache"));
+                (engine, cache)
+            })
+            .clone()
     }
 
     /// Load a decree compiled as a native dynamic library (.dylib/.so/.dll).
@@ -373,11 +327,11 @@ mod loader {
     fn load_wasm(lib_path: &Path) -> Result<BoxDecree> {
         use dictator_decree_abi::ABI_VERSION;
 
-        let mut config = Config::new();
-        config.wasm_component_model(true);
-        let engine = Engine::new(&config)?;
-        let component = Component::from_file(&engine, lib_path)
-            .with_context(|| format!("failed to load wasm decree: {}", lib_path.display()))?;
+        let (engine, cache) = get_wasm_engine_cache();
+        let component = cache.get_or_load(lib_path).with_context(|| {
+            format!("failed to load cached wasm decree: {}", lib_path.display())
+        })?;
+
         let mut linker: Linker<HostState> = Linker::new(&engine);
         add_to_linker_sync(&mut linker)?;
         let host_state = HostState {
@@ -422,9 +376,15 @@ mod loader {
                 .collect(),
         };
 
-        metadata
-            .validate_abi(ABI_VERSION)
-            .map_err(|e| anyhow::anyhow!("Decree '{}' from {}: {}", name, lib_path.display(), e))?;
+        metadata.validate_abi(ABI_VERSION).map_err(|_e| {
+            let path = lib_path.to_path_buf();
+            crate::DictatorError::WasmLoadError {
+                path,
+                abi_version: metadata.abi_version.clone(),
+                expected: ABI_VERSION.to_string(),
+                suggestion: crate::suggestions::wasm_suggestions("abi_mismatch").to_string(),
+            }
+        })?;
 
         tracing::info!(
             "Loaded WASM decree '{}' v{} (ABI {})",

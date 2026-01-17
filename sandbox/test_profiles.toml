@@ -1,0 +1,37 @@
+# Base configuration
+[decree.supreme]
+trailing_whitespace = "deny"
+tabs_vs_spaces = "spaces"
+tab_width = 2
+final_newline = "require"
+line_endings = "lf"
+
+[decree.ruby]
+max_lines = 300
+comment_spacing = true
+
+# Strict profile for CI
+[profile.strict]
+description = "Strict configuration for CI/CD"
+[profile.strict.decree.supreme]
+trailing_whitespace = "deny"
+tabs_vs_spaces = "spaces"
+tab_width = 2
+final_newline = "require"
+line_endings = "lf"
+max_line_length = 80
+
+[profile.strict.decree.ruby]
+max_lines = 200
+comment_spacing = true
+
+# Relaxed profile for development
+[profile.relaxed]
+description = "Relaxed configuration for development"
+inherits = "default"
+[profile.relaxed.decree.supreme]
+trailing_whitespace = "allow"
+max_line_length = 120
+
+[profile.relaxed.decree.ruby]
+max_lines = 500

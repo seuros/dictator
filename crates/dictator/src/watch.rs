@@ -19,7 +19,11 @@ use crate::regime::init_regime_for_watch;
 /// Controls how often we check if there are pending file changes.
 const WATCHER_RX_TIMEOUT_MS: u64 = 200;
 
-pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()> {
+pub fn run_watch(
+    args: WatchArgs,
+    config_path: Option<Utf8PathBuf>,
+    profile: Option<String>,
+) -> Result<()> {
     let cfg = load_config(config_path.as_ref())?;
     let format = if args.json {
         OutputFormat::Json
@@ -28,11 +32,22 @@ pub fn run_watch(args: WatchArgs, config_path: Option<Utf8PathBuf>) -> Result<()
     };
 
     // Load decree configuration (with validation)
-    let decree_config = if let Some(p) = config_path.as_ref() {
+    let mut decree_config = if let Some(p) = config_path.as_ref() {
         Some(dictator_core::DictateConfig::from_file(p.as_std_path())?)
     } else {
         dictator_core::DictateConfig::load_default_strict()?
     };
+
+    // Apply profile if specified
+    if let Some(ref config) = decree_config
+        && let Some(ref profile_name) = profile
+    {
+        decree_config = Some(
+            config
+                .get_profile_config(profile_name)
+                .map_err(|e| anyhow::anyhow!("Profile error: {e}"))?,
+        );
+    }
 
     // Load native decrees
     let mut regime = init_regime_for_watch(decree_config.as_ref());
