@@ -5,7 +5,7 @@ use mcp_host::prelude::*;
 use std::sync::{Arc, Mutex};
 
 use super::config_exists;
-use crate::mcp::resources::{handle_read_resource, CONFIG_URI, CENSUS_URI};
+use crate::mcp::resources::{CENSUS_URI, CONFIG_URI, handle_read_resource};
 use crate::mcp::state::ServerState;
 
 /// Config resource - .dictate.toml configuration
@@ -14,14 +14,14 @@ pub struct ConfigResource {
 }
 
 impl ConfigResource {
-    pub fn new(state: Arc<Mutex<ServerState>>) -> Self {
+    pub const fn new(state: Arc<Mutex<ServerState>>) -> Self {
         Self { state }
     }
 }
 
 #[async_trait]
 impl Resource for ConfigResource {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Config"
     }
 
@@ -41,8 +41,10 @@ impl Resource for ConfigResource {
         config_exists()
     }
 
-    async fn read(&self, _ctx: ExecutionContext<'_>) -> Result<Vec<ResourceContent>, ResourceError>
-    {
+    async fn read(
+        &self,
+        _ctx: ExecutionContext<'_>,
+    ) -> Result<Vec<ResourceContent>, ResourceError> {
         let params = serde_json::json!({"uri": CONFIG_URI});
         let response = handle_read_resource(
             serde_json::Value::Null,
@@ -76,14 +78,14 @@ pub struct CensusResource {
 }
 
 impl CensusResource {
-    pub fn new(state: Arc<Mutex<ServerState>>) -> Self {
+    pub const fn new(state: Arc<Mutex<ServerState>>) -> Self {
         Self { state }
     }
 }
 
 #[async_trait]
 impl Resource for CensusResource {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "Census"
     }
 
@@ -103,8 +105,10 @@ impl Resource for CensusResource {
         config_exists()
     }
 
-    async fn read(&self, _ctx: ExecutionContext<'_>) -> Result<Vec<ResourceContent>, ResourceError>
-    {
+    async fn read(
+        &self,
+        _ctx: ExecutionContext<'_>,
+    ) -> Result<Vec<ResourceContent>, ResourceError> {
         let params = serde_json::json!({"uri": CENSUS_URI});
         let response = handle_read_resource(
             serde_json::Value::Null,

@@ -1,0 +1,4 @@
+[decree.supreme]
+trailing_whitespace = "invalid_value"
+tabs_vs_spaces = "wrong_value"
+max_line_length = 9999

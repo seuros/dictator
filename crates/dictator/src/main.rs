@@ -11,6 +11,7 @@ mod cli;
 mod config;
 mod dictate;
 mod files;
+mod interactive;
 mod lint;
 mod mcp;
 mod mcp_host;
@@ -48,11 +49,12 @@ fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
     let config = args.config;
+    let profile = args.profile;
     match args.command {
-        Command::Lint(lint) => run_once(lint, config),
-        Command::Dictate(dictate) => run_dictate(dictate),
-        Command::Watch(watch) => run_watch(watch, config),
-        Command::Census(census) => run_census(census, config),
+        Command::Lint(lint) => run_once(lint, config, profile),
+        Command::Dictate(dictate) => run_dictate(dictate, config, profile),
+        Command::Watch(watch) => run_watch(watch, config, profile),
+        Command::Census(census) => run_census(census, config, profile),
         Command::Occupy(occupy) => run_occupy(occupy),
         Command::Mcp => mcp_host::run(),
     }

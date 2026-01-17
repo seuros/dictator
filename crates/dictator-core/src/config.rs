@@ -1,5 +1,6 @@
 //! Configuration loading for .dictate.toml
 
+use crate::error::{DictatorContext, suggestions};
 use garde::Validate;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -20,11 +21,32 @@ pub struct RuleIgnore {
     pub extensions: Vec<String>,
 }
 
+/// Configuration profile for different environments (strict, relaxed, etc.)
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct ProfileConfig {
+    /// Inherit from another profile (optional)
+    pub inherits: Option<String>,
+
+    /// Override decree settings for this profile
+    #[serde(default)]
+    pub decree: HashMap<String, DecreeSettings>,
+
+    /// Profile description
+    pub description: Option<String>,
+}
+
 /// Root configuration from .dictate.toml
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct DictateConfig {
     #[serde(default)]
     pub decree: HashMap<String, DecreeSettings>,
+
+    /// Configuration profiles for different environments
+    #[serde(default)]
+    pub profile: HashMap<String, ProfileConfig>,
+
+    /// Active profile (defaults to "default" if not specified)
+    pub active_profile: Option<String>,
 }
 
 /// Settings for a specific decree (language)
@@ -323,10 +345,22 @@ impl DictateConfig {
     /// Returns `ConfigError::Parse` if the TOML content is invalid.
     /// Returns `ConfigError::Validation` if decree settings fail validation.
     pub fn from_file(path: &std::path::Path) -> Result<Self, ConfigError> {
-        let content = std::fs::read_to_string(path).map_err(|e| ConfigError::Io(e.to_string()))?;
+        let path_buf = path.to_path_buf();
+        let content = std::fs::read_to_string(path)
+            .config_context(
+                path_buf.clone(),
+                None,
+                suggestions::config_suggestions("file_not_found"),
+            )
+            .map_err(|e| ConfigError::Io(e.to_string()))?;
 
-        let config: Self =
-            toml::from_str(&content).map_err(|e| ConfigError::Parse(e.to_string()))?;
+        let config: Self = toml::from_str(&content)
+            .config_context(
+                path_buf,
+                None,
+                suggestions::config_suggestions("invalid_toml"),
+            )
+            .map_err(|e| ConfigError::Parse(e.to_string()))?;
 
         // Validate all decree settings
         for (name, settings) in &config.decree {
@@ -365,6 +399,147 @@ impl DictateConfig {
         }
 
         Self::from_file(&config_path).map(Some)
+    }
+
+    /// Get the effective configuration for a specific profile
+    ///
+    /// This resolves profile inheritance and merges profile-specific settings
+    /// with the base configuration.
+    pub fn get_profile_config(&self, profile_name: &str) -> Result<Self, String> {
+        let mut result = self.clone();
+
+        // Start with the requested profile
+        let mut current_profile = profile_name;
+        let mut visited_profiles = std::collections::HashSet::new();
+
+        // Resolve profile inheritance chain
+        loop {
+            if !visited_profiles.insert(current_profile.to_string()) {
+                return Err(format!(
+                    "Circular profile inheritance detected involving '{current_profile}'"
+                ));
+            }
+
+            if let Some(profile) = self.profile.get(current_profile) {
+                // Merge profile decree settings
+                for (decree_name, profile_settings) in &profile.decree {
+                    if let Some(base_settings) = result.decree.get_mut(decree_name) {
+                        // Merge settings (profile overrides base)
+                        merge_decree_settings(base_settings, profile_settings);
+                    } else {
+                        // Add new decree settings from profile
+                        result
+                            .decree
+                            .insert(decree_name.clone(), profile_settings.clone());
+                    }
+                }
+
+                // Check if this profile inherits from another
+                if let Some(parent) = &profile.inherits {
+                    current_profile = parent;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        Ok(result)
+    }
+
+    /// Get the active profile configuration
+    #[must_use]
+    pub fn get_active_profile_config(&self) -> Self {
+        let profile_name = self.active_profile.as_deref().unwrap_or("default");
+
+        if self.profile.contains_key(profile_name) {
+            self.get_profile_config(profile_name).unwrap_or_else(|e| {
+                eprintln!(
+                    "Warning: Failed to resolve profile '{profile_name}': {e}. \
+                     Using base configuration."
+                );
+                self.clone()
+            })
+        } else {
+            // No active profile or profile doesn't exist, use base config
+            self.clone()
+        }
+    }
+}
+
+/// Merge profile settings into base settings (profile overrides base)
+fn merge_decree_settings(base: &mut DecreeSettings, profile: &DecreeSettings) {
+    // Override each field if profile provides a value
+    if profile.enabled.is_some() {
+        base.enabled = profile.enabled;
+    }
+    if profile.path.is_some() {
+        base.path.clone_from(&profile.path);
+    }
+    if profile.trailing_whitespace.is_some() {
+        base.trailing_whitespace
+            .clone_from(&profile.trailing_whitespace);
+    }
+    if profile.tabs_vs_spaces.is_some() {
+        base.tabs_vs_spaces.clone_from(&profile.tabs_vs_spaces);
+    }
+    if profile.tab_width.is_some() {
+        base.tab_width = profile.tab_width;
+    }
+    if profile.final_newline.is_some() {
+        base.final_newline.clone_from(&profile.final_newline);
+    }
+    if profile.line_endings.is_some() {
+        base.line_endings.clone_from(&profile.line_endings);
+    }
+    if profile.max_line_length.is_some() {
+        base.max_line_length = profile.max_line_length;
+    }
+    if profile.blank_line_whitespace.is_some() {
+        base.blank_line_whitespace
+            .clone_from(&profile.blank_line_whitespace);
+    }
+    if profile.max_lines.is_some() {
+        base.max_lines = profile.max_lines;
+    }
+    if profile.ignore_comments.is_some() {
+        base.ignore_comments = profile.ignore_comments;
+    }
+    if profile.ignore_blank_lines.is_some() {
+        base.ignore_blank_lines = profile.ignore_blank_lines;
+    }
+    if profile.method_visibility_order.is_some() {
+        base.method_visibility_order
+            .clone_from(&profile.method_visibility_order);
+    }
+    if profile.comment_spacing.is_some() {
+        base.comment_spacing = profile.comment_spacing;
+    }
+    if profile.import_order.is_some() {
+        base.import_order.clone_from(&profile.import_order);
+    }
+    if profile.visibility_order.is_some() {
+        base.visibility_order.clone_from(&profile.visibility_order);
+    }
+    if profile.min_edition.is_some() {
+        base.min_edition.clone_from(&profile.min_edition);
+    }
+    if profile.min_rust_version.is_some() {
+        base.min_rust_version.clone_from(&profile.min_rust_version);
+    }
+    if profile.order.is_some() {
+        base.order.clone_from(&profile.order);
+    }
+    if profile.required.is_some() {
+        base.required.clone_from(&profile.required);
+    }
+    if profile.linter.is_some() {
+        base.linter.clone_from(&profile.linter);
+    }
+    // Merge ignore rules (profile adds to base)
+    for (rule, ignore) in &profile.ignore {
+        base.ignore.insert(rule.clone(), ignore.clone());
     }
 }
 

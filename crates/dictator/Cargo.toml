@@ -41,6 +41,7 @@ notify = { workspace = true }
 notify-types = { workspace = true }
 ctrlc = { workspace = true }
 toml = { workspace = true }
+rayon = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

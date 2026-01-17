@@ -27,6 +27,10 @@ pub struct Args {
     #[arg(short, long, global = true)]
     pub config: Option<Utf8PathBuf>,
 
+    /// Configuration profile to use (e.g., strict, relaxed, ci)
+    #[arg(short = 'p', long, global = true)]
+    pub profile: Option<String>,
+
     #[command(subcommand)]
     pub command: Command,
 
@@ -78,6 +82,10 @@ pub struct LintArgs {
     #[arg(required = true)]
     pub paths: Vec<Utf8PathBuf>,
 
+    /// Auto-fix structural violations after linting
+    #[arg(short = 'f', long)]
+    pub fix: bool,
+
     /// Output JSON instead of human format
     #[arg(long)]
     pub json: bool,
@@ -93,6 +101,10 @@ pub struct DictateArgs {
     /// Files or directories to fix.
     #[arg(required = true)]
     pub paths: Vec<Utf8PathBuf>,
+
+    /// Interactive mode - review each fix before applying
+    #[arg(short, long)]
+    pub interactive: bool,
 }
 
 #[derive(Debug, Parser)]

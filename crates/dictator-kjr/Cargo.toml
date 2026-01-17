@@ -2,6 +2,7 @@
 name = "dictator-kjr"
 version = "0.60.0"
 edition = "2024"
+rust-version = "1.92"
 authors = ["Kim Jong Rails <kim@derails.dev>"]
 license = "GPL"  # Glorious People Licence
 publish = false

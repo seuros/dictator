@@ -16,14 +16,14 @@ pub struct OnboardPrompt {
 }
 
 impl OnboardPrompt {
-    pub fn new(state: Arc<Mutex<ServerState>>) -> Self {
+    pub const fn new(state: Arc<Mutex<ServerState>>) -> Self {
         Self { state }
     }
 }
 
 #[async_trait]
 impl Prompt for OnboardPrompt {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "onboard"
     }
 
@@ -70,14 +70,14 @@ pub struct PreCommitPrompt {
 }
 
 impl PreCommitPrompt {
-    pub fn new(state: Arc<Mutex<ServerState>>) -> Self {
+    pub const fn new(state: Arc<Mutex<ServerState>>) -> Self {
         Self { state }
     }
 }
 
 #[async_trait]
 impl Prompt for PreCommitPrompt {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "pre_commit"
     }
 
@@ -125,14 +125,14 @@ pub struct ExplainViolationPrompt {
 }
 
 impl ExplainViolationPrompt {
-    pub fn new(state: Arc<Mutex<ServerState>>) -> Self {
+    pub const fn new(state: Arc<Mutex<ServerState>>) -> Self {
         Self { state }
     }
 }
 
 #[async_trait]
 impl Prompt for ExplainViolationPrompt {
-    fn name(&self) -> &str {
+    fn name(&self) -> &'static str {
         "explain_violation"
     }
 
@@ -182,7 +182,7 @@ impl Prompt for ExplainViolationPrompt {
         };
 
         Ok(GetPromptResult {
-            description: Some(format!("Explanation: {}", violation_type)),
+            description: Some(format!("Explanation: {violation_type}")),
             messages: vec![PromptMessage::user(explanation)],
         })
     }

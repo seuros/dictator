@@ -6,10 +6,10 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::mpsc;
 
-use crate::mcp::state::{
-    ServerState, CONFIG_FILE, STALINT_CHECK_TIMEOUT_SECS, WATCHER_CHECK_INTERVAL_SECS,
-};
 use crate::mcp::regime::run_stalint_check;
+use crate::mcp::state::{
+    CONFIG_FILE, STALINT_CHECK_TIMEOUT_SECS, ServerState, WATCHER_CHECK_INTERVAL_SECS,
+};
 use crate::mcp::utils::log_to_file;
 
 use super::prompts::{ExplainViolationPrompt, OnboardPrompt, PreCommitPrompt};
@@ -60,13 +60,23 @@ async fn run_async() -> Result<()> {
     });
 
     // Register all resources - visibility controlled by is_visible()
-    server.resource_manager().register(ConfigResource::new(Arc::clone(&watcher_state)));
-    server.resource_manager().register(CensusResource::new(Arc::clone(&watcher_state)));
+    server
+        .resource_manager()
+        .register(ConfigResource::new(Arc::clone(&watcher_state)));
+    server
+        .resource_manager()
+        .register(CensusResource::new(Arc::clone(&watcher_state)));
 
     // Register all prompts - visibility controlled by is_visible()
-    server.prompt_manager().register(OnboardPrompt::new(Arc::clone(&watcher_state)));
-    server.prompt_manager().register(PreCommitPrompt::new(Arc::clone(&watcher_state)));
-    server.prompt_manager().register(ExplainViolationPrompt::new(Arc::clone(&watcher_state)));
+    server
+        .prompt_manager()
+        .register(OnboardPrompt::new(Arc::clone(&watcher_state)));
+    server
+        .prompt_manager()
+        .register(PreCommitPrompt::new(Arc::clone(&watcher_state)));
+    server
+        .prompt_manager()
+        .register(ExplainViolationPrompt::new(Arc::clone(&watcher_state)));
 
     // Update capabilities
     let caps = ServerCapabilities {
@@ -91,7 +101,10 @@ async fn run_async() -> Result<()> {
 
     // Run server with stdio transport
     let transport = StdioTransport::new();
-    server.run(transport).await.map_err(|e| anyhow::anyhow!("{e}"))?;
+    server
+        .run(transport)
+        .await
+        .map_err(|e| anyhow::anyhow!("{e}"))?;
 
     Ok(())
 }
@@ -111,15 +124,15 @@ fn start_config_watcher(
 
         // Set up file watcher
         let state_clone = Arc::clone(&state);
-        let watcher = notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
-            if let Ok(event) = res
-                && (event.kind.is_modify() || event.kind.is_create() || event.kind.is_remove())
-            {
-                if let Ok(mut s) = state_clone.lock() {
+        let watcher =
+            notify::recommended_watcher(move |res: Result<notify::Event, notify::Error>| {
+                if let Ok(event) = res
+                    && (event.kind.is_modify() || event.kind.is_create() || event.kind.is_remove())
+                    && let Ok(mut s) = state_clone.lock()
+                {
                     s.config_dirty = true;
                 }
-            }
-        });
+            });
 
         let mut watcher = match watcher {
             Ok(w) => w,

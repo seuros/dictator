@@ -34,7 +34,8 @@ pub fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnos
         diags.push(Diagnostic {
             rule: "python/file-too-long".to_string(),
             message: format!(
-                "File has {code_lines} code lines (max {max_lines}, excluding comments and blank lines)"
+                "File has {code_lines} code lines \
+                 (max {max_lines}, excluding comments and blank lines)"
             ),
             enforced: false,
             span: Span::new(0, source.len().min(100)),

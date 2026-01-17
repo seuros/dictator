@@ -67,7 +67,8 @@ fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics
         diags.push(Diagnostic {
             rule: "typescript/file-too-long".to_string(),
             message: format!(
-                "File has {code_lines} code lines (max {max_lines}, excluding comments and blank lines)"
+                "File has {code_lines} code lines \
+                 (max {max_lines}, excluding comments and blank lines)"
             ),
             enforced: false,
             span: Span::new(0, source.len().min(100)),
@@ -130,7 +131,8 @@ fn check_import_ordering(source: &str, diags: &mut Diagnostics) {
                 diags.push(Diagnostic {
                     rule: "typescript/import-order".to_string(),
                     message: format!(
-                        "Import order violation: {import_type:?} import after {last_type:?} import. Expected order: system → external → internal"
+                        "Import order violation: {import_type:?} import after \
+                         {last_type:?} import. Expected: system → external → internal"
                     ),
                     enforced: false,
                     span: Span::new(*start, *end),
@@ -393,7 +395,8 @@ pub fn init_decree_with_config(config: TypeScriptConfig) -> BoxDecree {
     Box::new(TypeScript::new(config, SupremeConfig::default()))
 }
 
-/// Create plugin with custom config + supreme config (merged from decree.supreme + decree.typescript)
+/// Create plugin with custom config + supreme config
+/// (merged from decree.supreme + decree.typescript)
 #[must_use]
 pub fn init_decree_with_configs(config: TypeScriptConfig, supreme: SupremeConfig) -> BoxDecree {
     Box::new(TypeScript::new(config, supreme))

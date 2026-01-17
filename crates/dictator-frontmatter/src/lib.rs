@@ -349,7 +349,8 @@ mod tests {
 
     #[test]
     fn supports_mdx_files() {
-        let src = "---\ntitle: Test\nslug: test-slug\npubDate: 2024-01-01\n---\n\nimport Component from './Component';\n\n# Content\n";
+        let src = "---\ntitle: Test\nslug: test-slug\npubDate: 2024-01-01\n---\n\n\
+                   import Component from './Component';\n\n# Content\n";
         let diags = lint_source(src, "test.mdx");
         assert!(
             diags.is_empty(),
@@ -410,7 +411,10 @@ mod tests {
         // Test the actual sandbox file case: pubDate comes before title
         // Default order: title, description, pubDate
         // This frontmatter has: pubDate, description, title (wrong!)
-        let src = "---\npubDate: 2024-12-01\ndescription: This blog post has wrong frontmatter ordering\ntitle: Blog Post With Wrong Frontmatter Order\nauthor: John Doe\n---\n\n# Blog Post Content\n";
+        let src = "---\npubDate: 2024-12-01\n\
+                   description: This blog post has wrong frontmatter ordering\n\
+                   title: Blog Post With Wrong Frontmatter Order\n\
+                   author: John Doe\n---\n\n# Blog Post Content\n";
         let diags = lint_source(src, "blog-wrong-frontmatter-order.md");
         assert!(
             !diags.is_empty(),
