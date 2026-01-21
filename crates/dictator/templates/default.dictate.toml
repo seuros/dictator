@@ -44,8 +44,13 @@ extensions = ["md", "mdx"]
 # import_order = ["system", "external", "internal"]
 #
 # # External linter integration (uncomment to enable)
+# # Biome (recommended): fast, all-in-one linter + formatter
 # [decree.typescript.linter]
-# command = "eslint"
+# command = "biome"
+#
+# # Alternative: ESLint (if you have existing ESLint config)
+# # [decree.typescript.linter]
+# # command = "eslint"
 
 # [decree.golang]
 # # Go structural enforcement

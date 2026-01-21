@@ -365,6 +365,8 @@ impl Decree for TypeScript {
                 "package.json".to_string(),
                 "tsconfig.json".to_string(),
                 "jsconfig.json".to_string(),
+                "biome.json".to_string(),
+                "biome.jsonc".to_string(),
                 ".eslintrc".to_string(),
                 ".prettierrc".to_string(),
                 "deno.json".to_string(),

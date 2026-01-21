@@ -78,7 +78,8 @@ pub fn detect_file_types(files: &[Utf8PathBuf]) -> FileTypes {
                     continue;
                 }
                 // TypeScript-specific filenames
-                "tsconfig.json" | "package.json" | ".eslintrc.json" => {
+                "tsconfig.json" | "package.json" | "biome.json" | "biome.jsonc"
+                | ".eslintrc.json" => {
                     types.has_typescript = true;
                     continue;
                 }

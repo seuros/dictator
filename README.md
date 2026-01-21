@@ -501,7 +501,7 @@ The MCP server reads linter configurations from `.dictate.toml`:
 command = "rubocop"
 
 [decree.typescript.linter]
-command = "eslint"
+command = "biome"  # or "eslint" for existing ESLint configs
 
 [decree.python.linter]
 command = "ruff"
@@ -512,6 +512,7 @@ command = "gofmt"
 
 **Dictator controls the args.** You only specify the command. Dictator adds the appropriate flags for auto-fix and JSON output parsing:
 - `rubocop` → `-A --format json`
+- `biome` → `lint --write --reporter json`
 - `eslint` → `--fix --format json`
 - `ruff` → `check --fix --output-format json`
 - `gofmt` → `-w` (lists changed files, then fixes)
