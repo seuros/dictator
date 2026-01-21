@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.16.1](https://github.com/seuros/dictator/compare/dictator-typescript-v0.16.0...dictator-typescript-v0.16.1) (2026-01-21)
+
+
+### Bug Fixes
+
+* switch js linter to biome as default ([#28](https://github.com/seuros/dictator/issues/28)) ([5ebf241](https://github.com/seuros/dictator/commit/5ebf241a5b3fead517dbd05856de4c725fae563e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.16.0 to 0.16.1
+    * dictator-core bumped from 0.16.0 to 0.16.1
+    * dictator-supreme bumped from 0.16.0 to 0.16.1
+
 ## [0.16.0](https://github.com/seuros/dictator/compare/dictator-typescript-v0.15.0...dictator-typescript-v0.16.0) (2026-01-17)
 
 
