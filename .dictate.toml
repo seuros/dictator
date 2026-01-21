@@ -33,8 +33,9 @@ ignore_blank_lines = true
 import_order = ["system", "external", "internal"]
 
 [decree.typescript.linter]
-# External linter - Dictator adds: --fix --format json
-command = "eslint"
+# External linter - Dictator adds: lint --write --reporter json
+# Alternative: command = "eslint" (Dictator adds: --fix --format json)
+command = "biome"
 
 [decree.golang]
 # Go structural enforcement

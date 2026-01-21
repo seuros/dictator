@@ -16,6 +16,7 @@ pub fn get_linter_args(command: &str) -> Vec<&'static str> {
     match command {
         "rubocop" => vec!["-A", "--format", "json"],
         "eslint" => vec!["--fix", "--format", "json"],
+        "biome" => vec!["lint", "--write", "--reporter", "json"],
         "ruff" => vec!["check", "--fix", "--output-format", "json"],
         "prettier" => vec!["--write"],
         "gofmt" | "goimports" => vec!["-w"],
@@ -161,7 +162,7 @@ fn run_linter(command: &str, paths: &[&str], output: &mut String) {
     // For linters without JSON output (gofmt, rustfmt, etc.), list files first
     let has_json_output = matches!(
         command,
-        "rubocop" | "eslint" | "ruff" | "clippy" | "cargo-clippy"
+        "rubocop" | "eslint" | "biome" | "ruff" | "clippy" | "cargo-clippy"
     );
 
     if has_json_output {

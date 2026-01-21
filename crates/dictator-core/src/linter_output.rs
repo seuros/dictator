@@ -1,6 +1,6 @@
 //! Linter output parsing - converts external linter JSON to Dictator Diagnostics
 //!
-//! Supports: `RuboCop`, Ruff, `ESLint`, Clippy
+//! Supports: `RuboCop`, Ruff, `ESLint`, Biome, Clippy
 //! Each parser extracts fixability info to set `enforced` dynamically.
 
 use dictator_decree_abi::{Diagnostic, Span};
@@ -13,6 +13,7 @@ pub fn parse_linter_output(command: &str, json: &str) -> Vec<Diagnostic> {
         "rubocop" => parse_rubocop(json).unwrap_or_default(),
         "ruff" => parse_ruff(json).unwrap_or_default(),
         "eslint" => parse_eslint(json).unwrap_or_default(),
+        "biome" => parse_biome(json).unwrap_or_default(),
         "clippy" | "cargo-clippy" => parse_clippy(json),
         _ => vec![],
     }
@@ -167,6 +168,100 @@ fn parse_eslint(json: &str) -> Result<Vec<Diagnostic>, serde_json::Error> {
                 span: Span::new(0, 0),
             });
         }
+    }
+
+    Ok(diagnostics)
+}
+
+// ============================================================================
+// Biome - uses `tags` array containing "fixable"
+// ============================================================================
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BiomeOutput {
+    diagnostics: Vec<BiomeDiagnostic>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BiomeDiagnostic {
+    category: Option<String>,
+    description: Option<String>,
+    message: Option<BiomeMessage>,
+    location: Option<BiomeLocation>,
+    tags: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BiomeMessage {
+    // Message is an array of markup elements, we extract content
+    #[serde(default)]
+    content: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BiomeLocation {
+    path: Option<BiomeResource>,
+    span: Option<(usize, usize)>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BiomeResource {
+    file: Option<String>,
+}
+
+fn parse_biome(json: &str) -> Result<Vec<Diagnostic>, serde_json::Error> {
+    let output: BiomeOutput = serde_json::from_str(json)?;
+    let mut diagnostics = Vec::new();
+
+    for diag in output.diagnostics {
+        // Category looks like "lint/style/useConst" -> "biome/style/useConst"
+        let rule = diag.category.map_or_else(
+            || "biome/unknown".to_string(),
+            |c| {
+                // Strip "lint/" prefix if present, keep the rest
+                let stripped = c.strip_prefix("lint/").unwrap_or(&c);
+                format!("biome/{stripped}")
+            },
+        );
+
+        // Get file path from location
+        let file_path = diag
+            .location
+            .as_ref()
+            .and_then(|l| l.path.as_ref())
+            .and_then(|p| p.file.as_ref())
+            .map_or_else(|| "unknown".to_string(), String::clone);
+
+        // Get span for line info (span is [start, end] byte offsets)
+        let span_info = diag
+            .location
+            .as_ref()
+            .and_then(|l| l.span)
+            .map_or_else(String::new, |(start, _)| format!(":{start}"));
+
+        // Use description or extract from message
+        let message_text = diag
+            .description
+            .or_else(|| diag.message.and_then(|m| m.content))
+            .unwrap_or_default();
+
+        // Check if "fixable" tag is present
+        let enforced = diag
+            .tags
+            .as_ref()
+            .is_some_and(|tags| tags.iter().any(|t| t == "fixable"));
+
+        diagnostics.push(Diagnostic {
+            rule,
+            message: format!("[{file_path}{span_info}] {message_text}"),
+            enforced,
+            span: Span::new(0, 0),
+        });
     }
 
     Ok(diagnostics)
@@ -397,5 +492,50 @@ mod tests {
         );
         let diags = parse_clippy(json);
         assert!(!diags[0].enforced); // MaybeIncorrect != MachineApplicable
+    }
+
+    #[test]
+    fn test_parse_biome_with_fixable() {
+        let json = r#"{
+            "diagnostics": [{
+                "category": "lint/style/useConst",
+                "description": "This let declares a variable that is only assigned once.",
+                "location": {
+                    "path": {"file": "test.js"},
+                    "span": [10, 20]
+                },
+                "tags": ["fixable"]
+            }]
+        }"#;
+        let diags = parse_biome(json).unwrap();
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].rule, "biome/style/useConst");
+        assert!(diags[0].enforced); // has fixable tag
+    }
+
+    #[test]
+    fn test_parse_biome_without_fixable() {
+        let json = r#"{
+            "diagnostics": [{
+                "category": "lint/correctness/noUnusedVariables",
+                "description": "This variable is unused.",
+                "location": {
+                    "path": {"file": "test.ts"},
+                    "span": [5, 15]
+                },
+                "tags": []
+            }]
+        }"#;
+        let diags = parse_biome(json).unwrap();
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].rule, "biome/correctness/noUnusedVariables");
+        assert!(!diags[0].enforced); // no fixable tag
+    }
+
+    #[test]
+    fn test_parse_biome_empty_diagnostics() {
+        let json = r#"{"diagnostics": []}"#;
+        let diags = parse_biome(json).unwrap();
+        assert!(diags.is_empty());
     }
 }
