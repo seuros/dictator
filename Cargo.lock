@@ -707,7 +707,7 @@ dependencies = [
 
 [[package]]
 name = "dictator"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -741,7 +741,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-core"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "anyhow",
  "camino",
@@ -760,14 +760,14 @@ dependencies = [
 
 [[package]]
 name = "dictator-decree-abi"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "dictator-frontmatter"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "dictator-core",
  "dictator-decree-abi",
@@ -777,7 +777,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-golang"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "dictator-core",
  "dictator-decree-abi",
@@ -787,7 +787,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-python"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "dictator-core",
  "dictator-decree-abi",
@@ -797,7 +797,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-ruby"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "dictator-core",
  "dictator-decree-abi",
@@ -807,7 +807,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-rust"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "dictator-core",
  "dictator-decree-abi",
@@ -817,7 +817,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-supreme"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "dictator-core",
  "dictator-decree-abi",
@@ -826,7 +826,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-typescript"
-version = "0.16.1"
+version = "0.16.2"
 dependencies = [
  "dictator-core",
  "dictator-decree-abi",

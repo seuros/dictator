@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.16.2](https://github.com/seuros/dictator/compare/dictator-supreme-v0.16.1...dictator-supreme-v0.16.2) (2026-01-23)
+
+
+### Miscellaneous Chores
+
+* **dictator-supreme:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.16.1 to 0.16.2
+    * dictator-core bumped from 0.16.1 to 0.16.2
+
 ## [0.16.1](https://github.com/seuros/dictator/compare/dictator-supreme-v0.16.0...dictator-supreme-v0.16.1) (2026-01-21)
 
 
