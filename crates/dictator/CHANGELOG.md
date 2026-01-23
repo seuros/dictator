@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.16.2](https://github.com/seuros/dictator/compare/dictator-v0.16.1...dictator-v0.16.2) (2026-01-23)
+
+
+### Bug Fixes
+
+* use macros instead ([32eba5b](https://github.com/seuros/dictator/commit/32eba5b389d10d00823c5ca84906db2818a6a25d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.16.1 to 0.16.2
+    * dictator-frontmatter bumped from 0.16.1 to 0.16.2
+    * dictator-golang bumped from 0.16.1 to 0.16.2
+    * dictator-decree-abi bumped from 0.16.1 to 0.16.2
+    * dictator-python bumped from 0.16.1 to 0.16.2
+    * dictator-ruby bumped from 0.16.1 to 0.16.2
+    * dictator-rust bumped from 0.16.1 to 0.16.2
+    * dictator-supreme bumped from 0.16.1 to 0.16.2
+    * dictator-typescript bumped from 0.16.1 to 0.16.2
+
 ## [0.16.1](https://github.com/seuros/dictator/compare/dictator-v0.16.0...dictator-v0.16.1) (2026-01-21)
 
 
