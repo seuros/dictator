@@ -8,7 +8,7 @@ use serde_json::Value;
 use std::sync::{Arc, Mutex};
 
 use crate::mcp::regime::init_regime_from_config;
-use crate::mcp::state::{DEFAULT_STALINT_LIMIT, ServerState};
+use crate::mcp::state::{ServerState, DEFAULT_STALINT_LIMIT};
 use crate::mcp::utils::{
     base64_decode, base64_encode, byte_to_line_col, collect_files, log_to_file, make_snippet,
 };
@@ -19,7 +19,7 @@ pub fn handle_stalint(
     arguments: Option<Value>,
     watcher_state: Arc<Mutex<ServerState>>,
 ) -> JsonRpcResponse {
-    #[derive(Deserialize)]
+    #[derive(Deserialize, Default)]
     struct Args {
         #[serde(default)]
         paths: Vec<String>,
@@ -27,21 +27,9 @@ pub fn handle_stalint(
         cursor: Option<String>,
     }
 
-    let args: Args = match arguments.and_then(|a| serde_json::from_value(a).ok()) {
-        Some(a) => a,
-        None => {
-            return JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
-                result: None,
-                error: Some(JsonRpcError {
-                    code: -32602,
-                    message: "Missing or invalid arguments".to_string(),
-                    data: None,
-                }),
-            };
-        }
-    };
+    let args: Args = arguments
+        .and_then(|a| serde_json::from_value(a).ok())
+        .unwrap_or_default();
 
     // Determine paths: use provided paths, or fall back to stored paths for pagination
     let paths = if !args.paths.is_empty() {
@@ -70,16 +58,8 @@ pub fn handle_stalint(
         }
         state.stalint_paths.clone()
     } else {
-        return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
-            result: None,
-            error: Some(JsonRpcError {
-                code: -32602,
-                message: "Missing paths argument".to_string(),
-                data: None,
-            }),
-        };
+        // Default to current working directory
+        vec![".".to_string()]
     };
 
     let limit = args.limit.unwrap_or(DEFAULT_STALINT_LIMIT);
@@ -225,13 +205,15 @@ mod tests {
     use crate::mcp::utils::base64_encode;
 
     #[test]
-    fn test_handle_stalint_missing_arguments() {
+    fn test_handle_stalint_missing_arguments_defaults_to_cwd() {
         let state = Arc::new(Mutex::new(ServerState::default()));
         let id = serde_json::json!(1);
         let response = handle_stalint(id, None, state);
 
-        assert!(response.error.is_some());
-        assert_eq!(response.error.unwrap().code, -32602);
+        // Should succeed with cwd as default
+        assert!(response.error.is_none());
+        let result = response.result.unwrap();
+        assert!(result["structuredContent"]["total"].is_number());
     }
 
     #[test]

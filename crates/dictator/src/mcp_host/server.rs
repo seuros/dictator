@@ -12,9 +12,9 @@ use crate::mcp::state::{
 };
 use crate::mcp::utils::log_to_file;
 
-use super::prompts::{ExplainViolationPrompt, OnboardPrompt, PreCommitPrompt};
-use super::resources::{CensusResource, ConfigResource};
-use super::tools::{DictatorTool, OccupyTool, StalintTool, StalintWatchTool};
+use super::prompts::DictatorPrompts;
+use super::resources::DictatorResources;
+use super::tools::{DictatorTools, OccupyTool, StalintWatchTool};
 
 /// Run the MCP server with mcp-host framework
 pub fn run() -> Result<()> {
@@ -43,13 +43,18 @@ async fn run_async() -> Result<()> {
     // Create shared state with proper notification channel
     let watcher_state = Arc::new(Mutex::new(ServerState::new(notification_tx.clone())));
 
-    // Register all tools - visibility controlled by is_visible()
-    server.tool_registry().register(StalintTool {
+    // Register macro-based tools (stalint, dictator)
+    let tools = Arc::new(DictatorTools {
         state: Arc::clone(&watcher_state),
     });
-    server.tool_registry().register(DictatorTool {
-        state: Arc::clone(&watcher_state),
-    });
+    DictatorTools::router().register_all(
+        server.tool_registry(),
+        server.prompt_manager(),
+        server.resource_manager(),
+        tools,
+    );
+
+    // Register stateful tools (manual impl - need notification_tx)
     server.tool_registry().register(StalintWatchTool {
         state: Arc::clone(&watcher_state),
         notification_tx: notification_tx.clone(),
@@ -59,24 +64,25 @@ async fn run_async() -> Result<()> {
         notification_tx: notification_tx.clone(),
     });
 
-    // Register all resources - visibility controlled by is_visible()
-    server
-        .resource_manager()
-        .register(ConfigResource::new(Arc::clone(&watcher_state)));
-    server
-        .resource_manager()
-        .register(CensusResource::new(Arc::clone(&watcher_state)));
+    // Register macro-based resources
+    let resources = Arc::new(DictatorResources {
+        state: Arc::clone(&watcher_state),
+    });
+    DictatorResources::router().register_all(
+        server.tool_registry(),
+        server.prompt_manager(),
+        server.resource_manager(),
+        resources,
+    );
 
-    // Register all prompts - visibility controlled by is_visible()
-    server
-        .prompt_manager()
-        .register(OnboardPrompt::new(Arc::clone(&watcher_state)));
-    server
-        .prompt_manager()
-        .register(PreCommitPrompt::new(Arc::clone(&watcher_state)));
-    server
-        .prompt_manager()
-        .register(ExplainViolationPrompt::new(Arc::clone(&watcher_state)));
+    // Register macro-based prompts
+    let prompts = Arc::new(DictatorPrompts);
+    DictatorPrompts::router().register_all(
+        server.tool_registry(),
+        server.prompt_manager(),
+        server.resource_manager(),
+        prompts,
+    );
 
     // Update capabilities
     let caps = ServerCapabilities {

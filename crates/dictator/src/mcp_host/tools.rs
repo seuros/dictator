@@ -1,4 +1,4 @@
-//! Tool implementations with dynamic visibility based on config state
+//! Tool implementations - simple tools via macros, stateful tools via manual impl
 
 use async_trait::async_trait;
 use mcp_host::prelude::*;
@@ -12,35 +12,20 @@ use crate::mcp::handlers::{
 };
 use crate::mcp::state::ServerState;
 
-/// Stalint structural linting tool
-pub struct StalintTool {
+/// Simple tools using macro-based registration
+pub struct DictatorTools {
     pub state: Arc<Mutex<ServerState>>,
 }
 
-#[async_trait]
-impl Tool for StalintTool {
-    fn name(&self) -> &'static str {
-        "stalint"
-    }
-
-    fn description(&self) -> Option<&str> {
-        Some("Run structural linting checks on files (read-only analysis)")
-    }
-
-    fn input_schema(&self) -> Value {
-        serde_json::json!({
-            "type": "object",
-            "properties": {},
-            "required": []
-        })
-    }
-
-    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
-        config_exists()
-    }
-
-    async fn execute(&self, ctx: ExecutionContext<'_>) -> Result<ToolOutput, ToolError> {
-        let response = handle_stalint(Value::Null, Some(ctx.params), Arc::clone(&self.state));
+#[mcp_router]
+impl DictatorTools {
+    /// Run structural linting checks on files (read-only analysis)
+    #[mcp_tool(
+        name = "stalint",
+        visible = "config_exists()"
+    )]
+    async fn stalint(&self, _ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
+        let response = handle_stalint(Value::Null, None, Arc::clone(&self.state));
 
         if let Some(error) = response.error {
             return Err(ToolError::Execution(error.message));
@@ -53,36 +38,13 @@ impl Tool for StalintTool {
         let content = TextContent::new(serde_json::to_string_pretty(&result).unwrap_or_default());
         Ok(ToolOutput::Content(vec![Box::new(content)]))
     }
-}
 
-/// Dictator auto-fix tool
-pub struct DictatorTool {
-    pub state: Arc<Mutex<ServerState>>,
-}
-
-#[async_trait]
-impl Tool for DictatorTool {
-    fn name(&self) -> &'static str {
-        "dictator"
-    }
-
-    fn description(&self) -> Option<&str> {
-        Some("Auto-fix structural violations (requires write permissions)")
-    }
-
-    fn input_schema(&self) -> Value {
-        serde_json::json!({
-            "type": "object",
-            "properties": {},
-            "required": []
-        })
-    }
-
-    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
-        config_exists()
-    }
-
-    async fn execute(&self, ctx: ExecutionContext<'_>) -> Result<ToolOutput, ToolError> {
+    /// Auto-fix structural violations (requires write permissions)
+    #[mcp_tool(
+        name = "dictator",
+        visible = "config_exists()"
+    )]
+    async fn dictator(&self, _ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
         let can_write = self.state.lock().unwrap().can_write;
         if !can_write {
             return Err(ToolError::Execution(
@@ -90,7 +52,7 @@ impl Tool for DictatorTool {
             ));
         }
 
-        let response = handle_dictator(Value::Null, Some(ctx.params), Arc::clone(&self.state));
+        let response = handle_dictator(Value::Null, None, Arc::clone(&self.state));
 
         if let Some(error) = response.error {
             return Err(ToolError::Execution(error.message));
@@ -104,6 +66,10 @@ impl Tool for DictatorTool {
         Ok(ToolOutput::Content(vec![Box::new(content)]))
     }
 }
+
+// =============================================================================
+// Stateful tools requiring manual implementation (dynamic show/hide)
+// =============================================================================
 
 /// Watch files for structural changes
 pub struct StalintWatchTool {
@@ -249,7 +215,7 @@ impl Tool for StalintUnwatchTool {
     }
 }
 
-/// Initialize .dictate.toml
+/// Initialize .dictate.toml - needs notification_tx for list_changed
 pub struct OccupyTool {
     pub state: Arc<Mutex<ServerState>>,
     pub notification_tx: mpsc::UnboundedSender<JsonRpcNotification>,

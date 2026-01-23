@@ -1,6 +1,5 @@
-//! Resource implementations with dynamic visibility based on config state
+//! Resource implementations using mcp-host macros
 
-use async_trait::async_trait;
 use mcp_host::prelude::*;
 use std::sync::{Arc, Mutex};
 
@@ -8,43 +7,21 @@ use super::config_exists;
 use crate::mcp::resources::{CENSUS_URI, CONFIG_URI, handle_read_resource};
 use crate::mcp::state::ServerState;
 
-/// Config resource - .dictate.toml configuration
-pub struct ConfigResource {
-    state: Arc<Mutex<ServerState>>,
+/// Dictator resources using macro-based registration
+pub struct DictatorResources {
+    pub state: Arc<Mutex<ServerState>>,
 }
 
-impl ConfigResource {
-    pub const fn new(state: Arc<Mutex<ServerState>>) -> Self {
-        Self { state }
-    }
-}
-
-#[async_trait]
-impl Resource for ConfigResource {
-    fn name(&self) -> &'static str {
-        "Config"
-    }
-
-    fn uri(&self) -> &str {
-        CONFIG_URI
-    }
-
-    fn description(&self) -> Option<&str> {
-        Some("Current .dictate.toml configuration (parsed)")
-    }
-
-    fn mime_type(&self) -> Option<&str> {
-        Some("application/json")
-    }
-
-    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
-        config_exists()
-    }
-
-    async fn read(
-        &self,
-        _ctx: ExecutionContext<'_>,
-    ) -> Result<Vec<ResourceContent>, ResourceError> {
+#[mcp_router]
+impl DictatorResources {
+    /// Current .dictate.toml configuration (parsed)
+    #[mcp_resource(
+        name = "Config",
+        uri = "dictator://config",
+        mime_type = "application/json",
+        visible = "config_exists()"
+    )]
+    async fn config(&self, _ctx: Ctx<'_>) -> ResourceResult {
         let params = serde_json::json!({"uri": CONFIG_URI});
         let response = handle_read_resource(
             serde_json::Value::Null,
@@ -68,47 +45,17 @@ impl Resource for ConfigResource {
             .unwrap_or("")
             .to_string();
 
-        Ok(vec![self.text_content(&text)])
-    }
-}
-
-/// Census resource - list of available decrees
-pub struct CensusResource {
-    state: Arc<Mutex<ServerState>>,
-}
-
-impl CensusResource {
-    pub const fn new(state: Arc<Mutex<ServerState>>) -> Self {
-        Self { state }
-    }
-}
-
-#[async_trait]
-impl Resource for CensusResource {
-    fn name(&self) -> &'static str {
-        "Census"
+        Ok(vec![text_resource(CONFIG_URI, text)])
     }
 
-    fn uri(&self) -> &str {
-        CENSUS_URI
-    }
-
-    fn description(&self) -> Option<&str> {
-        Some("List of all available decrees and their status")
-    }
-
-    fn mime_type(&self) -> Option<&str> {
-        Some("application/json")
-    }
-
-    fn is_visible(&self, _ctx: &VisibilityContext) -> bool {
-        config_exists()
-    }
-
-    async fn read(
-        &self,
-        _ctx: ExecutionContext<'_>,
-    ) -> Result<Vec<ResourceContent>, ResourceError> {
+    /// List of all available decrees and their status
+    #[mcp_resource(
+        name = "Census",
+        uri = "dictator://census",
+        mime_type = "application/json",
+        visible = "config_exists()"
+    )]
+    async fn census(&self, _ctx: Ctx<'_>) -> ResourceResult {
         let params = serde_json::json!({"uri": CENSUS_URI});
         let response = handle_read_resource(
             serde_json::Value::Null,
@@ -132,6 +79,6 @@ impl Resource for CensusResource {
             .unwrap_or("")
             .to_string();
 
-        Ok(vec![self.text_content(&text)])
+        Ok(vec![text_resource(CENSUS_URI, text)])
     }
 }
