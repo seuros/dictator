@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.16.3](https://github.com/seuros/dictator/compare/dictator-core-v0.16.2...dictator-core-v0.16.3) (2026-02-14)
+
+
+### Miscellaneous Chores
+
+* **dictator-core:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.16.2 to 0.16.3
+
 ## [0.16.2](https://github.com/seuros/dictator/compare/dictator-core-v0.16.1...dictator-core-v0.16.2) (2026-01-23)
 
 

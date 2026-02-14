@@ -1,6 +1,6 @@
 [package]
 name = "dictator-decree-abi"
-version = "0.16.2"
+version = "0.16.3"
 description = "ABI and trait definitions for Dictator structural linter decree plugins"
 edition.workspace = true
 rust-version.workspace = true

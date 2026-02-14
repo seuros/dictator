@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.16.3](https://github.com/seuros/dictator/compare/dictator-v0.16.2...dictator-v0.16.3) (2026-02-14)
+
+
+### Bug Fixes
+
+* remove unused async trait ([7896e13](https://github.com/seuros/dictator/commit/7896e134734fbcf0731210f56016762f411cc4cb))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.16.2 to 0.16.3
+    * dictator-frontmatter bumped from 0.16.2 to 0.16.3
+    * dictator-golang bumped from 0.16.2 to 0.16.3
+    * dictator-decree-abi bumped from 0.16.2 to 0.16.3
+    * dictator-python bumped from 0.16.2 to 0.16.3
+    * dictator-ruby bumped from 0.16.2 to 0.16.3
+    * dictator-rust bumped from 0.16.2 to 0.16.3
+    * dictator-supreme bumped from 0.16.2 to 0.16.3
+    * dictator-typescript bumped from 0.16.2 to 0.16.3
+
 ## [0.16.2](https://github.com/seuros/dictator/compare/dictator-v0.16.1...dictator-v0.16.2) (2026-01-23)
 
 
