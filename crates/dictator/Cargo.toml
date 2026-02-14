@@ -16,7 +16,6 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-async-trait = "0.1"
 clap = { workspace = true }
 camino = { workspace = true }
 dictator-core = { version = "0.16.2", path = "../dictator-core" }
