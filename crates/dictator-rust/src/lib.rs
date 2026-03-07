@@ -61,8 +61,7 @@ pub fn lint_source_with_configs(
 ) -> Diagnostics {
     let mut diags = Diagnostics::new();
 
-    let supreme_diags =
-        dictator_supreme::lint_source_with_owner(source, supreme_config, "rust");
+    let supreme_diags = dictator_supreme::lint_source_with_owner(source, supreme_config, "rust");
 
     if rust_config.ignore_comments {
         // Filter out line-too-long violations on comment lines

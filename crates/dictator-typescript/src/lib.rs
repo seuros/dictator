@@ -9,7 +9,11 @@ use memchr::memchr_iter;
 /// Lint TypeScript source for structural violations.
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
-    lint_source_with_configs(source, &TypeScriptConfig::default(), &SupremeConfig::default())
+    lint_source_with_configs(
+        source,
+        &TypeScriptConfig::default(),
+        &SupremeConfig::default(),
+    )
 }
 
 /// Lint TypeScript source with custom configuration.

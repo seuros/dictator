@@ -13,10 +13,7 @@ pub struct DictatorPrompts;
 #[mcp_router]
 impl DictatorPrompts {
     /// Introduction to Dictator for new projects
-    #[mcp_prompt(
-        name = "onboard",
-        visible = "!config_exists()"
-    )]
+    #[mcp_prompt(name = "onboard", visible = "!config_exists()")]
     async fn onboard(&self, _ctx: Ctx<'_>, _args: Value) -> PromptResult {
         let cwd = std::env::current_dir()
             .map_err(|e| PromptError::Execution(format!("Failed to get cwd: {e}")))?;
@@ -42,10 +39,7 @@ impl DictatorPrompts {
     }
 
     /// Check staged files before commit
-    #[mcp_prompt(
-        name = "pre_commit",
-        visible = "config_exists()"
-    )]
+    #[mcp_prompt(name = "pre_commit", visible = "config_exists()")]
     async fn pre_commit(&self, _ctx: Ctx<'_>, _args: Value) -> PromptResult {
         let staged = std::process::Command::new("git")
             .args(["diff", "--cached", "--name-only"])

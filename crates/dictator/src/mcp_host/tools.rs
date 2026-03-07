@@ -23,10 +23,7 @@ pub struct DictatorTools {
 #[mcp_router]
 impl DictatorTools {
     /// Run structural linting checks on files (read-only analysis)
-    #[mcp_tool(
-        name = "stalint",
-        visible = "config_exists()"
-    )]
+    #[mcp_tool(name = "stalint", visible = "config_exists()")]
     async fn stalint(&self, _ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
         let response = handle_stalint(Value::Null, None, Arc::clone(&self.state));
 
@@ -43,10 +40,7 @@ impl DictatorTools {
     }
 
     /// Auto-fix structural violations (requires write permissions)
-    #[mcp_tool(
-        name = "dictator",
-        visible = "config_exists()"
-    )]
+    #[mcp_tool(name = "dictator", visible = "config_exists()")]
     async fn dictator(&self, _ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
         let can_write = self.state.lock().unwrap().can_write;
         if !can_write {
