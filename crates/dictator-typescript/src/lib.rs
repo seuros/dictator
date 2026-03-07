@@ -9,14 +9,45 @@ use memchr::memchr_iter;
 /// Lint TypeScript source for structural violations.
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
-    lint_source_with_config(source, &TypeScriptConfig::default())
+    lint_source_with_configs(source, &TypeScriptConfig::default(), &SupremeConfig::default())
 }
 
 /// Lint TypeScript source with custom configuration.
 #[must_use]
 pub fn lint_source_with_config(source: &str, config: &TypeScriptConfig) -> Diagnostics {
+    lint_source_with_configs(source, config, &SupremeConfig::default())
+}
+
+/// Lint TypeScript source with custom config + supreme config.
+#[must_use]
+pub fn lint_source_with_configs(
+    source: &str,
+    config: &TypeScriptConfig,
+    supreme_config: &SupremeConfig,
+) -> Diagnostics {
     let mut diags = Diagnostics::new();
 
+    let supreme_diags =
+        dictator_supreme::lint_source_with_owner(source, supreme_config, "typescript");
+
+    if config.ignore_comments {
+        // Filter out line-too-long violations on comment lines
+        let lines: Vec<&str> = source.lines().collect();
+        diags.extend(supreme_diags.into_iter().filter(|d| {
+            if d.rule == "typescript/line-too-long" {
+                let line_idx = source[..d.span.start].matches('\n').count();
+                !lines
+                    .get(line_idx)
+                    .is_some_and(|line| line.trim_start().starts_with("//"))
+            } else {
+                true
+            }
+        }));
+    } else {
+        diags.extend(supreme_diags);
+    }
+
+    // TypeScript-specific rules
     check_file_line_count(source, config.max_lines, &mut diags);
     check_import_ordering(source, &mut diags);
     check_indentation_consistency(source, &mut diags);
@@ -28,11 +59,15 @@ pub fn lint_source_with_config(source: &str, config: &TypeScriptConfig) -> Diagn
 #[derive(Debug, Clone)]
 pub struct TypeScriptConfig {
     pub max_lines: usize,
+    pub ignore_comments: bool,
 }
 
 impl Default for TypeScriptConfig {
     fn default() -> Self {
-        Self { max_lines: 350 }
+        Self {
+            max_lines: 350,
+            ignore_comments: false,
+        }
     }
 }
 
@@ -339,10 +374,7 @@ impl Decree for TypeScript {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        let mut diags =
-            dictator_supreme::lint_source_with_owner(source, &self.supreme, "typescript");
-        diags.extend(lint_source_with_config(source, &self.config));
-        diags
+        lint_source_with_configs(source, &self.config, &self.supreme)
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -409,6 +441,7 @@ pub fn init_decree_with_configs(config: TypeScriptConfig, supreme: SupremeConfig
 pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> TypeScriptConfig {
     TypeScriptConfig {
         max_lines: settings.max_lines.unwrap_or(350),
+        ignore_comments: settings.ignore_comments.unwrap_or(false),
     }
 }
 
@@ -588,5 +621,59 @@ function test() {
         assert!(!is_nodejs_builtin("date-fns"));
         assert!(!is_nodejs_builtin("lodash"));
         assert!(!is_nodejs_builtin("./config"));
+    }
+
+    #[test]
+    fn ignores_long_comment_lines_when_configured() {
+        let long_comment = format!("// {}\n", "x".repeat(150));
+        let src = format!("function foo() {{\n{long_comment}}}\n");
+        let config = TypeScriptConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(
+            !diags.iter().any(|d| d.rule == "typescript/line-too-long"),
+            "Should ignore long comment lines when ignore_comments is true"
+        );
+    }
+
+    #[test]
+    fn detects_long_comment_lines_when_not_configured() {
+        let long_comment = format!("// {}\n", "x".repeat(150));
+        let src = format!("function foo() {{\n{long_comment}}}\n");
+        let config = TypeScriptConfig::default(); // ignore_comments = false
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(
+            diags.iter().any(|d| d.rule == "typescript/line-too-long"),
+            "Should detect long comment lines when ignore_comments is false"
+        );
+    }
+
+    #[test]
+    fn still_detects_long_code_lines_with_ignore_comments() {
+        let long_code = format!("  const x = \"{}\";\n", "a".repeat(150));
+        let src = format!("function foo() {{\n{long_code}}}\n");
+        let config = TypeScriptConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(
+            diags.iter().any(|d| d.rule == "typescript/line-too-long"),
+            "Should still detect long code lines even with ignore_comments enabled"
+        );
     }
 }

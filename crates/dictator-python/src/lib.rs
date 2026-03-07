@@ -15,12 +15,14 @@ pub use imports::{ImportType, classify_module, is_python_stdlib};
 #[derive(Debug, Clone)]
 pub struct PythonConfig {
     pub max_lines: usize,
+    pub ignore_comments: bool,
 }
 
 impl Default for PythonConfig {
     fn default() -> Self {
         Self {
             max_lines: file_length::DEFAULT_MAX_LINES,
+            ignore_comments: false,
         }
     }
 }
@@ -61,7 +63,28 @@ impl Decree for Python {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        let mut diags = dictator_supreme::lint_source_with_owner(source, &self.supreme, "python");
+        let mut diags = Diagnostics::new();
+
+        let supreme_diags =
+            dictator_supreme::lint_source_with_owner(source, &self.supreme, "python");
+
+        if self.config.ignore_comments {
+            // Filter out line-too-long violations on comment lines
+            let lines: Vec<&str> = source.lines().collect();
+            diags.extend(supreme_diags.into_iter().filter(|d| {
+                if d.rule == "python/line-too-long" {
+                    let line_idx = source[..d.span.start].matches('\n').count();
+                    !lines
+                        .get(line_idx)
+                        .is_some_and(|line| line.trim_start().starts_with('#'))
+                } else {
+                    true
+                }
+            }));
+        } else {
+            diags.extend(supreme_diags);
+        }
+
         diags.extend(lint_source_with_config(source, &self.config));
         diags
     }
@@ -118,6 +141,7 @@ pub fn init_decree_with_configs(config: PythonConfig, supreme: SupremeConfig) ->
 pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> PythonConfig {
     PythonConfig {
         max_lines: settings.max_lines.unwrap_or(file_length::DEFAULT_MAX_LINES),
+        ignore_comments: settings.ignore_comments.unwrap_or(false),
     }
 }
 
@@ -302,5 +326,62 @@ def test():
         assert_eq!(classify_module("django.conf"), ImportType::ThirdParty);
         assert_eq!(classify_module(".config"), ImportType::Local);
         assert_eq!(classify_module("..utils"), ImportType::Local);
+    }
+
+    #[test]
+    fn ignores_long_comment_lines_when_configured() {
+        let long_comment = format!("# {}\n", "x".repeat(150));
+        let src = format!("def foo():\n{long_comment}    pass\n");
+        let config = PythonConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let python = Python::new(config, supreme);
+        let diags = python.lint("test.py", &src);
+        assert!(
+            !diags.iter().any(|d| d.rule == "python/line-too-long"),
+            "Should not flag long comment lines when ignore_comments is true"
+        );
+    }
+
+    #[test]
+    fn detects_long_comment_lines_when_not_configured() {
+        let long_comment = format!("# {}\n", "x".repeat(150));
+        let src = format!("def foo():\n{long_comment}    pass\n");
+        let config = PythonConfig::default(); // ignore_comments = false
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let python = Python::new(config, supreme);
+        let diags = python.lint("test.py", &src);
+        assert!(
+            diags.iter().any(|d| d.rule == "python/line-too-long"),
+            "Should flag long comment lines when ignore_comments is false"
+        );
+    }
+
+    #[test]
+    fn still_detects_long_code_lines_with_ignore_comments() {
+        let long_code = format!("    x = \"{}\"\n", "a".repeat(150));
+        let src = format!("def foo():\n{long_code}    pass\n");
+        let config = PythonConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let python = Python::new(config, supreme);
+        let diags = python.lint("test.py", &src);
+        assert!(
+            diags.iter().any(|d| d.rule == "python/line-too-long"),
+            "Should still flag long code lines even when ignore_comments is true"
+        );
     }
 }

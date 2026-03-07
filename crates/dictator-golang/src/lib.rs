@@ -10,25 +10,64 @@ use memchr::memchr_iter;
 #[derive(Debug, Clone)]
 pub struct GolangConfig {
     pub max_lines: usize,
+    pub ignore_comments: bool,
 }
 
 impl Default for GolangConfig {
     fn default() -> Self {
-        Self { max_lines: 450 }
+        Self {
+            max_lines: 450,
+            ignore_comments: false,
+        }
     }
 }
 
 /// Lint Go source for structural violations.
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
-    lint_source_with_config(source, &GolangConfig::default())
+    lint_source_with_configs(source, &GolangConfig::default(), &SupremeConfig::default())
 }
 
 /// Lint with custom configuration
 #[must_use]
 pub fn lint_source_with_config(source: &str, config: &GolangConfig) -> Diagnostics {
+    lint_source_with_configs(source, config, &SupremeConfig::default())
+}
+
+/// Lint with custom golang config + supreme config
+#[must_use]
+pub fn lint_source_with_configs(
+    source: &str,
+    config: &GolangConfig,
+    supreme_config: &SupremeConfig,
+) -> Diagnostics {
     let mut diags = Diagnostics::new();
 
+    // Go's decree owns indentation style; suppress supreme's tabs/spaces check to avoid
+    // duplicate diagnostics.
+    let mut supreme = supreme_config.clone();
+    supreme.tabs_vs_spaces = TabsOrSpaces::Either;
+
+    let supreme_diags = dictator_supreme::lint_source_with_owner(source, &supreme, "golang");
+
+    if config.ignore_comments {
+        // Filter out line-too-long violations on comment lines
+        let lines: Vec<&str> = source.lines().collect();
+        diags.extend(supreme_diags.into_iter().filter(|d| {
+            if d.rule == "golang/line-too-long" {
+                let line_idx = source[..d.span.start].matches('\n').count();
+                !lines
+                    .get(line_idx)
+                    .is_some_and(|line| line.trim_start().starts_with("//"))
+            } else {
+                true
+            }
+        }));
+    } else {
+        diags.extend(supreme_diags);
+    }
+
+    // Golang-specific rules
     check_file_line_count(source, config.max_lines, &mut diags);
     check_indentation_style(source, &mut diags);
 
@@ -151,14 +190,7 @@ impl Decree for Golang {
     }
 
     fn lint(&self, _path: &str, source: &str) -> Diagnostics {
-        // Go's decree owns indentation style; suppress supreme's tabs/spaces check to avoid
-        // duplicate diagnostics.
-        let mut supreme = self.supreme.clone();
-        supreme.tabs_vs_spaces = TabsOrSpaces::Either;
-
-        let mut diags = dictator_supreme::lint_source_with_owner(source, &supreme, "golang");
-        diags.extend(lint_source_with_config(source, &self.config));
-        diags
+        lint_source_with_configs(source, &self.config, &self.supreme)
     }
 
     fn metadata(&self) -> dictator_decree_abi::DecreeMetadata {
@@ -197,6 +229,7 @@ pub fn init_decree_with_configs(config: GolangConfig, supreme: SupremeConfig) ->
 pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> GolangConfig {
     GolangConfig {
         max_lines: settings.max_lines.unwrap_or(450),
+        ignore_comments: settings.ignore_comments.unwrap_or(false),
     }
 }
 
@@ -383,6 +416,60 @@ mod tests {
                 .iter()
                 .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
             "Inline raw strings should not affect next line"
+        );
+    }
+
+    #[test]
+    fn ignores_long_comment_lines_when_configured() {
+        let long_comment = format!("// {}\n", "x".repeat(150));
+        let src = format!("package main\n{long_comment}func main() {{}}\n");
+        let config = GolangConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(
+            !diags.iter().any(|d| d.rule == "golang/line-too-long"),
+            "Should not flag long comment lines when ignore_comments is true"
+        );
+    }
+
+    #[test]
+    fn detects_long_comment_lines_when_not_configured() {
+        let long_comment = format!("// {}\n", "x".repeat(150));
+        let src = format!("package main\n{long_comment}func main() {{}}\n");
+        let config = GolangConfig::default(); // ignore_comments = false
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(
+            diags.iter().any(|d| d.rule == "golang/line-too-long"),
+            "Should flag long comment lines when ignore_comments is false"
+        );
+    }
+
+    #[test]
+    fn still_detects_long_code_lines_with_ignore_comments() {
+        let long_code = format!("\tx := \"{}\"\n", "a".repeat(150));
+        let src = format!("package main\n{long_code}func main() {{}}\n");
+        let config = GolangConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(
+            diags.iter().any(|d| d.rule == "golang/line-too-long"),
+            "Should still flag long code lines even when ignore_comments is true"
         );
     }
 }

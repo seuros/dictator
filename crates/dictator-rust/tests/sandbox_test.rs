@@ -21,6 +21,7 @@ fn test_old_edition_cargo_toml() {
         max_lines: 400,
         min_edition: Some("2024".to_string()),
         min_rust_version: None,
+        ignore_comments: false,
     };
     let diags = lint_cargo_toml(&src, &config);
 

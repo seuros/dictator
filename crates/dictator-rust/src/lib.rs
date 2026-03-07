@@ -20,6 +20,8 @@ pub struct RustConfig {
     pub min_edition: Option<String>,
     /// Minimum required rust-version/MSRV (e.g., "1.83"). None = disabled.
     pub min_rust_version: Option<String>,
+    /// When true, `line-too-long` violations on comment lines are suppressed.
+    pub ignore_comments: bool,
 }
 
 impl Default for RustConfig {
@@ -28,6 +30,7 @@ impl Default for RustConfig {
             max_lines: 400,
             min_edition: None,
             min_rust_version: None,
+            ignore_comments: false,
         }
     }
 }
@@ -35,7 +38,7 @@ impl Default for RustConfig {
 /// Lint Rust source for structural violations.
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
-    lint_source_with_config(source, &RustConfig::default())
+    lint_source_with_configs(source, &RustConfig::default(), &SupremeConfig::default())
 }
 
 /// Lint with custom configuration
@@ -45,6 +48,41 @@ pub fn lint_source_with_config(source: &str, config: &RustConfig) -> Diagnostics
 
     counting::check_file_line_count(source, config.max_lines, &mut diags);
     visibility::check_visibility_ordering(source, &mut diags);
+
+    diags
+}
+
+/// Lint with custom config + supreme config (merged from decree.supreme + decree.rust)
+#[must_use]
+pub fn lint_source_with_configs(
+    source: &str,
+    rust_config: &RustConfig,
+    supreme_config: &SupremeConfig,
+) -> Diagnostics {
+    let mut diags = Diagnostics::new();
+
+    let supreme_diags =
+        dictator_supreme::lint_source_with_owner(source, supreme_config, "rust");
+
+    if rust_config.ignore_comments {
+        // Filter out line-too-long violations on comment lines
+        let lines: Vec<&str> = source.lines().collect();
+        diags.extend(supreme_diags.into_iter().filter(|d| {
+            if d.rule == "rust/line-too-long" {
+                let line_idx = source[..d.span.start].matches('\n').count();
+                !lines
+                    .get(line_idx)
+                    .is_some_and(|line| line.trim_start().starts_with("//"))
+            } else {
+                true
+            }
+        }));
+    } else {
+        diags.extend(supreme_diags);
+    }
+
+    // Rust-specific rules
+    diags.extend(lint_source_with_config(source, rust_config));
 
     diags
 }
@@ -79,8 +117,7 @@ impl Decree for RustDecree {
         }
 
         // Regular Rust files get full treatment
-        let mut diags = dictator_supreme::lint_source_with_owner(source, &self.supreme, "rust");
-        diags.extend(lint_source_with_config(source, &self.config));
+        let mut diags = lint_source_with_configs(source, &self.config, &self.supreme);
 
         // Check mod.rs structure (needs filesystem access)
         structure::check_mod_rs_structure(path, &mut diags);
@@ -135,5 +172,56 @@ pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> 
         max_lines: settings.max_lines.unwrap_or(400),
         min_edition: settings.min_edition.clone(),
         min_rust_version: settings.min_rust_version.clone(),
+        ignore_comments: settings.ignore_comments.unwrap_or(false),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ignores_long_comment_lines_when_configured() {
+        let long_comment = format!("// {}\n", "x".repeat(150));
+        let src = format!("fn main() {{\n{long_comment}}}\n");
+        let config = RustConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(!diags.iter().any(|d| d.rule == "rust/line-too-long"));
+    }
+
+    #[test]
+    fn detects_long_comment_lines_when_not_configured() {
+        let long_comment = format!("// {}\n", "x".repeat(150));
+        let src = format!("fn main() {{\n{long_comment}}}\n");
+        let config = RustConfig::default(); // ignore_comments = false
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(diags.iter().any(|d| d.rule == "rust/line-too-long"));
+    }
+
+    #[test]
+    fn still_detects_long_code_lines_with_ignore_comments() {
+        let long_code = format!("    let x = \"{}\";\n", "a".repeat(150));
+        let src = format!("fn main() {{\n{long_code}}}\n");
+        let config = RustConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(diags.iter().any(|d| d.rule == "rust/line-too-long"));
     }
 }

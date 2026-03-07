@@ -8,11 +8,15 @@ use memchr::memchr_iter;
 #[derive(Debug, Clone)]
 pub struct RubyConfig {
     pub max_lines: usize,
+    pub ignore_comments: bool,
 }
 
 impl Default for RubyConfig {
     fn default() -> Self {
-        Self { max_lines: 300 }
+        Self {
+            max_lines: 300,
+            ignore_comments: false,
+        }
     }
 }
 
@@ -47,11 +51,24 @@ pub fn lint_source_with_configs(
 ) -> Diagnostics {
     let mut diags = Diagnostics::new();
 
-    diags.extend(dictator_supreme::lint_source_with_owner(
-        source,
-        supreme_config,
-        "ruby",
-    ));
+    let supreme_diags = dictator_supreme::lint_source_with_owner(source, supreme_config, "ruby");
+
+    if ruby_config.ignore_comments {
+        // Filter out line-too-long violations on comment lines
+        let lines: Vec<&str> = source.lines().collect();
+        diags.extend(supreme_diags.into_iter().filter(|d| {
+            if d.rule == "ruby/line-too-long" {
+                let line_idx = source[..d.span.start].matches('\n').count();
+                !lines
+                    .get(line_idx)
+                    .is_some_and(|line| line.trim_start().starts_with('#'))
+            } else {
+                true
+            }
+        }));
+    } else {
+        diags.extend(supreme_diags);
+    }
 
     // Ruby-specific rules
     diags.extend(lint_ruby_specific(source, ruby_config));
@@ -195,6 +212,7 @@ pub fn init_decree_with_configs(config: RubyConfig, supreme: SupremeConfig) -> B
 pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> RubyConfig {
     RubyConfig {
         max_lines: settings.max_lines.unwrap_or(300),
+        ignore_comments: settings.ignore_comments.unwrap_or(false),
     }
 }
 
@@ -254,6 +272,51 @@ mod tests {
         let src = "#bad\n# good\n";
         let diags = lint_source(src);
         assert!(diags.iter().any(|d| d.rule == "ruby/comment-space"));
+    }
+
+    #[test]
+    fn ignores_long_comment_lines_when_configured() {
+        let long_comment = format!("# {}\n", "x".repeat(150));
+        let src = format!("def foo\n{long_comment}end\n");
+        let config = RubyConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(!diags.iter().any(|d| d.rule == "ruby/line-too-long"));
+    }
+
+    #[test]
+    fn detects_long_comment_lines_when_not_configured() {
+        let long_comment = format!("# {}\n", "x".repeat(150));
+        let src = format!("def foo\n{long_comment}end\n");
+        let config = RubyConfig::default(); // ignore_comments = false
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(diags.iter().any(|d| d.rule == "ruby/line-too-long"));
+    }
+
+    #[test]
+    fn still_detects_long_code_lines_with_ignore_comments() {
+        let long_code = format!("  x = \"{}\"\n", "a".repeat(150));
+        let src = format!("def foo\n{long_code}end\n");
+        let config = RubyConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
+        let diags = lint_source_with_configs(&src, &config, &supreme);
+        assert!(diags.iter().any(|d| d.rule == "ruby/line-too-long"));
     }
 
     #[test]
