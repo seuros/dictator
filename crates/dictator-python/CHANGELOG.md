@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.16.4](https://github.com/seuros/dictator/compare/dictator-python-v0.16.3...dictator-python-v0.16.4) (2026-03-07)
+
+
+### Bug Fixes
+
+* wire ignore_comments to skip line-too-long on comment lines ([4b059c5](https://github.com/seuros/dictator/commit/4b059c5ea2540d447425992858c066bd0f06a3ca))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.16.3 to 0.16.4
+    * dictator-core bumped from 0.16.3 to 0.16.4
+    * dictator-supreme bumped from 0.16.3 to 0.16.4
+
 ## [0.16.3](https://github.com/seuros/dictator/compare/dictator-python-v0.16.2...dictator-python-v0.16.3) (2026-02-14)
 
 
