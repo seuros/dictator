@@ -184,10 +184,9 @@ fn read_census_resource(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> Js
     let mut wasm_decrees = Vec::new();
     if let Some(ref cfg) = dictate_config {
         for (name, settings) in &cfg.decree {
-            if settings.path.is_some()
+            if let Some(ref path) = settings.path
                 && !NATIVE_DECREES.iter().any(|(n, _, _)| *n == name.as_str())
             {
-                let path = settings.path.as_ref().unwrap();
                 let exists = std::path::Path::new(path).exists();
                 wasm_decrees.push(serde_json::json!({
                     "name": name,
