@@ -1,11 +1,11 @@
-//! Resource implementations using mcp-host macros
+//! Resource implementations - macro-based resources here, manual resources in submodules
 
 use mcp_host::prelude::*;
 use std::sync::{Arc, Mutex};
 
-use super::config_exists;
 use crate::mcp::resources::{CENSUS_URI, CONFIG_URI, handle_read_resource};
 use crate::mcp::state::ServerState;
+use crate::mcp_host::config_exists;
 
 /// Dictator resources using macro-based registration
 pub struct DictatorResources {
