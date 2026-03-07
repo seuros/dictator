@@ -72,9 +72,7 @@ impl Tool for StalintUnwatchTool {
             ctx.logger
                 .info("Watch stopped. stalint_watch now available.");
 
-            let content =
-                TextContent::new(serde_json::to_string_pretty(&result).unwrap_or_default());
-            Ok(ToolOutput::Content(vec![Box::new(content)]))
+            Ok(ToolOutput::text(serde_json::to_string_pretty(&result).unwrap_or_default()))
         })
     }
 }

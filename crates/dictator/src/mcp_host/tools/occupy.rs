@@ -70,9 +70,7 @@ impl Tool for OccupyTool {
                 .result
                 .ok_or_else(|| ToolError::Execution("No result from occupy handler".to_string()))?;
 
-            let content =
-                TextContent::new(serde_json::to_string_pretty(&result).unwrap_or_default());
-            Ok(ToolOutput::Content(vec![Box::new(content)]))
+            Ok(ToolOutput::text(serde_json::to_string_pretty(&result).unwrap_or_default()))
         })
     }
 }

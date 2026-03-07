@@ -35,8 +35,7 @@ impl DictatorTools {
             .result
             .ok_or_else(|| ToolError::Execution("No result from stalint handler".to_string()))?;
 
-        let content = TextContent::new(serde_json::to_string_pretty(&result).unwrap_or_default());
-        Ok(ToolOutput::Content(vec![Box::new(content)]))
+        Ok(ToolOutput::text(serde_json::to_string_pretty(&result).unwrap_or_default()))
     }
 
     /// Auto-fix structural violations (requires write permissions)
@@ -59,7 +58,6 @@ impl DictatorTools {
             .result
             .ok_or_else(|| ToolError::Execution("No result from dictator handler".to_string()))?;
 
-        let content = TextContent::new(serde_json::to_string_pretty(&result).unwrap_or_default());
-        Ok(ToolOutput::Content(vec![Box::new(content)]))
+        Ok(ToolOutput::text(serde_json::to_string_pretty(&result).unwrap_or_default()))
     }
 }
