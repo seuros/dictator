@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.16.5](https://github.com/seuros/dictator/compare/dictator-v0.16.4...dictator-v0.16.5) (2026-03-07)
+
+
+### Bug Fixes
+
+* use if-let instead of is_some + unwrap (clippy) ([a488795](https://github.com/seuros/dictator/commit/a488795b5603c50214484979f31653e314d39bd1))
+* use ToolOutput::text() helper instead of verbose TextContent boilerplate ([bf55926](https://github.com/seuros/dictator/commit/bf559261af8a1af3b201e044ed2aaf5c9b7ab8e5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.16.4 to 0.16.5
+    * dictator-frontmatter bumped from 0.16.4 to 0.16.5
+    * dictator-golang bumped from 0.16.4 to 0.16.5
+    * dictator-decree-abi bumped from 0.16.4 to 0.16.5
+    * dictator-python bumped from 0.16.4 to 0.16.5
+    * dictator-ruby bumped from 0.16.4 to 0.16.5
+    * dictator-rust bumped from 0.16.4 to 0.16.5
+    * dictator-supreme bumped from 0.16.4 to 0.16.5
+    * dictator-typescript bumped from 0.16.4 to 0.16.5
+
 ## [0.16.4](https://github.com/seuros/dictator/compare/dictator-v0.16.3...dictator-v0.16.4) (2026-03-07)
 
 
