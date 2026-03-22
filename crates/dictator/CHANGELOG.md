@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.16.6](https://github.com/seuros/dictator/compare/dictator-v0.16.5...dictator-v0.16.6) (2026-03-22)
+
+
+### Bug Fixes
+
+* the Dictator purges corrupt capitalist binaries from the linting pipeline ([04d3ab0](https://github.com/seuros/dictator/commit/04d3ab0392d5c3e3bf8e65ad740751038e556419)), closes [#34](https://github.com/seuros/dictator/issues/34)
+* the Dictator reclaims border control from mcp-host's incompetent customs ([4e84a4a](https://github.com/seuros/dictator/commit/4e84a4abde9e25ea5317edfbd4a49203844cd561))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.16.5 to 0.16.6
+    * dictator-frontmatter bumped from 0.16.5 to 0.16.6
+    * dictator-golang bumped from 0.16.5 to 0.16.6
+    * dictator-decree-abi bumped from 0.16.5 to 0.16.6
+    * dictator-python bumped from 0.16.5 to 0.16.6
+    * dictator-ruby bumped from 0.16.5 to 0.16.6
+    * dictator-rust bumped from 0.16.5 to 0.16.6
+    * dictator-supreme bumped from 0.16.5 to 0.16.6
+    * dictator-typescript bumped from 0.16.5 to 0.16.6
+
 ## [0.16.5](https://github.com/seuros/dictator/compare/dictator-v0.16.4...dictator-v0.16.5) (2026-03-07)
 
 
