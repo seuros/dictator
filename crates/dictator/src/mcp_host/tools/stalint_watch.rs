@@ -82,7 +82,9 @@ impl Tool for StalintWatchTool {
             ctx.logger
                 .info("Watch started. stalint_unwatch now available.");
 
-            Ok(ToolOutput::text(serde_json::to_string_pretty(&result).unwrap_or_default()))
+            Ok(ToolOutput::text(
+                serde_json::to_string_pretty(&result).unwrap_or_default(),
+            ))
         })
     }
 }
