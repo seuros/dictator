@@ -5,7 +5,8 @@ use dictator_core::{Regime, Source};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use super::utils::{collect_files, make_snippet};
+use super::utils::make_snippet;
+use crate::files::collect_source_files;
 
 /// Run stalint check and return violations
 pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
@@ -19,7 +20,7 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
             continue;
         }
 
-        let files = collect_files(path);
+        let files = collect_source_files(path);
         for file in files {
             let Some(text) = crate::files::read_source_file(&file) else {
                 continue;

@@ -72,7 +72,7 @@ pub fn command_available(cmd: &str) -> bool {
 }
 
 // Re-export mcp-host utilities
-pub use mcp_host::utils::{base64_decode, base64_encode, byte_to_line_col, collect_files};
+pub use mcp_host::utils::{base64_decode, base64_encode, byte_to_line_col};
 
 /// Check if a path is within the current working directory (security boundary)
 /// Wrapper around mcp-host's `is_safe_path` for dictator-specific naming

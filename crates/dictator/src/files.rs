@@ -3,7 +3,6 @@
 use anyhow::Result;
 use camino::Utf8PathBuf;
 use ignore::WalkBuilder;
-use std::fs;
 
 #[derive(Debug, Default)]
 #[allow(clippy::struct_excessive_bools)]
@@ -20,29 +19,40 @@ pub fn read_source_file(path: &std::path::Path) -> Option<String> {
     std::fs::read_to_string(path).ok()
 }
 
+/// Walk a single path and collect source files.
+///
+/// Uses `ignore::WalkBuilder` with:
+/// - `standard_filters(true)` — respects `.gitignore`, `.ignore`, hidden files
+/// - `require_git(false)` — honours `.gitignore` files even outside git repos
+///
+/// This is the single walker for both CLI and MCP paths.
+pub fn collect_source_files(path: &std::path::Path) -> Vec<std::path::PathBuf> {
+    let mut files = Vec::new();
+    if path.is_file() {
+        files.push(path.to_path_buf());
+        return files;
+    }
+
+    let walker = WalkBuilder::new(path)
+        .standard_filters(true)
+        .require_git(false)
+        .build();
+
+    for entry in walker.flatten() {
+        if entry.file_type().is_some_and(|ft| ft.is_file()) {
+            files.push(entry.into_path());
+        }
+    }
+    files
+}
+
 pub fn collect_all_files(paths: &[Utf8PathBuf]) -> Result<Vec<Utf8PathBuf>> {
     let mut files = Vec::new();
     for path in paths {
-        let metadata = fs::metadata(path)?;
-        if metadata.is_file() {
-            // Explicit file path: always include, regardless of gitignore
-            files.push(path.clone());
-            continue;
-        }
-
-        // Directory: walk with gitignore filtering
-        let walker = WalkBuilder::new(path)
-            .standard_filters(true) // enables gitignore, .git/info/exclude, global config
-            .build();
-
-        for result in walker {
-            let entry = result?;
-            if !entry.file_type().is_some_and(|ft| ft.is_file()) {
-                continue;
-            }
-            let p = Utf8PathBuf::from_path_buf(entry.path().to_owned())
-                .map_err(|_| anyhow::anyhow!("non-utf8 path: {}", entry.path().display()))?;
-            files.push(p);
+        for p in collect_source_files(path.as_std_path()) {
+            let utf8 = Utf8PathBuf::from_path_buf(p)
+                .map_err(|p| anyhow::anyhow!("non-utf8 path: {}", p.display()))?;
+            files.push(utf8);
         }
     }
     Ok(files)

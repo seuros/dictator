@@ -8,7 +8,7 @@ use std::fmt::Write;
 use std::sync::{Arc, Mutex};
 
 use super::state::ServerState;
-use super::utils::collect_files;
+use crate::files::collect_source_files;
 
 /// Handle kimjongrails auto-fix (whitespace, newlines, line endings)
 pub fn handle_kimjongrails(
@@ -47,7 +47,7 @@ pub fn handle_kimjongrails(
         .iter()
         .map(std::path::Path::new)
         .filter(|p| p.exists())
-        .flat_map(collect_files)
+        .flat_map(collect_source_files)
         .collect();
 
     // Start progress tracking

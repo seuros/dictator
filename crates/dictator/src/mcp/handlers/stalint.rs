@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use crate::mcp::regime::init_regime_from_config;
 use crate::mcp::state::{DEFAULT_STALINT_LIMIT, ServerState};
 use crate::mcp::utils::{
-    base64_decode, base64_encode, byte_to_line_col, collect_files, log_to_file, make_snippet,
+    base64_decode, base64_encode, byte_to_line_col, log_to_file, make_snippet,
 };
 
 /// Handle stalint tool
@@ -100,7 +100,7 @@ pub fn handle_stalint(
     let all_files: Vec<std::path::PathBuf> = resolved_paths
         .iter()
         .filter(|p| p.exists())
-        .flat_map(|p| collect_files(p))
+        .flat_map(|p| crate::files::collect_source_files(p))
         .collect();
 
     // Start progress tracking

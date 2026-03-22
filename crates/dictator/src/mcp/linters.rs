@@ -9,7 +9,7 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 
 use super::state::ServerState;
-use super::utils::collect_files;
+use crate::files::collect_source_files;
 
 /// Get linter args based on command - Dictator controls the format for parsing
 pub fn get_linter_args(command: &str) -> Vec<&'static str> {
@@ -142,7 +142,7 @@ fn detect_decrees_with_files(paths: &[String]) -> HashSet<String> {
     let mut decrees_with_files: HashSet<String> = HashSet::new();
     for path in paths {
         let path = std::path::Path::new(path);
-        let files = collect_files(path);
+        let files = collect_source_files(path);
         for file in files {
             if let Some(ext) = file.extension().and_then(|e| e.to_str())
                 && let Some(decree_name) = ext_to_decree.get(ext)
