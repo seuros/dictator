@@ -6,7 +6,6 @@ use dictator_core::Source;
 use notify::{RecommendedWatcher, RecursiveMode, Watcher};
 use notify_types::event::{Event, EventKind};
 use std::collections::HashSet;
-use std::fs;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
@@ -147,7 +146,9 @@ pub fn run_watch(
                     continue;
                 }
 
-                let text = fs::read_to_string(&path)?;
+                let Some(text) = crate::files::read_source_file(path.as_std_path()) else {
+                    continue;
+                };
                 let path_ref = path.as_path();
                 let source = Source {
                     path: path_ref,

@@ -21,7 +21,7 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
 
         let files = collect_files(path);
         for file in files {
-            let Ok(text) = std::fs::read_to_string(&file) else {
+            let Some(text) = crate::files::read_source_file(&file) else {
                 continue;
             };
 

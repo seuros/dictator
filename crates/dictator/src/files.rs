@@ -16,6 +16,10 @@ pub struct FileTypes {
     pub has_configs: bool,
 }
 
+pub fn read_source_file(path: &std::path::Path) -> Option<String> {
+    std::fs::read_to_string(path).ok()
+}
+
 pub fn collect_all_files(paths: &[Utf8PathBuf]) -> Result<Vec<Utf8PathBuf>> {
     let mut files = Vec::new();
     for path in paths {

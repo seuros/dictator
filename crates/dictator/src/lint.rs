@@ -88,7 +88,9 @@ pub fn run_once(
 
     // Process files in parallel using rayon
     files.par_iter().try_for_each(|path| -> Result<()> {
-        let text = fs::read_to_string(path)?;
+        let Some(text) = crate::files::read_source_file(path.as_std_path()) else {
+            return Ok(());
+        };
         let path_ref = path.as_path();
         let source = Source {
             path: path_ref,

@@ -121,7 +121,9 @@ fn run_batch_dictate(
     let mut file_count = 0;
 
     for path in files {
-        let original = fs::read_to_string(&path)?;
+        let Some(original) = crate::files::read_source_file(path.as_std_path()) else {
+            continue;
+        };
         let source = dictator_core::Source {
             path: path.as_path(),
             text: &original,

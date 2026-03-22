@@ -65,12 +65,8 @@ pub fn handle_kimjongrails(
             state.progress_tracker.progress(&progress_token, current);
         }
 
-        let text = match std::fs::read_to_string(file) {
-            Ok(t) => t,
-            Err(e) => {
-                let _ = writeln!(log_output, "! Cannot read {}: {}", file.display(), e);
-                continue;
-            }
+        let Some(text) = crate::files::read_source_file(file) else {
+            continue;
         };
 
         let (fixed, changes) = apply_fixes(&text);

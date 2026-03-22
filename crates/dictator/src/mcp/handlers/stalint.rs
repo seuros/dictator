@@ -118,7 +118,7 @@ pub fn handle_stalint(
             state.progress_tracker.progress(&progress_token, current);
         }
 
-        let Ok(text) = std::fs::read_to_string(file) else {
+        let Some(text) = crate::files::read_source_file(file) else {
             continue;
         };
 
