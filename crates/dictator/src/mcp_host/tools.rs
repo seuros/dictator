@@ -8,6 +8,8 @@ pub use occupy::OccupyTool;
 pub use stalint_watch::StalintWatchTool;
 
 use mcp_host::prelude::*;
+use mcp_host::protocol::elicitation::ElicitationSchema;
+use mcp_host::protocol::types::ElicitationAction;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 
@@ -23,7 +25,7 @@ pub struct DictatorTools {
 #[mcp_router]
 impl DictatorTools {
     /// Run structural linting checks on files (read-only analysis)
-    #[mcp_tool(name = "stalint", visible = "config_exists()")]
+    #[mcp_tool(name = "stalint", visible = "config_exists()", read_only = true, idempotent = true)]
     async fn stalint(&self, _ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
         let response = handle_stalint(Value::Null, None, Arc::clone(&self.state));
 
@@ -41,13 +43,44 @@ impl DictatorTools {
     }
 
     /// Auto-fix structural violations (requires write permissions)
-    #[mcp_tool(name = "dictator", visible = "config_exists()")]
-    async fn dictator(&self, _ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
+    #[mcp_tool(name = "dictator", visible = "config_exists()", destructive = true)]
+    async fn dictator(&self, ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
         let can_write = self.state.lock().unwrap().can_write;
         if !can_write {
             return Err(ToolError::Execution(
                 "Write operations disabled in read-only mode".to_string(),
             ));
+        }
+
+        if let Some(requester) = ctx.client_requester() {
+            if requester.supports_elicitation() {
+                let schema = ElicitationSchema::builder()
+                    .optional_bool("confirm", false)
+                    .build_unchecked();
+
+                let result = requester
+                    .request_elicitation(
+                        "dictator will auto-apply structural fixes to disk. Confirm?".to_string(),
+                        serde_json::to_value(&schema).unwrap_or_default(),
+                        None,
+                    )
+                    .await
+                    .map_err(|e| ToolError::Execution(e.to_string()))?;
+
+                let confirmed = matches!(result.action, ElicitationAction::Accept)
+                    && result
+                        .content
+                        .as_ref()
+                        .and_then(|c| c.get("confirm"))
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false);
+
+                if !confirmed {
+                    return Err(ToolError::Execution(
+                        "Operation cancelled by user".to_string(),
+                    ));
+                }
+            }
         }
 
         let response = handle_dictator(Value::Null, None, Arc::clone(&self.state));
