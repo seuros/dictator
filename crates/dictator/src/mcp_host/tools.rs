@@ -135,13 +135,25 @@ impl DictatorTools {
         if let Some(requester) = ctx.client_requester()
             && requester.supports_elicitation()
         {
+            let lint_summary = {
+                let response = handle_stalint(Value::Null, None, Arc::clone(&self.state));
+                response
+                    .result
+                    .and_then(|r| serde_json::to_string_pretty(&r).ok())
+                    .unwrap_or_else(|| "unknown violations".to_string())
+            };
+            let message = format!(
+                "dictator will auto-fix the following \
+                 violations:\n\n{lint_summary}\n\nConfirm?"
+            );
+
             let schema = ElicitationSchema::builder()
                 .optional_bool("confirm", false)
                 .build_unchecked();
 
             let result = requester
                 .request_elicitation(
-                    "dictator will auto-apply structural fixes to disk. Confirm?".to_string(),
+                    message,
                     serde_json::to_value(&schema).unwrap_or_default(),
                     None,
                 )
