@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.17.0](https://github.com/seuros/dictator/compare/dictator-v0.16.6...dictator-v0.17.0) (2026-04-06)
+
+
+### Features
+
+* **mcp:** annotate stalint as read-only and dictator as destructive ([429b9ab](https://github.com/seuros/dictator/commit/429b9abd8bb08f82cdc3f4bb685f84750a4d463a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.16.6 to 0.17.0
+    * dictator-frontmatter bumped from 0.16.6 to 0.17.0
+    * dictator-golang bumped from 0.16.6 to 0.17.0
+    * dictator-decree-abi bumped from 0.16.6 to 0.17.0
+    * dictator-python bumped from 0.16.6 to 0.17.0
+    * dictator-ruby bumped from 0.16.6 to 0.17.0
+    * dictator-rust bumped from 0.16.6 to 0.17.0
+    * dictator-supreme bumped from 0.16.6 to 0.17.0
+    * dictator-typescript bumped from 0.16.6 to 0.17.0
+
 ## [0.16.6](https://github.com/seuros/dictator/compare/dictator-v0.16.5...dictator-v0.16.6) (2026-03-22)
 
 
