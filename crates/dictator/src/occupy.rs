@@ -51,9 +51,8 @@ pub fn run_occupy(args: OccupyArgs) -> Result<()> {
     let cache_dir = target_dir.join(".dictator").join("cache");
     let gitignore_path = target_dir.join(".gitignore");
 
-    // Ensure cache directory exists (per-worktree) and is user-private on Unix
+    // Ensure cache directory exists (per-worktree) and is user-private
     std::fs::create_dir_all(&cache_dir)?;
-    #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         let _ = std::fs::set_permissions(&cache_dir, std::fs::Permissions::from_mode(0o700));

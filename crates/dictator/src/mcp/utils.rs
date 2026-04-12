@@ -5,7 +5,6 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::fs::OpenOptions;
 use std::io::Write;
-#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
 /// Get per-worktree cache directory: `.dictator/cache` under the current working dir.
@@ -19,7 +18,6 @@ pub fn get_cache_dir() -> std::path::PathBuf {
             let cache = cwd.join(".dictator").join("cache");
             let _ = std::fs::create_dir_all(&cache);
             // Restrict to user only; ignore errors quietly.
-            #[cfg(unix)]
             let _ = std::fs::set_permissions(&cache, std::fs::Permissions::from_mode(0o700));
             return cache;
         }
