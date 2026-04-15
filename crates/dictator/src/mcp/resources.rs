@@ -5,6 +5,7 @@ use serde_json::Value;
 use std::sync::{Arc, Mutex};
 
 use super::state::{CONFIG_FILE, ServerState};
+use super::utils::{current_dir_or_default, to_json_string};
 
 /// URI for the config resource
 pub const CONFIG_URI: &str = "dictator://config";
@@ -124,7 +125,7 @@ pub fn handle_read_resource(
 
 /// Read the config resource - returns raw TOML
 fn read_config_resource(id: Value) -> JsonRpcResponse {
-    let cwd = std::env::current_dir().unwrap_or_default();
+    let cwd = current_dir_or_default();
     let config_path = cwd.join(CONFIG_FILE);
 
     let (mime_type, text) = if config_path.exists() {
@@ -227,7 +228,7 @@ fn read_census_resource(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> Js
             "contents": [{
                 "uri": CENSUS_URI,
                 "mimeType": "application/json",
-                "text": serde_json::to_string(&content).unwrap_or_default()
+                "text": to_json_string(&content)
             }]
         })),
         error: None,

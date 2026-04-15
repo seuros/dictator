@@ -6,14 +6,20 @@
 use dictator_decree_abi::{Diagnostic, Span};
 use serde::Deserialize;
 
+macro_rules! parse_or_default {
+    ($parser:ident, $json:expr) => {
+        $parser($json).unwrap_or_default()
+    };
+}
+
 /// Parse linter output based on command name
 #[must_use]
 pub fn parse_linter_output(command: &str, json: &str) -> Vec<Diagnostic> {
     match command {
-        "rubocop" => parse_rubocop(json).unwrap_or_default(),
-        "ruff" => parse_ruff(json).unwrap_or_default(),
-        "eslint" => parse_eslint(json).unwrap_or_default(),
-        "biome" => parse_biome(json).unwrap_or_default(),
+        "rubocop" => parse_or_default!(parse_rubocop, json),
+        "ruff" => parse_or_default!(parse_ruff, json),
+        "eslint" => parse_or_default!(parse_eslint, json),
+        "biome" => parse_or_default!(parse_biome, json),
         "clippy" | "cargo-clippy" => parse_clippy(json),
         _ => vec![],
     }

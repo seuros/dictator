@@ -5,13 +5,12 @@ use dictator_core::{Regime, Source};
 use serde_json::Value;
 use std::collections::HashMap;
 
-use super::utils::make_snippet;
-use crate::files::collect_source_files;
+use super::utils::{collect_files, current_dir_or_default, make_snippet};
 
 /// Run stalint check and return violations
 pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
     let regime = init_regime_from_config();
-    let cwd = std::env::current_dir().unwrap_or_default();
+    let cwd = current_dir_or_default();
     let mut violations = Vec::new();
 
     for path in paths {
@@ -20,9 +19,9 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
             continue;
         }
 
-        let files = collect_source_files(path);
+        let files = collect_files(path);
         for file in files {
-            let Some(text) = crate::files::read_source_file(&file) else {
+            let Ok(text) = std::fs::read_to_string(&file) else {
                 continue;
             };
 

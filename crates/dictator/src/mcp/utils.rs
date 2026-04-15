@@ -1,5 +1,8 @@
 //! File collection, path utilities, and helper functions.
 
+use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 use std::fs::OpenOptions;
 use std::io::Write;
 #[cfg(unix)]
@@ -55,10 +58,41 @@ pub fn log_to_file(msg: &str) {
     }
 }
 
+/// Current working directory, falling back to an empty path on failure.
+#[must_use]
+pub fn current_dir_or_default() -> std::path::PathBuf {
+    std::env::current_dir().unwrap_or_default()
+}
+
+/// Standard JSON-RPC response for invalid tool arguments.
+#[must_use]
+pub fn invalid_arguments_response(id: serde_json::Value) -> JsonRpcResponse {
+    JsonRpcResponse {
+        jsonrpc: "2.0".to_string(),
+        id,
+        result: None,
+        error: Some(JsonRpcError {
+            code: -32602,
+            message: "Missing or invalid arguments".to_string(),
+            data: None,
+        }),
+    }
+}
+
+/// Parse optional JSON-RPC arguments into a typed struct.
+pub fn parse_arguments<T: DeserializeOwned>(
+    id: &serde_json::Value,
+    arguments: Option<serde_json::Value>,
+) -> Result<T, Box<JsonRpcResponse>> {
+    arguments
+        .and_then(|a| serde_json::from_value(a).ok())
+        .ok_or_else(|| Box::new(invalid_arguments_response(id.clone())))
+}
+
 /// Check if current directory is a git repository
 #[allow(dead_code)]
 pub fn is_git_repo() -> bool {
-    let cwd = std::env::current_dir().unwrap_or_default();
+    let cwd = current_dir_or_default();
     cwd.join(".git").exists()
 }
 
@@ -72,12 +106,45 @@ pub fn command_available(cmd: &str) -> bool {
 }
 
 // Re-export mcp-host utilities
-pub use mcp_host::utils::{base64_decode, base64_encode, byte_to_line_col};
+pub use mcp_host::utils::{base64_decode, base64_encode, byte_to_line_col, collect_files};
 
 /// Check if a path is within the current working directory (security boundary)
 /// Wrapper around mcp-host's `is_safe_path` for dictator-specific naming
 pub fn is_within_cwd(path: &std::path::Path, cwd: &std::path::Path) -> bool {
     mcp_host::utils::is_safe_path(path, cwd)
+}
+
+/// Partition paths into allowed and rejected sets based on the cwd security boundary.
+#[must_use]
+pub fn partition_paths_within_cwd(
+    paths: &[String],
+    cwd: &std::path::Path,
+) -> (Vec<String>, Vec<String>) {
+    let mut allowed = Vec::new();
+    let mut rejected = Vec::new();
+
+    for path in paths {
+        let candidate = std::path::Path::new(path);
+        if is_within_cwd(candidate, cwd) {
+            allowed.push(path.clone());
+        } else {
+            rejected.push(path.clone());
+        }
+    }
+
+    (allowed, rejected)
+}
+
+/// Serialize a value to compact JSON, falling back to an empty string on failure.
+#[must_use]
+pub fn to_json_string<T: Serialize>(value: &T) -> String {
+    serde_json::to_string(value).unwrap_or_default()
+}
+
+/// Serialize a value to pretty JSON, falling back to an empty string on failure.
+#[must_use]
+pub fn to_json_string_pretty<T: Serialize>(value: &T) -> String {
+    serde_json::to_string_pretty(value).unwrap_or_default()
 }
 
 /// Build a sanitized single-line snippet around the diagnostic span.

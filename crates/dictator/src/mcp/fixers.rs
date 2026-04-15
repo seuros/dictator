@@ -1,6 +1,6 @@
 //! Auto-fix handlers for MCP tools.
 
-use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
+use mcp_host::protocol::types::JsonRpcResponse;
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -8,7 +8,7 @@ use std::fmt::Write;
 use std::sync::{Arc, Mutex};
 
 use super::state::ServerState;
-use crate::files::collect_source_files;
+use super::utils::{collect_files, parse_arguments};
 
 /// Handle kimjongrails auto-fix (whitespace, newlines, line endings)
 pub fn handle_kimjongrails(
@@ -21,20 +21,9 @@ pub fn handle_kimjongrails(
         paths: Vec<String>,
     }
 
-    let args: Args = match arguments.and_then(|a| serde_json::from_value(a).ok()) {
-        Some(a) => a,
-        None => {
-            return JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
-                result: None,
-                error: Some(JsonRpcError {
-                    code: -32602,
-                    message: "Missing or invalid arguments".to_string(),
-                    data: None,
-                }),
-            };
-        }
+    let args: Args = match parse_arguments(&id, arguments) {
+        Ok(args) => args,
+        Err(response) => return *response,
     };
 
     let mut log_output = String::new();
@@ -47,7 +36,7 @@ pub fn handle_kimjongrails(
         .iter()
         .map(std::path::Path::new)
         .filter(|p| p.exists())
-        .flat_map(collect_source_files)
+        .flat_map(collect_files)
         .collect();
 
     // Start progress tracking
@@ -65,8 +54,12 @@ pub fn handle_kimjongrails(
             state.progress_tracker.progress(&progress_token, current);
         }
 
-        let Some(text) = crate::files::read_source_file(file) else {
-            continue;
+        let text = match std::fs::read_to_string(file) {
+            Ok(t) => t,
+            Err(e) => {
+                let _ = writeln!(log_output, "! Cannot read {}: {}", file.display(), e);
+                continue;
+            }
         };
 
         let (fixed, changes) = apply_fixes(&text);
