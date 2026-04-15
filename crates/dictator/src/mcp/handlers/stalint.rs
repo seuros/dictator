@@ -10,7 +10,8 @@ use std::sync::{Arc, Mutex};
 use crate::mcp::regime::init_regime_from_config;
 use crate::mcp::state::{DEFAULT_STALINT_LIMIT, ServerState};
 use crate::mcp::utils::{
-    base64_decode, base64_encode, byte_to_line_col, log_to_file, make_snippet,
+    base64_decode, base64_encode, byte_to_line_col, collect_files, current_dir_or_default,
+    log_to_file, make_snippet,
 };
 
 /// Handle stalint tool
@@ -70,7 +71,7 @@ pub fn handle_stalint(
         .unwrap_or(0);
 
     // Resolve paths to absolute (relative to server's cwd)
-    let cwd = std::env::current_dir().unwrap_or_default();
+    let cwd = current_dir_or_default();
     let resolved_paths: Vec<std::path::PathBuf> = paths
         .iter()
         .map(|p| {
@@ -100,7 +101,7 @@ pub fn handle_stalint(
     let all_files: Vec<std::path::PathBuf> = resolved_paths
         .iter()
         .filter(|p| p.exists())
-        .flat_map(|p| crate::files::collect_source_files(p))
+        .flat_map(|p| collect_files(p))
         .collect();
 
     // Start progress tracking
@@ -118,7 +119,7 @@ pub fn handle_stalint(
             state.progress_tracker.progress(&progress_token, current);
         }
 
-        let Some(text) = crate::files::read_source_file(file) else {
+        let Ok(text) = std::fs::read_to_string(file) else {
             continue;
         };
 

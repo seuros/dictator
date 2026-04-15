@@ -3,7 +3,8 @@
 use crate::cli::CensusArgs;
 use camino::Utf8PathBuf;
 use dictator_core::DecreeSettings;
-use std::process::Command;
+
+use crate::mcp::utils::command_available;
 
 /// Native decrees that are always available
 const NATIVE_DECREES: &[(&str, &[&str])] = &[
@@ -118,7 +119,7 @@ pub fn run_census(
         println!("  (none configured)");
     } else {
         for (decree, command) in configured_linters {
-            let available = is_command_available(command);
+            let available = command_available(command);
             let status = if available { "✓" } else { "✗" };
             let state = if available { "available" } else { "not found" };
             println!("  {status} {command:<12} ({state}, decree: {decree})");
@@ -126,14 +127,6 @@ pub fn run_census(
     }
 
     Ok(())
-}
-
-fn is_command_available(cmd: &str) -> bool {
-    Command::new("which")
-        .arg(cmd)
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
 }
 
 fn decree_status<'a>(

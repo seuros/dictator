@@ -35,22 +35,19 @@ async fn resolve_paths(ctx: &Ctx<'_>) -> Option<Vec<String>> {
         }
         let paths = roots
             .iter()
-            .filter_map(|r| {
+            .map(|r| {
                 // Strip file:// or file:/// prefix; leave other URIs as-is
                 if let Some(p) = r.uri.strip_prefix("file://") {
-                    Some(p.to_string())
+                    p.to_string()
                 } else {
-                    Some(r.uri.clone())
+                    r.uri.clone()
                 }
             })
             .collect();
         Some(paths)
     } else {
         // Fall back to current working directory
-        let cwd = std::env::current_dir()
-            .ok()?
-            .to_string_lossy()
-            .to_string();
+        let cwd = std::env::current_dir().ok()?.to_string_lossy().to_string();
         Some(vec![cwd])
     }
 }
@@ -98,7 +95,12 @@ pub struct DictatorTools {
 #[mcp_router]
 impl DictatorTools {
     /// Run structural linting checks on files (read-only analysis)
-    #[mcp_tool(name = "stalint", visible = "config_exists()", read_only = true, idempotent = true)]
+    #[mcp_tool(
+        name = "stalint",
+        visible = "config_exists()",
+        read_only = true,
+        idempotent = true
+    )]
     async fn stalint(&self, ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
         let paths = match resolve_paths(&ctx).await {
             Some(p) => p,
@@ -130,36 +132,37 @@ impl DictatorTools {
             ));
         }
 
-        if let Some(requester) = ctx.client_requester() {
-            if requester.supports_elicitation() {
-                let schema = ElicitationSchema::builder()
-                    .optional_bool("confirm", false)
-                    .build_unchecked();
+        if let Some(requester) = ctx.client_requester()
+            && requester.supports_elicitation()
+        {
+            let schema = ElicitationSchema::builder()
+                .optional_bool("confirm", false)
+                .build_unchecked();
 
-                let result = requester
-                    .request_elicitation(
-                        "dictator will auto-apply structural fixes to disk. Confirm?".to_string(),
-                        serde_json::to_value(&schema).unwrap_or_default(),
-                        None,
-                    )
-                    .await
-                    .map_err(|e| ToolError::Execution(e.to_string()))?;
+            let result = requester
+                .request_elicitation(
+                    "dictator will auto-apply structural fixes to disk. Confirm?".to_string(),
+                    serde_json::to_value(&schema).unwrap_or_default(),
+                    None,
+                )
+                .await
+                .map_err(|e| ToolError::Execution(e.to_string()))?;
 
-                let confirmed = matches!(result.action, ElicitationAction::Accept)
-                    && result
-                        .content
-                        .as_ref()
-                        .and_then(|c| c.get("confirm"))
-                        .and_then(|v| v.as_bool())
-                        .unwrap_or(false);
+            let confirmed = matches!(result.action, ElicitationAction::Accept)
+                && result
+                    .content
+                    .as_ref()
+                    .and_then(|c| c.get("confirm"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
 
-                if !confirmed {
-                    return Err(ToolError::Execution(
-                        "Operation cancelled by user".to_string(),
-                    ));
-                }
+            if !confirmed {
+                return Err(ToolError::Execution(
+                    "Operation cancelled by user".to_string(),
+                ));
             }
         }
+
         let paths = match resolve_paths(&ctx).await {
             Some(p) => p,
             None => {

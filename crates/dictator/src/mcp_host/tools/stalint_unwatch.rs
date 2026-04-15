@@ -9,6 +9,8 @@ use crate::mcp::handlers::handle_stalint_unwatch;
 use crate::mcp::state::ServerState;
 use crate::mcp_host::config_exists;
 
+use super::{extract_tool_result, pretty_result_output, spawn_notification_forwarder};
+
 /// Unwatch files
 pub struct StalintUnwatchTool {
     pub state: Arc<Mutex<ServerState>>,
@@ -40,28 +42,9 @@ impl Tool for StalintUnwatchTool {
         Box::pin(async move {
             ctx.logger.info("Stopping path watch...");
 
-            let (string_tx, mut string_rx) = tokio::sync::mpsc::channel::<String>(100);
-
-            let notification_tx = self.notification_tx.clone();
-            tokio::spawn(async move {
-                while let Some(notif_str) = string_rx.recv().await {
-                    if let Ok(notif) = serde_json::from_str::<JsonRpcNotification>(&notif_str)
-                        && notification_tx.send(notif).is_err()
-                    {
-                        break;
-                    }
-                }
-            });
-
+            let string_tx = spawn_notification_forwarder(self.notification_tx.clone());
             let response = handle_stalint_unwatch(Value::Null, Arc::clone(&self.state), string_tx);
-
-            if let Some(error) = response.error {
-                return Err(ToolError::Execution(error.message));
-            }
-
-            let result = response.result.ok_or_else(|| {
-                ToolError::Execution("No result from stalint_unwatch handler".to_string())
-            })?;
+            let result = extract_tool_result(response, "stalint_unwatch")?;
 
             // Swap tools: hide unwatch, show watch
             ctx.session.batch(|batch| {
@@ -72,9 +55,7 @@ impl Tool for StalintUnwatchTool {
             ctx.logger
                 .info("Watch stopped. stalint_watch now available.");
 
-            Ok(ToolOutput::text(
-                serde_json::to_string_pretty(&result).unwrap_or_default(),
-            ))
+            Ok(pretty_result_output(&result))
         })
     }
 }

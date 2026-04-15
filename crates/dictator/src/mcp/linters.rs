@@ -1,6 +1,6 @@
 //! External linter execution for MCP tools.
 
-use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
+use mcp_host::protocol::types::JsonRpcResponse;
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -9,7 +9,7 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 
 use super::state::ServerState;
-use crate::files::collect_source_files;
+use super::utils::{collect_files, parse_arguments};
 
 /// Get linter args based on command - Dictator controls the format for parsing
 pub fn get_linter_args(command: &str) -> Vec<&'static str> {
@@ -39,20 +39,9 @@ pub fn handle_supremecourt(
         paths: Vec<String>,
     }
 
-    let args: Args = match arguments.and_then(|a| serde_json::from_value(a).ok()) {
-        Some(a) => a,
-        None => {
-            return JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
-                result: None,
-                error: Some(JsonRpcError {
-                    code: -32602,
-                    message: "Missing or invalid arguments".to_string(),
-                    data: None,
-                }),
-            };
-        }
+    let args: Args = match parse_arguments(&id, arguments) {
+        Ok(args) => args,
+        Err(response) => return *response,
     };
 
     // Load config to get linter configurations (clone to release lock early)
@@ -142,7 +131,7 @@ fn detect_decrees_with_files(paths: &[String]) -> HashSet<String> {
     let mut decrees_with_files: HashSet<String> = HashSet::new();
     for path in paths {
         let path = std::path::Path::new(path);
-        let files = collect_source_files(path);
+        let files = collect_files(path);
         for file in files {
             if let Some(ext) = file.extension().and_then(|e| e.to_str())
                 && let Some(decree_name) = ext_to_decree.get(ext)

@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::is_within_cwd;
+use crate::mcp::utils::{current_dir_or_default, parse_arguments, partition_paths_within_cwd};
 
 /// Handle `stalint_watch` tool
 pub fn handle_stalint_watch(
@@ -24,35 +24,14 @@ pub fn handle_stalint_watch(
         paths: Vec<String>,
     }
 
-    let args: Args = match arguments.and_then(|a| serde_json::from_value(a).ok()) {
-        Some(a) => a,
-        None => {
-            return JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
-                result: None,
-                error: Some(JsonRpcError {
-                    code: -32602,
-                    message: "Missing or invalid arguments".to_string(),
-                    data: None,
-                }),
-            };
-        }
+    let args: Args = match parse_arguments(&id, arguments) {
+        Ok(args) => args,
+        Err(response) => return *response,
     };
 
     // Security: stalint_watch only works within cwd
-    let cwd = std::env::current_dir().unwrap_or_default();
-    let mut rejected: Vec<String> = Vec::new();
-    let mut allowed: Vec<String> = Vec::new();
-
-    for path in &args.paths {
-        let p = std::path::Path::new(path);
-        if is_within_cwd(p, &cwd) {
-            allowed.push(path.clone());
-        } else {
-            rejected.push(path.clone());
-        }
-    }
+    let cwd = current_dir_or_default();
+    let (allowed, rejected) = partition_paths_within_cwd(&args.paths, &cwd);
 
     if !rejected.is_empty() {
         return JsonRpcResponse {
