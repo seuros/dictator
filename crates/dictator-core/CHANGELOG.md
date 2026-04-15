@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.17.1](https://github.com/seuros/dictator/compare/dictator-core-v0.17.0...dictator-core-v0.17.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* update mcp-host and DRY MCP helpers ([11319a0](https://github.com/seuros/dictator/commit/11319a05fbadeaa845ab2c9313d77ec2cb5d197c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.17.0 to 0.17.1
+
 ## [0.17.0](https://github.com/seuros/dictator/compare/dictator-core-v0.16.6...dictator-core-v0.17.0) (2026-04-06)
 
 
