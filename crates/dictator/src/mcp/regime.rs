@@ -95,6 +95,10 @@ fn load_native_decrees(
     supreme_settings: &dictator_core::config::DecreeSettings,
 ) {
     for (decree_name, settings) in decree_config {
+        if !native_decree_enabled(settings) {
+            continue;
+        }
+
         match decree_name.as_str() {
             "typescript" => {
                 let ts_config = dictator_typescript::config_from_decree_settings(settings);
@@ -137,5 +141,31 @@ fn load_native_decrees(
             }
             _ => {} // Already loaded above; custom WASM decrees handled elsewhere
         }
+    }
+}
+
+fn native_decree_enabled(settings: &dictator_core::config::DecreeSettings) -> bool {
+    settings.enabled != Some(false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn native_decree_enabled_defaults_to_true() {
+        let settings = dictator_core::config::DecreeSettings::default();
+
+        assert!(native_decree_enabled(&settings));
+    }
+
+    #[test]
+    fn native_decree_enabled_respects_false() {
+        let settings = dictator_core::config::DecreeSettings {
+            enabled: Some(false),
+            ..Default::default()
+        };
+
+        assert!(!native_decree_enabled(&settings));
     }
 }
