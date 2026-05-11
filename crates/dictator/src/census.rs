@@ -1,6 +1,7 @@
 //! Census command - shows regime status
 
 use crate::cli::CensusArgs;
+use crate::config::load_dictate_config;
 use camino::Utf8PathBuf;
 use dictator_core::DecreeSettings;
 
@@ -22,23 +23,7 @@ pub fn run_census(
     config_path: Option<Utf8PathBuf>,
     profile: Option<String>,
 ) -> anyhow::Result<()> {
-    // Load decree configuration (with validation)
-    let mut dictate_config = if let Some(p) = config_path.as_ref() {
-        Some(dictator_core::DictateConfig::from_file(p.as_std_path())?)
-    } else {
-        dictator_core::DictateConfig::load_default_strict()?
-    };
-
-    // Apply profile if specified
-    if let Some(ref config) = dictate_config
-        && let Some(ref profile_name) = profile
-    {
-        dictate_config = Some(
-            config
-                .get_profile_config(profile_name)
-                .map_err(|e| anyhow::anyhow!("Profile error: {e}"))?,
-        );
-    }
+    let dictate_config = load_dictate_config(config_path.as_ref(), profile.as_deref())?;
 
     let default_path = Utf8PathBuf::from(".dictate.toml");
     let config_display = config_path.as_ref().unwrap_or(&default_path);

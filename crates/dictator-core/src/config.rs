@@ -362,12 +362,7 @@ impl DictateConfig {
             )
             .map_err(|e| ConfigError::Parse(e.to_string()))?;
 
-        // Validate all decree settings
-        for (name, settings) in &config.decree {
-            settings
-                .validate()
-                .map_err(|e| ConfigError::Validation(format!("decree.{name}: {e}")))?;
-        }
+        config.validate_all_settings()?;
 
         Ok(config)
     }
@@ -408,11 +403,11 @@ impl DictateConfig {
     pub fn get_profile_config(&self, profile_name: &str) -> Result<Self, String> {
         let mut result = self.clone();
 
-        // Start with the requested profile
+        // Resolve parent profiles first so the requested profile remains most specific.
         let mut current_profile = profile_name;
         let mut visited_profiles = std::collections::HashSet::new();
+        let mut inheritance_chain = Vec::new();
 
-        // Resolve profile inheritance chain
         loop {
             if !visited_profiles.insert(current_profile.to_string()) {
                 return Err(format!(
@@ -420,28 +415,30 @@ impl DictateConfig {
                 ));
             }
 
-            if let Some(profile) = self.profile.get(current_profile) {
-                // Merge profile decree settings
-                for (decree_name, profile_settings) in &profile.decree {
-                    if let Some(base_settings) = result.decree.get_mut(decree_name) {
-                        // Merge settings (profile overrides base)
-                        merge_decree_settings(base_settings, profile_settings);
-                    } else {
-                        // Add new decree settings from profile
-                        result
-                            .decree
-                            .insert(decree_name.clone(), profile_settings.clone());
-                    }
-                }
+            let Some(profile) = self.profile.get(current_profile) else {
+                return Err(format!("Profile '{current_profile}' not found"));
+            };
+            inheritance_chain.push(profile);
 
-                // Check if this profile inherits from another
-                if let Some(parent) = &profile.inherits {
-                    current_profile = parent;
-                } else {
-                    break;
-                }
+            if let Some(parent) = &profile.inherits {
+                current_profile = parent;
             } else {
                 break;
+            }
+        }
+
+        for profile in inheritance_chain.iter().rev() {
+            // Merge profile decree settings
+            for (decree_name, profile_settings) in &profile.decree {
+                if let Some(base_settings) = result.decree.get_mut(decree_name) {
+                    // Merge settings (profile overrides base)
+                    merge_decree_settings(base_settings, profile_settings);
+                } else {
+                    // Add new decree settings from profile
+                    result
+                        .decree
+                        .insert(decree_name.clone(), profile_settings.clone());
+                }
             }
         }
 
@@ -465,6 +462,24 @@ impl DictateConfig {
             // No active profile or profile doesn't exist, use base config
             self.clone()
         }
+    }
+
+    fn validate_all_settings(&self) -> Result<(), ConfigError> {
+        for (name, settings) in &self.decree {
+            settings
+                .validate()
+                .map_err(|e| ConfigError::Validation(format!("decree.{name}: {e}")))?;
+        }
+
+        for (profile_name, profile) in &self.profile {
+            for (name, settings) in &profile.decree {
+                settings.validate().map_err(|e| {
+                    ConfigError::Validation(format!("profile.{profile_name}.decree.{name}: {e}"))
+                })?;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -703,5 +718,58 @@ max_line_length = -340
     fn accepts_none_values() {
         let settings = DecreeSettings::default();
         assert!(settings.validate().is_ok());
+    }
+
+    #[test]
+    fn profile_inheritance_applies_parent_before_child() {
+        let toml = r#"
+[decree.supreme]
+max_line_length = 100
+
+[profile.relaxed.decree.supreme]
+max_line_length = 120
+
+[profile.ci]
+inherits = "relaxed"
+
+[profile.ci.decree.supreme]
+max_line_length = 80
+"#;
+
+        let config: DictateConfig = toml::from_str(toml).unwrap();
+        let effective = config.get_profile_config("ci").unwrap();
+
+        assert_eq!(effective.decree["supreme"].max_line_length, Some(80));
+    }
+
+    #[test]
+    fn profile_inheritance_rejects_missing_parent() {
+        let toml = r#"
+[profile.ci]
+inherits = "missing"
+"#;
+
+        let config: DictateConfig = toml::from_str(toml).unwrap();
+        let err = config.get_profile_config("ci").unwrap_err();
+
+        assert!(err.contains("missing"));
+    }
+
+    #[test]
+    fn from_file_validates_profile_decree_settings() {
+        let mut file = tempfile::NamedTempFile::new().unwrap();
+        std::io::Write::write_all(
+            &mut file,
+            br#"
+[profile.ci.decree.supreme]
+max_line_length = 10
+"#,
+        )
+        .unwrap();
+
+        let err = DictateConfig::from_file(file.path()).unwrap_err();
+
+        assert!(err.to_string().contains("profile.ci.decree.supreme"));
+        assert!(err.to_string().contains("40-500"));
     }
 }
