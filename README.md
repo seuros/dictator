@@ -414,7 +414,7 @@ AI coding assistants like Claude Code and OpenAI Codex can use Dictator not to �
 - **`stalint`** (Static Lint). Despite the name, it doesn’t “lint” in the classic sense — it just **reports** structural violations: trailing whitespace, line endings, file size, etc. Read-only. No surprises.
 - **`dictator`**. This one actually does things:
   - In **`kimjongrails`** mode, it fixes native structural errors (LF/CRLF, trailing spaces, missing final newlines, etc.).
-  - In **`supremecourt`** mode, it escalates to whatever primitive linters you already trust (RuboCop, ESLint, Prettier, Ruff, …) as defined in `.dictate.toml`.
+  - In **`supremecourt`** mode, it escalates to whatever linters you have configured — rubyfmt, Biome, Ruff, Clippy, Prettier, gofmt (or legacy RuboCop/ESLint if you must) — as defined in `.dictate.toml`.
 
 From the AI’s point of view, Dictator is the one calling the shots: external linters do the heavy lifting, Dictator orchestrates them, and then takes the credit.
 
@@ -446,7 +446,7 @@ MCP mode is auto-detected when stdin is a pipe and no CLI arguments are provided
 
 **Tool modes are dynamic:**
 - `kimjongrails`: Always available (basic structural fixes)
-- `supremecourt`: Only available if decrees have configured linters (e.g., `decree.ruby.linter.command = "rubocop"`)
+- `supremecourt`: Only available if decrees have configured linters (e.g., `decree.ruby.linter.command = "rubyfmt"`)
 
 ### Example Usage
 
@@ -488,7 +488,7 @@ The MCP server will:
 **Examples:**
 - Run from `/tmp` (no git) → LLM only sees `stalint` (read-only)
 - Run from project (has git) → LLM sees `dictator` but it rejects `/home` or `/etc`
-- No rubocop/eslint → `supremecourt` mode hidden from LLM
+- No rubyfmt/biome → `supremecourt` mode hidden from LLM
 
 **Note:** As of 2025, some MCP clients don't send sandbox notifications. See Claude Code issues [#3315](https://github.com/anthropics/claude-code/issues/3315), [#3174](https://github.com/anthropics/claude-code/issues/3174), [#3141](https://github.com/anthropics/claude-code/issues/3141) for related discussion.
 
@@ -498,7 +498,7 @@ The MCP server reads linter configurations from `.dictate.toml`:
 
 ```toml
 [decree.ruby.linter]
-command = "rubocop"
+command = "rubyfmt"  # or "rubocop" for existing .rubocop.yml configs
 
 [decree.typescript.linter]
 command = "biome"  # or "eslint" for existing ESLint configs
@@ -511,6 +511,7 @@ command = "gofmt"
 ```
 
 **Dictator controls the args.** You only specify the command. Dictator adds the appropriate flags for auto-fix and JSON output parsing:
+- `rubyfmt` → `-i` (write-in-place formatter)
 - `rubocop` → `-A --format json`
 - `biome` → `lint --write --reporter json`
 - `eslint` → `--fix --format json`
@@ -533,8 +534,8 @@ command = "gofmt"
 ```yaml
 - name: Structural checks (fast)
   run: dictator lint .  # Fails fast if structure is wrong
-- name: Quality checks (slow)
-  run: bundle exec rubocop
+- name: Formatting check (fast)
+  run: rubyfmt --check .   # legacy projects may swap in: bundle exec rubocop
 ```
 
 **Pre-commit workflow:**
