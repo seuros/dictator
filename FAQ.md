@@ -128,12 +128,13 @@ The `enforced` field in diagnostics indicates whether Dictator auto-fixed the vi
 | `true` | Dictator fixed it | 🔧 |
 | `false` | User must comply | ❌ |
 
-For external linters (RuboCop, ESLint, Biome, Clippy, Ruff), `enforced` is determined by whether the linter can auto-fix:
-- RuboCop: `correctable` field
-- ESLint: `fix` object presence
+For external linters (rubyfmt, Biome, Ruff, Clippy, plus legacy RuboCop/ESLint), `enforced` is determined by whether the linter can auto-fix:
+- rubyfmt: always rewrites in place (always enforced)
 - Biome: `tags` array contains `"fixable"`
-- Clippy: `MachineApplicable` suggestion
 - Ruff: `fix.applicability == "safe"`
+- Clippy: `MachineApplicable` suggestion
+- RuboCop (legacy): `correctable` field
+- ESLint (legacy): `fix` object presence
 
 ## MCP / AI Integration
 

@@ -9,7 +9,7 @@ use std::fs;
 use std::sync::{Arc, Mutex};
 
 use crate::cli::{LintArgs, OutputFormat};
-use crate::config::load_config;
+use crate::config::{load_config, load_dictate_config};
 use crate::dictate::apply_single_fix;
 use crate::files::{collect_all_files, detect_file_types};
 use crate::output::{SerializableDiagnostic, byte_to_line_col, print_diagnostic};
@@ -35,23 +35,7 @@ pub fn run_once(
 
     let file_types = detect_file_types(&files);
 
-    // Load decree configuration (with validation)
-    let mut decree_config = if let Some(p) = config_path.as_ref() {
-        Some(dictator_core::DictateConfig::from_file(p.as_std_path())?)
-    } else {
-        dictator_core::DictateConfig::load_default_strict()?
-    };
-
-    // Apply profile if specified
-    if let Some(ref config) = decree_config
-        && let Some(ref profile_name) = profile
-    {
-        decree_config = Some(
-            config
-                .get_profile_config(profile_name)
-                .map_err(|e| anyhow::anyhow!("Profile error: {e}"))?,
-        );
-    }
+    let decree_config = load_dictate_config(config_path.as_ref(), profile.as_deref())?;
 
     // Load native decrees based on detected file types
     let mut regime = init_regime_for_files(&file_types, decree_config.as_ref());

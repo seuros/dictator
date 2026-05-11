@@ -15,6 +15,7 @@ use super::utils::{collect_files, parse_arguments};
 pub fn get_linter_args(command: &str) -> Vec<&'static str> {
     match command {
         "rubocop" => vec!["-A", "--format", "json"],
+        "rubyfmt" => vec!["-i"],
         "eslint" => vec!["--fix", "--format", "json"],
         "biome" => vec!["lint", "--write", "--reporter", "json"],
         "ruff" => vec!["check", "--fix", "--output-format", "json"],

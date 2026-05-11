@@ -32,8 +32,13 @@ extensions = ["md", "mdx"]
 # comment_spacing = true
 #
 # # External linter integration (uncomment to enable)
+# # rubyfmt (recommended): fast, deterministic Ruby formatter
 # [decree.ruby.linter]
-# command = "rubocop"
+# command = "rubyfmt"
+#
+# # Alternative: RuboCop (if you have an existing .rubocop.yml)
+# # [decree.ruby.linter]
+# # command = "rubocop"
 
 # [decree.typescript]
 # # TypeScript/JavaScript structural enforcement

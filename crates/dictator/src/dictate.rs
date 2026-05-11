@@ -2,10 +2,10 @@
 
 use anyhow::Result;
 use camino::Utf8PathBuf;
-use dictator_core::DictateConfig;
 use std::fs;
 
 use crate::cli::DictateArgs;
+use crate::config::load_dictate_config;
 use crate::files::collect_all_files;
 use crate::interactive::InteractiveFixer;
 use crate::regime::init_regime_for_files;
@@ -31,23 +31,7 @@ fn run_interactive_dictate(
     println!("🔧 Interactive Fix Mode");
     println!("========================\n");
 
-    // Load configuration
-    let mut decree_config = if let Some(p) = config_path.as_ref() {
-        Some(DictateConfig::from_file(p.as_std_path())?)
-    } else {
-        DictateConfig::load_default_strict()?
-    };
-
-    // Apply profile if specified
-    if let Some(ref config) = decree_config
-        && let Some(ref profile_name) = profile
-    {
-        decree_config = Some(
-            config
-                .get_profile_config(profile_name)
-                .map_err(|e| anyhow::anyhow!("Profile error: {e}"))?,
-        );
-    }
+    let decree_config = load_dictate_config(config_path.as_ref(), profile.as_deref())?;
 
     let mut fixer = InteractiveFixer::new();
 
@@ -78,23 +62,7 @@ fn run_batch_dictate(
         return Ok(());
     }
 
-    // Load configuration for enhanced batch mode
-    let mut decree_config = if let Some(p) = config_path.as_ref() {
-        Some(DictateConfig::from_file(p.as_std_path())?)
-    } else {
-        DictateConfig::load_default_strict()?
-    };
-
-    // Apply profile if specified
-    if let Some(ref config) = decree_config
-        && let Some(ref profile_name) = profile
-    {
-        decree_config = Some(
-            config
-                .get_profile_config(profile_name)
-                .map_err(|e| anyhow::anyhow!("Profile error: {e}"))?,
-        );
-    }
+    let decree_config = load_dictate_config(config_path.as_ref(), profile.as_deref())?;
 
     let file_types = crate::files::detect_file_types(&files);
     let mut regime = init_regime_for_files(&file_types, decree_config.as_ref());
