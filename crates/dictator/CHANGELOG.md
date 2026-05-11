@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.17.2](https://github.com/seuros/dictator/compare/dictator-v0.17.1...dictator-v0.17.2) (2026-05-11)
+
+
+### Bug Fixes
+
+* **mcp:** show violations before asking confirmation ([3360e72](https://github.com/seuros/dictator/commit/3360e729ae0d500cde9912b3adca6a1038d17225))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.17.1 to 0.17.2
+    * dictator-frontmatter bumped from 0.17.1 to 0.17.2
+    * dictator-golang bumped from 0.17.1 to 0.17.2
+    * dictator-decree-abi bumped from 0.17.1 to 0.17.2
+    * dictator-python bumped from 0.17.1 to 0.17.2
+    * dictator-ruby bumped from 0.17.1 to 0.17.2
+    * dictator-rust bumped from 0.17.1 to 0.17.2
+    * dictator-supreme bumped from 0.17.1 to 0.17.2
+    * dictator-typescript bumped from 0.17.1 to 0.17.2
+
 ## [0.17.1](https://github.com/seuros/dictator/compare/dictator-v0.17.0...dictator-v0.17.1) (2026-04-15)
 
 
