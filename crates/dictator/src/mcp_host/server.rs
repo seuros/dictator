@@ -29,13 +29,13 @@ async fn run_async() -> Result<()> {
     log_to_file(&format!("Version: {}", env!("CARGO_PKG_VERSION")));
     log_to_file(&format!("PID: {}", std::process::id()));
 
-    // Create server
-    let server = Server::new("dictator", env!("CARGO_PKG_VERSION"));
-
-    // Set concise server instructions for LLMs
-    server.set_instructions(Some(
-        "Run stalint before any commit. User expects disciplined agents.".to_string(),
-    ));
+    // Build server with capabilities via builder
+    let server = server("dictator", env!("CARGO_PKG_VERSION"))
+        .with_instructions("Run stalint before any commit. User expects disciplined agents.")
+        .with_tools(true)
+        .with_resources(true, false)
+        .with_prompts(true)
+        .build();
 
     // Get notification sender for background tasks
     let notification_tx = server.notification_sender();
@@ -43,16 +43,11 @@ async fn run_async() -> Result<()> {
     // Create shared state with proper notification channel
     let watcher_state = Arc::new(Mutex::new(ServerState::new(notification_tx.clone())));
 
-    // Register macro-based tools (stalint, dictator)
+    // Register macro-based tools (stalint, dictator) via unified router
     let tools = Arc::new(DictatorTools {
         state: Arc::clone(&watcher_state),
     });
-    DictatorTools::router().register_all(
-        server.tool_registry(),
-        server.prompt_manager(),
-        server.resource_manager(),
-        tools,
-    );
+    server.register_router(DictatorTools::router(), tools);
 
     // Register stateful tools (manual impl - need notification_tx)
     server.tool_registry().register(StalintWatchTool {
@@ -64,42 +59,15 @@ async fn run_async() -> Result<()> {
         notification_tx: notification_tx.clone(),
     });
 
-    // Register macro-based resources
+    // Register macro-based resources via unified router
     let resources = Arc::new(DictatorResources {
         state: Arc::clone(&watcher_state),
     });
-    DictatorResources::router().register_all(
-        server.tool_registry(),
-        server.prompt_manager(),
-        server.resource_manager(),
-        resources,
-    );
+    server.register_router(DictatorResources::router(), resources);
 
-    // Register macro-based prompts
+    // Register macro-based prompts via unified router
     let prompts = Arc::new(DictatorPrompts);
-    DictatorPrompts::router().register_all(
-        server.tool_registry(),
-        server.prompt_manager(),
-        server.resource_manager(),
-        prompts,
-    );
-
-    // Update capabilities
-    let caps = ServerCapabilities {
-        tools: Some(mcp_host::protocol::capabilities::ToolsCapability {
-            list_changed: Some(true),
-        }),
-        resources: Some(mcp_host::protocol::capabilities::ResourcesCapability {
-            subscribe: Some(false),
-            list_changed: Some(true),
-            list_templates: Some(false),
-        }),
-        prompts: Some(mcp_host::protocol::capabilities::PromptsCapability {
-            list_changed: Some(true),
-        }),
-        ..Default::default()
-    };
-    server.set_capabilities(caps);
+    server.register_router(DictatorPrompts::router(), prompts);
 
     // Start background tasks
     start_config_watcher(Arc::clone(&watcher_state), notification_tx.clone());
@@ -176,29 +144,19 @@ fn start_config_watcher(
                     s.reload_config();
                 }
 
-                // Send tools/list_changed notification
-                let tools_notification = JsonRpcNotification {
-                    jsonrpc: "2.0".to_string(),
-                    method: "notifications/tools/list_changed".to_string(),
-                    params: Some(serde_json::json!({})),
-                };
-                let _ = notif_tx.send(tools_notification);
-
-                // Send resources/list_changed notification
-                let resources_notification = JsonRpcNotification {
-                    jsonrpc: "2.0".to_string(),
-                    method: "notifications/resources/list_changed".to_string(),
-                    params: Some(serde_json::json!({})),
-                };
-                let _ = notif_tx.send(resources_notification);
-
-                // Send prompts/list_changed notification
-                let prompts_notification = JsonRpcNotification {
-                    jsonrpc: "2.0".to_string(),
-                    method: "notifications/prompts/list_changed".to_string(),
-                    params: Some(serde_json::json!({})),
-                };
-                let _ = notif_tx.send(prompts_notification);
+                // Send list_changed notifications
+                let _ = notif_tx.send(JsonRpcNotification::new(
+                    "notifications/tools/list_changed",
+                    None,
+                ));
+                let _ = notif_tx.send(JsonRpcNotification::new(
+                    "notifications/resources/list_changed",
+                    None,
+                ));
+                let _ = notif_tx.send(JsonRpcNotification::new(
+                    "notifications/prompts/list_changed",
+                    None,
+                ));
 
                 log_to_file("Config changed: sent list_changed for tools/resources/prompts");
             }
@@ -236,10 +194,9 @@ fn start_watcher_check_loop(
                 let violations = run_stalint_check(&paths);
 
                 if !violations.is_empty() {
-                    let notification = JsonRpcNotification {
-                        jsonrpc: "2.0".to_string(),
-                        method: "notifications/message".to_string(),
-                        params: Some(serde_json::json!({
+                    let _ = notif_tx.send(JsonRpcNotification::new(
+                        "notifications/message",
+                        Some(serde_json::json!({
                             "level": "warning",
                             "logger": "stalint_watch",
                             "data": {
@@ -250,9 +207,7 @@ fn start_watcher_check_loop(
                                 "violations": violations
                             }
                         })),
-                    };
-
-                    let _ = notif_tx.send(notification);
+                    ));
                 }
             }
         }
