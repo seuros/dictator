@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.18.1](https://github.com/seuros/dictator/compare/dictator-golang-v0.18.0...dictator-golang-v0.18.1) (2026-05-24)
+
+
+### Miscellaneous Chores
+
+* **dictator-golang:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.18.0 to 0.18.1
+    * dictator-core bumped from 0.18.0 to 0.18.1
+    * dictator-supreme bumped from 0.18.0 to 0.18.1
+
 ## [0.18.0](https://github.com/seuros/dictator/compare/dictator-golang-v0.17.2...dictator-golang-v0.18.0) (2026-05-24)
 
 

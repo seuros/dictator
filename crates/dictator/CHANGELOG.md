@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.18.1](https://github.com/seuros/dictator/compare/dictator-v0.18.0...dictator-v0.18.1) (2026-05-24)
+
+
+### Bug Fixes
+
+* appease the formatter overlords ([7644047](https://github.com/seuros/dictator/commit/76440479ebadf6b88c5f7e066c4b270c4f2f35ad))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.18.0 to 0.18.1
+    * dictator-frontmatter bumped from 0.18.0 to 0.18.1
+    * dictator-golang bumped from 0.18.0 to 0.18.1
+    * dictator-decree-abi bumped from 0.18.0 to 0.18.1
+    * dictator-python bumped from 0.18.0 to 0.18.1
+    * dictator-ruby bumped from 0.18.0 to 0.18.1
+    * dictator-rust bumped from 0.18.0 to 0.18.1
+    * dictator-supreme bumped from 0.18.0 to 0.18.1
+    * dictator-typescript bumped from 0.18.0 to 0.18.1
+
 ## [0.18.0](https://github.com/seuros/dictator/compare/dictator-v0.17.2...dictator-v0.18.0) (2026-05-24)
 
 
