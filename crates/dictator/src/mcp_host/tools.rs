@@ -124,7 +124,12 @@ impl DictatorTools {
     }
 
     /// Auto-fix structural violations (requires write permissions)
-    #[mcp_tool(name = "dictator", title = "Dictator Auto-Fix", visible = "config_exists()", destructive = true)]
+    #[mcp_tool(
+        name = "dictator",
+        title = "Dictator Auto-Fix",
+        visible = "config_exists()",
+        destructive = true
+    )]
     async fn dictator(&self, ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
         let can_write = self.state.lock().unwrap().can_write;
         if !can_write {
