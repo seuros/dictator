@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.19.0](https://github.com/seuros/dictator/compare/dictator-supreme-v0.18.1...dictator-supreme-v0.19.0) (2026-06-25)
+
+
+### Features
+
+* the Dictator unifies the north, the south, the east, and the west ([a5bdff0](https://github.com/seuros/dictator/commit/a5bdff0a78851023924a42129256544837f39271))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.18.1 to 0.19.0
+    * dictator-core bumped from 0.18.1 to 0.19.0
+
 ## [0.18.1](https://github.com/seuros/dictator/compare/dictator-supreme-v0.18.0...dictator-supreme-v0.18.1) (2026-05-24)
 
 
