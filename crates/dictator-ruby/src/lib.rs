@@ -54,18 +54,12 @@ pub fn lint_source_with_configs(
     let supreme_diags = dictator_supreme::lint_source_with_owner(source, supreme_config, "ruby");
 
     if ruby_config.ignore_comments {
-        // Filter out line-too-long violations on comment lines
-        let lines: Vec<&str> = source.lines().collect();
-        diags.extend(supreme_diags.into_iter().filter(|d| {
-            if d.rule == "ruby/line-too-long" {
-                let line_idx = source[..d.span.start].matches('\n').count();
-                !lines
-                    .get(line_idx)
-                    .is_some_and(|line| line.trim_start().starts_with('#'))
-            } else {
-                true
-            }
-        }));
+        diags.extend(dictator_supreme::retain_long_line_diags(
+            source,
+            supreme_diags,
+            "ruby/line-too-long",
+            "#",
+        ));
     } else {
         diags.extend(supreme_diags);
     }
@@ -102,30 +96,7 @@ fn lint_ruby_specific(source: &str, config: &RubyConfig) -> Diagnostics {
 
 /// Check file line count (excluding comments and blank lines)
 fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics) {
-    let mut code_lines = 0;
-    let bytes = source.as_bytes();
-    let mut line_start = 0;
-
-    for nl in memchr_iter(b'\n', bytes) {
-        let line = &source[line_start..nl];
-        let trimmed = line.trim();
-
-        // Count line if it's not blank and not a comment-only line
-        if !trimmed.is_empty() && !trimmed.starts_with('#') {
-            code_lines += 1;
-        }
-
-        line_start = nl + 1;
-    }
-
-    // Handle last line without newline
-    if line_start < bytes.len() {
-        let line = &source[line_start..];
-        let trimmed = line.trim();
-        if !trimmed.is_empty() && !trimmed.starts_with('#') {
-            code_lines += 1;
-        }
-    }
+    let code_lines = dictator_supreme::count_code_lines(source, |trimmed| trimmed.starts_with('#'));
 
     if code_lines > max_lines {
         diags.push(Diagnostic {

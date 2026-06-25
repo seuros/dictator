@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use crate::mcp::fixers::handle_kimjongrails;
 use crate::mcp::linters::handle_supremecourt;
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::{current_dir_or_default, parse_arguments, partition_paths_within_cwd};
+use crate::mcp::utils::{allowed_paths_within_cwd, parse_arguments};
 
 /// Handle dictator tool (auto-fix)
 pub fn handle_dictator(
@@ -28,38 +28,10 @@ pub fn handle_dictator(
     };
 
     // Security: dictator only works within cwd (prevents LLM from fixing /home, /etc, etc.)
-    let cwd = current_dir_or_default();
-    let (allowed, rejected) = partition_paths_within_cwd(&args.paths, &cwd);
-
-    if !rejected.is_empty() {
-        return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
-            result: None,
-            error: Some(JsonRpcError {
-                code: -32602,
-                message: format!(
-                    "Security: dictator only operates within cwd ({}). Rejected paths: {}",
-                    cwd.display(),
-                    rejected.join(", ")
-                ),
-                data: None,
-            }),
-        };
-    }
-
-    if allowed.is_empty() {
-        return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
-            result: None,
-            error: Some(JsonRpcError {
-                code: -32602,
-                message: "No valid paths provided".to_string(),
-                data: None,
-            }),
-        };
-    }
+    let allowed = match allowed_paths_within_cwd(&id, &args.paths, "dictator") {
+        Ok(allowed) => allowed,
+        Err(response) => return *response,
+    };
 
     let paths_json = serde_json::json!({"paths": allowed});
     let mode = args.mode.unwrap_or_else(|| "kimjongrails".to_string());

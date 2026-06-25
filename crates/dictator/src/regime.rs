@@ -1,15 +1,80 @@
 //! Regime initialization and decree loading
 
-use dictator_core::{DictateConfig, Regime};
-use dictator_frontmatter::init_decree as create_frontmatter_plugin;
-use dictator_golang::init_decree as create_golang_plugin;
-use dictator_python::init_decree as create_python_plugin;
-use dictator_ruby::init_decree as create_ruby_plugin;
-use dictator_rust::init_decree as create_rust_plugin;
-use dictator_supreme::init_decree as init_supreme_decree;
-use dictator_typescript::init_decree as create_typescript_plugin;
+use std::collections::HashMap;
+
+use dictator_core::{DecreeSettings, DictateConfig, Regime};
+use dictator_decree_abi::BoxDecree;
+use dictator_supreme::SupremeConfig;
 
 use crate::files::FileTypes;
+
+/// A native language decree the regime can load: its config key plus the two
+/// constructors (configured + built-in default).
+struct LanguageDecree {
+    /// `.dictate.toml` key, e.g. `"ruby"`.
+    name: &'static str,
+    /// Build the decree from explicit settings merged with supreme.
+    with_configs: fn(&DecreeSettings, SupremeConfig) -> BoxDecree,
+    /// Build the decree with built-in defaults (no config present).
+    fallback: fn() -> BoxDecree,
+}
+
+/// The native language decrees, in load order. The order here must match the
+/// `enabled` array in [`init_regime_for_files`].
+fn language_decrees() -> [LanguageDecree; 5] {
+    [
+        LanguageDecree {
+            name: "ruby",
+            with_configs: |s, supreme| {
+                dictator_ruby::init_decree_with_configs(
+                    dictator_ruby::config_from_decree_settings(s),
+                    supreme,
+                )
+            },
+            fallback: dictator_ruby::init_decree,
+        },
+        LanguageDecree {
+            name: "typescript",
+            with_configs: |s, supreme| {
+                dictator_typescript::init_decree_with_configs(
+                    dictator_typescript::config_from_decree_settings(s),
+                    supreme,
+                )
+            },
+            fallback: dictator_typescript::init_decree,
+        },
+        LanguageDecree {
+            name: "golang",
+            with_configs: |s, supreme| {
+                dictator_golang::init_decree_with_configs(
+                    dictator_golang::config_from_decree_settings(s),
+                    supreme,
+                )
+            },
+            fallback: dictator_golang::init_decree,
+        },
+        LanguageDecree {
+            name: "rust",
+            with_configs: |s, supreme| {
+                dictator_rust::init_decree_with_configs(
+                    dictator_rust::config_from_decree_settings(s),
+                    supreme,
+                )
+            },
+            fallback: dictator_rust::init_decree,
+        },
+        LanguageDecree {
+            name: "python",
+            with_configs: |s, supreme| {
+                dictator_python::init_decree_with_configs(
+                    dictator_python::config_from_decree_settings(s),
+                    supreme,
+                )
+            },
+            fallback: dictator_python::init_decree,
+        },
+    ]
+}
 
 /// Check if a decree should be loaded based on config.
 /// Returns true only if decree is configured and enabled != false
@@ -19,21 +84,34 @@ fn should_load_decree(config: Option<&DictateConfig>, key: &str) -> bool {
         .is_some_and(|s| s.enabled != Some(false))
 }
 
-/// Initialize regime with all decrees for watch mode (all file types supported)
-pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
-    let mut regime = Regime::new();
-    regime.set_rule_ignores_from_config(decree_config);
+/// Resolve the supreme config a language decree runs with: language settings
+/// merged over `decree.supreme` when present, otherwise derived from the
+/// language settings alone.
+fn supreme_config_for(
+    decree_config: Option<&DictateConfig>,
+    settings: &DecreeSettings,
+) -> SupremeConfig {
+    decree_config
+        .and_then(|c| c.decree.get("supreme"))
+        .map_or_else(
+            || dictator_supreme::config_from_decree_settings(settings),
+            |base| dictator_supreme::merged_config(base, settings),
+        )
+}
 
-    // decree.supreme runs as the default structural decree.
-    // When a language-specific decree is enabled for a file type, it shadows supreme for that
-    // file type; language settings override supreme settings via merged config.
+/// Add the supreme decree, applying per-language overrides when configured.
+///
+/// decree.supreme runs as the default structural decree. When a language-specific
+/// decree is enabled for a file type, it shadows supreme for that file type;
+/// language settings override supreme settings via merged config.
+pub(crate) fn add_supreme_decree(regime: &mut Regime, decree_config: Option<&DictateConfig>) {
     if let Some(config) = decree_config
         && let Some(supreme_settings) = config.decree.get("supreme")
     {
         let supreme_config = dictator_supreme::config_from_decree_settings(supreme_settings);
 
         // Build language overrides: merge supreme + language settings
-        let mut overrides = std::collections::HashMap::new();
+        let mut overrides = HashMap::new();
         for lang in ["ruby", "typescript", "golang", "rust", "python"] {
             if let Some(lang_settings) = config.decree.get(lang) {
                 let merged = dictator_supreme::merged_config(supreme_settings, lang_settings);
@@ -46,120 +124,65 @@ pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
             overrides,
         ));
     } else {
-        regime.add_decree(init_supreme_decree());
+        regime.add_decree(dictator_supreme::init_decree());
     }
+}
+
+/// Load a single language decree into the regime when `enabled` and configured.
+fn load_language_decree(
+    regime: &mut Regime,
+    decree_config: Option<&DictateConfig>,
+    decree: &LanguageDecree,
+    enabled: bool,
+) {
+    if !(enabled && should_load_decree(decree_config, decree.name)) {
+        return;
+    }
+
+    if let Some(config) = decree_config
+        && let Some(settings) = config.decree.get(decree.name)
+    {
+        let supreme = supreme_config_for(decree_config, settings);
+        regime.add_decree((decree.with_configs)(settings, supreme));
+    } else {
+        regime.add_decree((decree.fallback)());
+    }
+}
+
+/// Load the frontmatter decree when `enabled` and configured.
+fn load_frontmatter_decree(
+    regime: &mut Regime,
+    decree_config: Option<&DictateConfig>,
+    enabled: bool,
+) {
+    if !(enabled && should_load_decree(decree_config, "frontmatter")) {
+        return;
+    }
+
+    if let Some(config) = decree_config
+        && let Some(settings) = config.decree.get("frontmatter")
+    {
+        let frontmatter_config = dictator_frontmatter::config_from_decree_settings(settings);
+        regime.add_decree(dictator_frontmatter::init_decree_with_config(
+            frontmatter_config,
+        ));
+    } else {
+        regime.add_decree(dictator_frontmatter::init_decree());
+    }
+}
+
+/// Initialize regime with all decrees for watch mode (all file types supported)
+pub fn init_regime_for_watch(decree_config: Option<&DictateConfig>) -> Regime {
+    let mut regime = Regime::new();
+    regime.set_rule_ignores_from_config(decree_config);
+
+    add_supreme_decree(&mut regime, decree_config);
 
     // For watch mode, load all decrees (we don't know what files will change)
-    if should_load_decree(decree_config, "ruby") {
-        if let Some(config) = decree_config
-            && let Some(ruby_settings) = config.decree.get("ruby")
-        {
-            let ruby_config = dictator_ruby::config_from_decree_settings(ruby_settings);
-            let ruby_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(ruby_settings),
-                    |base| dictator_supreme::merged_config(base, ruby_settings),
-                );
-            regime.add_decree(dictator_ruby::init_decree_with_configs(
-                ruby_config,
-                ruby_supreme,
-            ));
-        } else {
-            regime.add_decree(create_ruby_plugin());
-        }
+    for decree in &language_decrees() {
+        load_language_decree(&mut regime, decree_config, decree, true);
     }
-
-    if should_load_decree(decree_config, "typescript") {
-        if let Some(config) = decree_config
-            && let Some(ts_settings) = config.decree.get("typescript")
-        {
-            let ts_config = dictator_typescript::config_from_decree_settings(ts_settings);
-            let ts_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(ts_settings),
-                    |base| dictator_supreme::merged_config(base, ts_settings),
-                );
-            regime.add_decree(dictator_typescript::init_decree_with_configs(
-                ts_config, ts_supreme,
-            ));
-        } else {
-            regime.add_decree(create_typescript_plugin());
-        }
-    }
-
-    if should_load_decree(decree_config, "golang") {
-        if let Some(config) = decree_config
-            && let Some(golang_settings) = config.decree.get("golang")
-        {
-            let golang_config = dictator_golang::config_from_decree_settings(golang_settings);
-            let golang_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(golang_settings),
-                    |base| dictator_supreme::merged_config(base, golang_settings),
-                );
-            regime.add_decree(dictator_golang::init_decree_with_configs(
-                golang_config,
-                golang_supreme,
-            ));
-        } else {
-            regime.add_decree(create_golang_plugin());
-        }
-    }
-    if should_load_decree(decree_config, "rust") {
-        if let Some(config) = decree_config
-            && let Some(rust_settings) = config.decree.get("rust")
-        {
-            let rust_config = dictator_rust::config_from_decree_settings(rust_settings);
-            let rust_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(rust_settings),
-                    |base| dictator_supreme::merged_config(base, rust_settings),
-                );
-            regime.add_decree(dictator_rust::init_decree_with_configs(
-                rust_config,
-                rust_supreme,
-            ));
-        } else {
-            regime.add_decree(create_rust_plugin());
-        }
-    }
-    if should_load_decree(decree_config, "python") {
-        if let Some(config) = decree_config
-            && let Some(python_settings) = config.decree.get("python")
-        {
-            let python_config = dictator_python::config_from_decree_settings(python_settings);
-            let python_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(python_settings),
-                    |base| dictator_supreme::merged_config(base, python_settings),
-                );
-            regime.add_decree(dictator_python::init_decree_with_configs(
-                python_config,
-                python_supreme,
-            ));
-        } else {
-            regime.add_decree(create_python_plugin());
-        }
-    }
-
-    if should_load_decree(decree_config, "frontmatter") {
-        if let Some(config) = decree_config
-            && let Some(frontmatter_settings) = config.decree.get("frontmatter")
-        {
-            let frontmatter_config =
-                dictator_frontmatter::config_from_decree_settings(frontmatter_settings);
-            regime.add_decree(dictator_frontmatter::init_decree_with_config(
-                frontmatter_config,
-            ));
-        } else {
-            regime.add_decree(create_frontmatter_plugin());
-        }
-    }
+    load_frontmatter_decree(&mut regime, decree_config, true);
 
     regime
 }
@@ -172,139 +195,21 @@ pub fn init_regime_for_files(
     let mut regime = Regime::new();
     regime.set_rule_ignores_from_config(decree_config);
 
-    // decree.supreme runs as the default structural decree.
-    // When a language-specific decree is enabled for a file type, it shadows supreme for that
-    // file type; language settings override supreme settings via merged config.
-    if let Some(config) = decree_config
-        && let Some(supreme_settings) = config.decree.get("supreme")
-    {
-        let supreme_config = dictator_supreme::config_from_decree_settings(supreme_settings);
+    add_supreme_decree(&mut regime, decree_config);
 
-        // Build language overrides: merge supreme + language settings
-        let mut overrides = std::collections::HashMap::new();
-        for lang in ["ruby", "typescript", "golang", "rust", "python"] {
-            if let Some(lang_settings) = config.decree.get(lang) {
-                let merged = dictator_supreme::merged_config(supreme_settings, lang_settings);
-                overrides.insert(lang.to_string(), merged);
-            }
-        }
-
-        regime.add_decree(dictator_supreme::init_decree_with_overrides(
-            supreme_config,
-            overrides,
-        ));
-    } else {
-        regime.add_decree(init_supreme_decree());
+    // Load language-specific decrees based on file types. Order matches
+    // `language_decrees()`.
+    let enabled = [
+        file_types.has_ruby,
+        file_types.has_typescript,
+        file_types.has_golang,
+        file_types.has_rust,
+        file_types.has_python,
+    ];
+    for (decree, &on) in language_decrees().iter().zip(enabled.iter()) {
+        load_language_decree(&mut regime, decree_config, decree, on);
     }
-
-    // Load language-specific decrees based on file types
-    if file_types.has_ruby && should_load_decree(decree_config, "ruby") {
-        if let Some(config) = decree_config
-            && let Some(ruby_settings) = config.decree.get("ruby")
-        {
-            let ruby_config = dictator_ruby::config_from_decree_settings(ruby_settings);
-            let ruby_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(ruby_settings),
-                    |base| dictator_supreme::merged_config(base, ruby_settings),
-                );
-            regime.add_decree(dictator_ruby::init_decree_with_configs(
-                ruby_config,
-                ruby_supreme,
-            ));
-        } else {
-            regime.add_decree(create_ruby_plugin());
-        }
-    }
-    if file_types.has_typescript && should_load_decree(decree_config, "typescript") {
-        if let Some(config) = decree_config
-            && let Some(ts_settings) = config.decree.get("typescript")
-        {
-            let ts_config = dictator_typescript::config_from_decree_settings(ts_settings);
-            let ts_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(ts_settings),
-                    |base| dictator_supreme::merged_config(base, ts_settings),
-                );
-            regime.add_decree(dictator_typescript::init_decree_with_configs(
-                ts_config, ts_supreme,
-            ));
-        } else {
-            regime.add_decree(create_typescript_plugin());
-        }
-    }
-    if file_types.has_golang && should_load_decree(decree_config, "golang") {
-        if let Some(config) = decree_config
-            && let Some(golang_settings) = config.decree.get("golang")
-        {
-            let golang_config = dictator_golang::config_from_decree_settings(golang_settings);
-            let golang_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(golang_settings),
-                    |base| dictator_supreme::merged_config(base, golang_settings),
-                );
-            regime.add_decree(dictator_golang::init_decree_with_configs(
-                golang_config,
-                golang_supreme,
-            ));
-        } else {
-            regime.add_decree(create_golang_plugin());
-        }
-    }
-    if file_types.has_rust && should_load_decree(decree_config, "rust") {
-        if let Some(config) = decree_config
-            && let Some(rust_settings) = config.decree.get("rust")
-        {
-            let rust_config = dictator_rust::config_from_decree_settings(rust_settings);
-            let rust_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(rust_settings),
-                    |base| dictator_supreme::merged_config(base, rust_settings),
-                );
-            regime.add_decree(dictator_rust::init_decree_with_configs(
-                rust_config,
-                rust_supreme,
-            ));
-        } else {
-            regime.add_decree(create_rust_plugin());
-        }
-    }
-    if file_types.has_python && should_load_decree(decree_config, "python") {
-        if let Some(config) = decree_config
-            && let Some(python_settings) = config.decree.get("python")
-        {
-            let python_config = dictator_python::config_from_decree_settings(python_settings);
-            let python_supreme = decree_config
-                .and_then(|c| c.decree.get("supreme"))
-                .map_or_else(
-                    || dictator_supreme::config_from_decree_settings(python_settings),
-                    |base| dictator_supreme::merged_config(base, python_settings),
-                );
-            regime.add_decree(dictator_python::init_decree_with_configs(
-                python_config,
-                python_supreme,
-            ));
-        } else {
-            regime.add_decree(create_python_plugin());
-        }
-    }
-    if file_types.has_configs && should_load_decree(decree_config, "frontmatter") {
-        if let Some(config) = decree_config
-            && let Some(frontmatter_settings) = config.decree.get("frontmatter")
-        {
-            let frontmatter_config =
-                dictator_frontmatter::config_from_decree_settings(frontmatter_settings);
-            regime.add_decree(dictator_frontmatter::init_decree_with_config(
-                frontmatter_config,
-            ));
-        } else {
-            regime.add_decree(create_frontmatter_plugin());
-        }
-    }
+    load_frontmatter_decree(&mut regime, decree_config, file_types.has_configs);
 
     regime
 }

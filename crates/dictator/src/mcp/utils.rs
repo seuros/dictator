@@ -133,6 +133,52 @@ pub fn partition_paths_within_cwd(
     (allowed, rejected)
 }
 
+/// Validate that every path lies within `cwd`, returning the allowed paths.
+///
+/// On any rejected path, or when nothing valid remains, returns the appropriate
+/// JSON-RPC error response (boxed) for the handler to return directly. `tool`
+/// names the tool in the security message.
+pub fn allowed_paths_within_cwd(
+    id: &serde_json::Value,
+    paths: &[String],
+    tool: &str,
+) -> Result<Vec<String>, Box<JsonRpcResponse>> {
+    let cwd = current_dir_or_default();
+    let (allowed, rejected) = partition_paths_within_cwd(paths, &cwd);
+
+    if !rejected.is_empty() {
+        return Err(Box::new(JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id: id.clone(),
+            result: None,
+            error: Some(JsonRpcError {
+                code: -32602,
+                message: format!(
+                    "Security: {tool} only operates within cwd ({}). Rejected paths: {}",
+                    cwd.display(),
+                    rejected.join(", ")
+                ),
+                data: None,
+            }),
+        }));
+    }
+
+    if allowed.is_empty() {
+        return Err(Box::new(JsonRpcResponse {
+            jsonrpc: "2.0".to_string(),
+            id: id.clone(),
+            result: None,
+            error: Some(JsonRpcError {
+                code: -32602,
+                message: "No valid paths provided".to_string(),
+                data: None,
+            }),
+        }));
+    }
+
+    Ok(allowed)
+}
+
 /// Serialize a value to compact JSON, falling back to an empty string on failure.
 #[must_use]
 pub fn to_json_string<T: Serialize>(value: &T) -> String {

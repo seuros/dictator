@@ -6,6 +6,9 @@ use dictator_decree_abi::{BoxDecree, Decree, Diagnostic, Diagnostics, Span};
 use memchr::memchr_iter;
 use std::collections::HashMap;
 
+mod text;
+pub use text::{check_indentation_consistency, count_code_lines, retain_long_line_diags};
+
 /// Configuration for supreme decree (will be loaded from .dictate.toml)
 #[derive(Debug, Clone)]
 pub struct SupremeConfig {

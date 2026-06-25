@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::{current_dir_or_default, parse_arguments, partition_paths_within_cwd};
+use crate::mcp::utils::{allowed_paths_within_cwd, parse_arguments};
 
 /// Handle `stalint_watch` tool
 pub fn handle_stalint_watch(
@@ -30,38 +30,10 @@ pub fn handle_stalint_watch(
     };
 
     // Security: stalint_watch only works within cwd
-    let cwd = current_dir_or_default();
-    let (allowed, rejected) = partition_paths_within_cwd(&args.paths, &cwd);
-
-    if !rejected.is_empty() {
-        return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
-            result: None,
-            error: Some(JsonRpcError {
-                code: -32602,
-                message: format!(
-                    "Security: stalint_watch only operates within cwd ({}). Rejected paths: {}",
-                    cwd.display(),
-                    rejected.join(", ")
-                ),
-                data: None,
-            }),
-        };
-    }
-
-    if allowed.is_empty() {
-        return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
-            result: None,
-            error: Some(JsonRpcError {
-                code: -32602,
-                message: "No valid paths provided".to_string(),
-                data: None,
-            }),
-        };
-    }
+    let allowed = match allowed_paths_within_cwd(&id, &args.paths, "stalint_watch") {
+        Ok(allowed) => allowed,
+        Err(response) => return *response,
+    };
 
     // Set up file watcher
     let watcher_state_clone = Arc::clone(&watcher_state);

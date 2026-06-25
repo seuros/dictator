@@ -1,34 +1,10 @@
 //! File line counting (excluding comments and blank lines).
 
 use dictator_decree_abi::{Diagnostic, Diagnostics, Span};
-use memchr::memchr_iter;
 
 /// Rule 1: File line count (ignoring comments and blank lines)
 pub fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics) {
-    let mut code_lines = 0;
-    let bytes = source.as_bytes();
-    let mut line_start = 0;
-
-    for nl in memchr_iter(b'\n', bytes) {
-        let line = &source[line_start..nl];
-        let trimmed = line.trim();
-
-        // Count line if it's not blank and not a comment-only line
-        if !trimmed.is_empty() && !is_comment_only_line(trimmed) {
-            code_lines += 1;
-        }
-
-        line_start = nl + 1;
-    }
-
-    // Handle last line without newline
-    if line_start < bytes.len() {
-        let line = &source[line_start..];
-        let trimmed = line.trim();
-        if !trimmed.is_empty() && !is_comment_only_line(trimmed) {
-            code_lines += 1;
-        }
-    }
+    let code_lines = dictator_supreme::count_code_lines(source, is_comment_only_line);
 
     if code_lines > max_lines {
         diags.push(Diagnostic {

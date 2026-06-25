@@ -35,18 +35,12 @@ pub fn lint_source_with_configs(
         dictator_supreme::lint_source_with_owner(source, supreme_config, "typescript");
 
     if config.ignore_comments {
-        // Filter out line-too-long violations on comment lines
-        let lines: Vec<&str> = source.lines().collect();
-        diags.extend(supreme_diags.into_iter().filter(|d| {
-            if d.rule == "typescript/line-too-long" {
-                let line_idx = source[..d.span.start].matches('\n').count();
-                !lines
-                    .get(line_idx)
-                    .is_some_and(|line| line.trim_start().starts_with("//"))
-            } else {
-                true
-            }
-        }));
+        diags.extend(dictator_supreme::retain_long_line_diags(
+            source,
+            supreme_diags,
+            "typescript/line-too-long",
+            "//",
+        ));
     } else {
         diags.extend(supreme_diags);
     }
@@ -77,30 +71,7 @@ impl Default for TypeScriptConfig {
 
 /// Rule 1: File line count - configurable max lines (ignoring comments and blank lines)
 fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics) {
-    let mut code_lines = 0;
-    let bytes = source.as_bytes();
-    let mut line_start = 0;
-
-    for nl in memchr_iter(b'\n', bytes) {
-        let line = &source[line_start..nl];
-        let trimmed = line.trim();
-
-        // Count line if it's not blank and not a comment-only line
-        if !trimmed.is_empty() && !is_comment_only_line(trimmed) {
-            code_lines += 1;
-        }
-
-        line_start = nl + 1;
-    }
-
-    // Handle last line without newline
-    if line_start < bytes.len() {
-        let line = &source[line_start..];
-        let trimmed = line.trim();
-        if !trimmed.is_empty() && !is_comment_only_line(trimmed) {
-            code_lines += 1;
-        }
-    }
+    let code_lines = dictator_supreme::count_code_lines(source, is_comment_only_line);
 
     if code_lines > max_lines {
         diags.push(Diagnostic {
@@ -261,102 +232,7 @@ fn is_nodejs_builtin(module: &str) -> bool {
 
 /// Rule 3: Indentation consistency
 fn check_indentation_consistency(source: &str, diags: &mut Diagnostics) {
-    let bytes = source.as_bytes();
-    let mut line_start = 0;
-    let mut has_tabs = false;
-    let mut has_spaces = false;
-    let mut inconsistent_depths: Vec<(usize, usize)> = Vec::new();
-    let mut indent_stack: Vec<usize> = Vec::new();
-
-    for nl in memchr_iter(b'\n', bytes) {
-        let line = &source[line_start..nl];
-
-        // Skip empty lines
-        if line.trim().is_empty() {
-            line_start = nl + 1;
-            continue;
-        }
-
-        // Detect tabs vs spaces
-        if line.starts_with('\t') {
-            has_tabs = true;
-        } else if line.starts_with(' ') {
-            has_spaces = true;
-        }
-
-        // Calculate indentation depth
-        let indent = count_leading_whitespace(line);
-        if indent > 0 && !line.trim().is_empty() {
-            // Check for inconsistent indentation depth changes
-            if let Some(&last_indent) = indent_stack.last() {
-                if indent > last_indent {
-                    // Indentation increased
-                    let diff = indent - last_indent;
-                    // Check if it's a consistent multiple (2 or 4 spaces, or 1 tab)
-                    if has_spaces && diff != 2 && diff != 4 {
-                        inconsistent_depths.push((line_start, nl));
-                    }
-                    indent_stack.push(indent);
-                } else if indent < last_indent {
-                    // Indentation decreased - pop stack until we find matching level
-                    while let Some(&stack_indent) = indent_stack.last() {
-                        if stack_indent <= indent {
-                            break;
-                        }
-                        indent_stack.pop();
-                    }
-                    // If current indent doesn't match any previous level, it's inconsistent
-                    if indent_stack.last() != Some(&indent) && indent > 0 {
-                        inconsistent_depths.push((line_start, nl));
-                    }
-                }
-            } else if indent > 0 {
-                indent_stack.push(indent);
-            }
-        }
-
-        line_start = nl + 1;
-    }
-
-    // Handle last line without newline
-    if line_start < bytes.len() {
-        let line = &source[line_start..];
-        if !line.trim().is_empty() {
-            if line.starts_with('\t') {
-                has_tabs = true;
-            } else if line.starts_with(' ') {
-                has_spaces = true;
-            }
-        }
-    }
-
-    // Report mixed tabs and spaces
-    if has_tabs && has_spaces {
-        diags.push(Diagnostic {
-            rule: "typescript/mixed-indentation".to_string(),
-            message: "File has mixed tabs and spaces for indentation".to_string(),
-            enforced: true,
-            span: Span::new(0, source.len().min(100)),
-        });
-    }
-
-    // Report inconsistent indentation depths
-    if !inconsistent_depths.is_empty() {
-        let (start, end) = inconsistent_depths[0];
-        diags.push(Diagnostic {
-            rule: "typescript/inconsistent-indentation".to_string(),
-            message: "Inconsistent indentation depth detected".to_string(),
-            enforced: true,
-            span: Span::new(start, end),
-        });
-    }
-}
-
-/// Count leading whitespace characters
-fn count_leading_whitespace(line: &str) -> usize {
-    line.chars()
-        .take_while(|c| c.is_whitespace() && *c != '\n' && *c != '\r')
-        .count()
+    dictator_supreme::check_indentation_consistency(source, "typescript", diags);
 }
 
 #[derive(Default)]

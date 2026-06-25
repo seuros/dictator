@@ -58,31 +58,14 @@ pub fn init_regime_from_config() -> Regime {
     let config = dictator_core::DictateConfig::load_default();
     regime.set_rule_ignores_from_config(config.as_ref());
 
-    // Load decree configuration and apply to supreme plugin
-    // Language-specific settings override supreme settings per file type
-    if let Some(config) = config
+    // decree.supreme (with per-language overrides) runs as the default decree.
+    crate::regime::add_supreme_decree(&mut regime, config.as_ref());
+
+    // Load native language decrees declared in config, overriding supreme per type.
+    if let Some(config) = config.as_ref()
         && let Some(supreme_settings) = config.decree.get("supreme")
     {
-        let supreme_config = dictator_supreme::config_from_decree_settings(supreme_settings);
-
-        // Build language overrides: merge supreme + language settings
-        let mut overrides = HashMap::new();
-        for lang in ["ruby", "typescript", "golang", "rust", "python"] {
-            if let Some(lang_settings) = config.decree.get(lang) {
-                let merged = dictator_supreme::merged_config(supreme_settings, lang_settings);
-                overrides.insert(lang.to_string(), merged);
-            }
-        }
-
-        regime.add_decree(dictator_supreme::init_decree_with_overrides(
-            supreme_config,
-            overrides,
-        ));
-
-        // Load native decrees declared in config with overrides
         load_native_decrees(&mut regime, &config.decree, supreme_settings);
-    } else {
-        regime.add_decree(dictator_supreme::init_decree());
     }
 
     regime

@@ -69,18 +69,12 @@ impl Decree for Python {
             dictator_supreme::lint_source_with_owner(source, &self.supreme, "python");
 
         if self.config.ignore_comments {
-            // Filter out line-too-long violations on comment lines
-            let lines: Vec<&str> = source.lines().collect();
-            diags.extend(supreme_diags.into_iter().filter(|d| {
-                if d.rule == "python/line-too-long" {
-                    let line_idx = source[..d.span.start].matches('\n').count();
-                    !lines
-                        .get(line_idx)
-                        .is_some_and(|line| line.trim_start().starts_with('#'))
-                } else {
-                    true
-                }
-            }));
+            diags.extend(dictator_supreme::retain_long_line_diags(
+                source,
+                supreme_diags,
+                "python/line-too-long",
+                "#",
+            ));
         } else {
             diags.extend(supreme_diags);
         }
