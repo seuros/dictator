@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.19.0](https://github.com/seuros/dictator/compare/dictator-frontmatter-v0.18.1...dictator-frontmatter-v0.19.0) (2026-06-25)
+
+
+### Miscellaneous Chores
+
+* **dictator-frontmatter:** Synchronize dictator versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.18.1 to 0.19.0
+    * dictator-core bumped from 0.18.1 to 0.19.0
+
 ## [0.18.1](https://github.com/seuros/dictator/compare/dictator-frontmatter-v0.18.0...dictator-frontmatter-v0.18.1) (2026-05-24)
 
 
