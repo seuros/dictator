@@ -176,11 +176,11 @@ dependencies = [
 
 [[package]]
 name = "breaker-machines"
-version = "0.7.6"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79897f504d9df42a4e8361c4655587c835705f5fa9570d79407a7ba2e1d6bba5"
+checksum = "9702fd4f684cec05070d132c7c2c1a04ff5b01abfb011304e646548fc35ba1f9"
 dependencies = [
- "chrono-machines",
+ "chrono-machines 0.3.1",
  "state-machines",
 ]
 
@@ -355,6 +355,15 @@ name = "chrono-machines"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "faf72f86922bae137d2fd6a6690499d78ffcfaa28be6a340f0ee9d7036b446dd"
+dependencies = [
+ "rand 0.10.1",
+]
+
+[[package]]
+name = "chrono-machines"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d14e76579ce2b100164d550a14d1307cc234666a94414c7ed4274392564005ea"
 dependencies = [
  "async-trait",
  "rand 0.10.1",
@@ -1667,15 +1676,15 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-host"
-version = "0.1.40"
+version = "0.1.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a403bbcd202d570d6d04635a9ae870b916ece62b83f02da48a407da8c5d141e8"
+checksum = "410459fbb345f34a5d2cf16efafd01e650143a481b52835cfc06a63069a9e3af"
 dependencies = [
  "arc-swap",
  "base64",
  "breaker-machines",
  "chrono",
- "chrono-machines",
+ "chrono-machines 0.4.0",
  "dashmap 6.2.1",
  "futures",
  "ignore",
@@ -1697,9 +1706,9 @@ dependencies = [
 
 [[package]]
 name = "mcp-host-macros"
-version = "0.1.40"
+version = "0.1.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c638df1be25a6715153a40ddc6325709140196d96640d32fd6318bab4851fa34"
+checksum = "15a1143412732ab7a4ddf39a9698939b40af4589cc8f276efbc1c4efb39faaf5"
 dependencies = [
  "darling",
  "proc-macro2",
@@ -2398,9 +2407,9 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "state-machines"
-version = "0.9.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6a3c439e93b084079d81f1ccec41c64edf5a7348484db5228344372e634b92f"
+checksum = "4085a22c58f0cb2e44848846197b7aa1e270ac080554e2c27fe318ba8f5d3ad2"
 dependencies = [
  "state-machines-core",
  "state-machines-macro",
@@ -2414,9 +2423,9 @@ checksum = "b53079921cf97a990334cd0296c1efa4f16631ed3f30a3010bb2f2d5c76cb37b"
 
 [[package]]
 name = "state-machines-macro"
-version = "0.9.0"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7158fc1607004ff2bfba01ef8ca59d0446c374cd52a25a8726bba0cbb0d5c74"
+checksum = "2cda45f33b02ad3a74b0b38cf704586230e3fcbf0178e0cf4824ded7b088961b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2573,9 +2582,9 @@ dependencies = [
 
 [[package]]
 name = "throttle-machines"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37ddf0aa98f258ef624ba9fed2a1c3f01b6c63cfb970b9e4cfa358083593e7ac"
+checksum = "5eae767823657559fc3b81e6b72c79fa1a7e618f3223e08d789bc1fdef9fd6f2"
 
 [[package]]
 name = "tinystr"

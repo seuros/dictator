@@ -18,7 +18,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2024"
-rust-version = "1.95"
+rust-version = "1.96"
 authors = ["Abdelkader Boudih <oss@seuros.com>"]
 license = "MIT"
 repository = "https://github.com/seuros/dictator"
