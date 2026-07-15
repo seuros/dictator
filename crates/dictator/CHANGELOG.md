@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.20.0](https://github.com/seuros/dictator/compare/dictator-v0.19.0...dictator-v0.20.0) (2026-07-15)
+
+
+### Features
+
+* **deps:** bump mcp-host to 0.1.50 (requires Rust 1.96) ([55cbf3f](https://github.com/seuros/dictator/commit/55cbf3fded23ea5e5bfd417eca364cbf4d062acc))
+* **deps:** bump mcp-host to 0.1.60 (Rust 1.97) ([021db2a](https://github.com/seuros/dictator/commit/021db2adb8415513c41f329dce73f8ed850618b1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.19.0 to 0.20.0
+    * dictator-frontmatter bumped from 0.19.0 to 0.20.0
+    * dictator-golang bumped from 0.19.0 to 0.20.0
+    * dictator-decree-abi bumped from 0.19.0 to 0.20.0
+    * dictator-python bumped from 0.19.0 to 0.20.0
+    * dictator-ruby bumped from 0.19.0 to 0.20.0
+    * dictator-rust bumped from 0.19.0 to 0.20.0
+    * dictator-supreme bumped from 0.19.0 to 0.20.0
+    * dictator-typescript bumped from 0.19.0 to 0.20.0
+
 ## [0.19.0](https://github.com/seuros/dictator/compare/dictator-v0.18.1...dictator-v0.19.0) (2026-06-25)
 
 

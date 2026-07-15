@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.20.0](https://github.com/seuros/dictator/compare/dictator-ruby-v0.19.0...dictator-ruby-v0.20.0) (2026-07-15)
+
+
+### Features
+
+* **deps:** bump mcp-host to 0.1.60 (Rust 1.97) ([021db2a](https://github.com/seuros/dictator/commit/021db2adb8415513c41f329dce73f8ed850618b1))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.19.0 to 0.20.0
+    * dictator-core bumped from 0.19.0 to 0.20.0
+    * dictator-supreme bumped from 0.19.0 to 0.20.0
+
 ## [0.19.0](https://github.com/seuros/dictator/compare/dictator-ruby-v0.18.1...dictator-ruby-v0.19.0) (2026-06-25)
 
 
