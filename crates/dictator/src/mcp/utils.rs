@@ -43,16 +43,9 @@ pub fn get_log_path(filename: &str) -> std::path::PathBuf {
 pub fn log_to_file(msg: &str) {
     let log_file = get_log_path("mcp.log");
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(&log_file) {
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default();
-        let _ = writeln!(
-            file,
-            "[{}.{:03}] {}",
-            now.as_secs(),
-            now.subsec_millis(),
-            msg
-        );
+        let now =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
+        let _ = writeln!(file, "[{}.{:03}] {}", now.as_secs(), now.subsec_millis(), msg);
     }
 }
 
@@ -201,24 +194,17 @@ pub fn make_snippet(source: &str, span: &dictator_decree_abi::Span, max_len: usi
 
     // Find line bounds containing the span start.
     let line_start = source[..start].rfind('\n').map_or(0, |idx| idx + 1);
-    let line_end = source[start..]
-        .find('\n')
-        .map_or_else(|| source.len(), |off| start + off);
+    let line_end = source[start..].find('\n').map_or_else(|| source.len(), |off| start + off);
 
     let line = &source[line_start..line_end];
 
     // Sanitize control characters (except tab) to spaces and trim trailing whitespace.
-    let mut cleaned: String = line
-        .chars()
-        .map(|c| if c.is_control() && c != '\t' { ' ' } else { c })
-        .collect();
+    let mut cleaned: String =
+        line.chars().map(|c| if c.is_control() && c != '\t' { ' ' } else { c }).collect();
     cleaned.truncate(cleaned.trim_end().len());
 
     if cleaned.len() > max_len {
-        let mut out = cleaned
-            .chars()
-            .take(max_len.saturating_sub(1))
-            .collect::<String>();
+        let mut out = cleaned.chars().take(max_len.saturating_sub(1)).collect::<String>();
         out.push('…');
         out
     } else {

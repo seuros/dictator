@@ -13,10 +13,7 @@ pub struct RubyConfig {
 
 impl Default for RubyConfig {
     fn default() -> Self {
-        Self {
-            max_lines: 300,
-            ignore_comments: false,
-        }
+        Self { max_lines: 300, ignore_comments: false }
     }
 }
 
@@ -249,14 +246,8 @@ mod tests {
     fn ignores_long_comment_lines_when_configured() {
         let long_comment = format!("# {}\n", "x".repeat(150));
         let src = format!("def foo\n{long_comment}end\n");
-        let config = RubyConfig {
-            ignore_comments: true,
-            ..Default::default()
-        };
-        let supreme = SupremeConfig {
-            max_line_length: Some(120),
-            ..Default::default()
-        };
+        let config = RubyConfig { ignore_comments: true, ..Default::default() };
+        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
         let diags = lint_source_with_configs(&src, &config, &supreme);
         assert!(!diags.iter().any(|d| d.rule == "ruby/line-too-long"));
     }
@@ -266,10 +257,7 @@ mod tests {
         let long_comment = format!("# {}\n", "x".repeat(150));
         let src = format!("def foo\n{long_comment}end\n");
         let config = RubyConfig::default(); // ignore_comments = false
-        let supreme = SupremeConfig {
-            max_line_length: Some(120),
-            ..Default::default()
-        };
+        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
         let diags = lint_source_with_configs(&src, &config, &supreme);
         assert!(diags.iter().any(|d| d.rule == "ruby/line-too-long"));
     }
@@ -278,14 +266,8 @@ mod tests {
     fn still_detects_long_code_lines_with_ignore_comments() {
         let long_code = format!("  x = \"{}\"\n", "a".repeat(150));
         let src = format!("def foo\n{long_code}end\n");
-        let config = RubyConfig {
-            ignore_comments: true,
-            ..Default::default()
-        };
-        let supreme = SupremeConfig {
-            max_line_length: Some(120),
-            ..Default::default()
-        };
+        let config = RubyConfig { ignore_comments: true, ..Default::default() };
+        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
         let diags = lint_source_with_configs(&src, &config, &supreme);
         assert!(diags.iter().any(|d| d.rule == "ruby/line-too-long"));
     }

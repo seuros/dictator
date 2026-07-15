@@ -9,11 +9,7 @@ use memchr::memchr_iter;
 /// Lint TypeScript source for structural violations.
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
-    lint_source_with_configs(
-        source,
-        &TypeScriptConfig::default(),
-        &SupremeConfig::default(),
-    )
+    lint_source_with_configs(source, &TypeScriptConfig::default(), &SupremeConfig::default())
 }
 
 /// Lint TypeScript source with custom configuration.
@@ -62,10 +58,7 @@ pub struct TypeScriptConfig {
 
 impl Default for TypeScriptConfig {
     fn default() -> Self {
-        Self {
-            max_lines: 350,
-            ignore_comments: false,
-        }
+        Self { max_lines: 350, ignore_comments: false }
     }
 }
 
@@ -430,9 +423,7 @@ import type { Logger } from './types';
         let src = "function test() {\n\tconst x = 1;\n  const y = 2;\n}\n";
         let diags = lint_source(src);
         assert!(
-            diags
-                .iter()
-                .any(|d| d.rule == "typescript/mixed-indentation"),
+            diags.iter().any(|d| d.rule == "typescript/mixed-indentation"),
             "Should detect mixed tabs and spaces"
         );
     }
@@ -448,9 +439,7 @@ function test() {
 ";
         let diags = lint_source(src);
         assert!(
-            diags
-                .iter()
-                .any(|d| d.rule == "typescript/inconsistent-indentation"),
+            diags.iter().any(|d| d.rule == "typescript/inconsistent-indentation"),
             "Should detect inconsistent indentation depth (3 spaces instead of 2 or 4)"
         );
     }
@@ -467,10 +456,8 @@ function test() {
 ";
         let diags = lint_source(src);
         assert!(
-            !diags
-                .iter()
-                .any(|d| d.rule == "typescript/mixed-indentation"
-                    || d.rule == "typescript/inconsistent-indentation"),
+            !diags.iter().any(|d| d.rule == "typescript/mixed-indentation"
+                || d.rule == "typescript/inconsistent-indentation"),
             "Should accept consistent indentation"
         );
     }
@@ -507,14 +494,8 @@ function test() {
     fn ignores_long_comment_lines_when_configured() {
         let long_comment = format!("// {}\n", "x".repeat(150));
         let src = format!("function foo() {{\n{long_comment}}}\n");
-        let config = TypeScriptConfig {
-            ignore_comments: true,
-            ..Default::default()
-        };
-        let supreme = SupremeConfig {
-            max_line_length: Some(120),
-            ..Default::default()
-        };
+        let config = TypeScriptConfig { ignore_comments: true, ..Default::default() };
+        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
         let diags = lint_source_with_configs(&src, &config, &supreme);
         assert!(
             !diags.iter().any(|d| d.rule == "typescript/line-too-long"),
@@ -527,10 +508,7 @@ function test() {
         let long_comment = format!("// {}\n", "x".repeat(150));
         let src = format!("function foo() {{\n{long_comment}}}\n");
         let config = TypeScriptConfig::default(); // ignore_comments = false
-        let supreme = SupremeConfig {
-            max_line_length: Some(120),
-            ..Default::default()
-        };
+        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
         let diags = lint_source_with_configs(&src, &config, &supreme);
         assert!(
             diags.iter().any(|d| d.rule == "typescript/line-too-long"),
@@ -542,14 +520,8 @@ function test() {
     fn still_detects_long_code_lines_with_ignore_comments() {
         let long_code = format!("  const x = \"{}\";\n", "a".repeat(150));
         let src = format!("function foo() {{\n{long_code}}}\n");
-        let config = TypeScriptConfig {
-            ignore_comments: true,
-            ..Default::default()
-        };
-        let supreme = SupremeConfig {
-            max_line_length: Some(120),
-            ..Default::default()
-        };
+        let config = TypeScriptConfig { ignore_comments: true, ..Default::default() };
+        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
         let diags = lint_source_with_configs(&src, &config, &supreme);
         assert!(
             diags.iter().any(|d| d.rule == "typescript/line-too-long"),

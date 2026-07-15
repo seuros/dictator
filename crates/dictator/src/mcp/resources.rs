@@ -15,16 +15,8 @@ pub const CENSUS_URI: &str = "dictator://census";
 /// Native decrees that are always available
 const NATIVE_DECREES: &[(&str, &[&str], &[&str])] = &[
     ("supreme", &["*"], &[]),
-    (
-        "ruby",
-        &["rb", "rake"],
-        &["Gemfile", "Rakefile", ".rubocop.yml"],
-    ),
-    (
-        "typescript",
-        &["ts", "tsx", "js", "jsx", "mjs", "cjs"],
-        &["package.json", "tsconfig.json"],
-    ),
+    ("ruby", &["rb", "rake"], &["Gemfile", "Rakefile", ".rubocop.yml"]),
+    ("typescript", &["ts", "tsx", "js", "jsx", "mjs", "cjs"], &["package.json", "tsconfig.json"]),
     ("python", &["py"], &["pyproject.toml", "setup.py"]),
     ("golang", &["go"], &["go.mod", "go.work"]),
     ("rust", &["rs"], &["Cargo.toml", "build.rs"]),
@@ -67,12 +59,7 @@ pub fn handle_list_resources(id: Value, watcher_state: Arc<Mutex<ServerState>>) 
         ]
     });
 
-    JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        id,
-        result: Some(resources),
-        error: None,
-    }
+    JsonRpcResponse { jsonrpc: "2.0".to_string(), id, result: Some(resources), error: None }
 }
 
 /// Handle resources/read request

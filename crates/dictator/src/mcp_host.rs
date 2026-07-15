@@ -9,7 +9,5 @@ pub use server::run;
 
 /// Check if .dictate.toml exists in current directory
 fn config_exists() -> bool {
-    std::env::current_dir()
-        .map(|cwd| cwd.join(".dictate.toml").exists())
-        .unwrap_or(false)
+    std::env::current_dir().map(|cwd| cwd.join(".dictate.toml").exists()).unwrap_or(false)
 }

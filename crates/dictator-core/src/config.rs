@@ -135,11 +135,7 @@ pub struct LinterConfig {
 // Note: garde requires `&Option<T>` and `&()` signatures - clippy lints suppressed
 // ============================================================================
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_whitespace_policy(value: &Option<String>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
         match v.as_str() {
@@ -153,11 +149,7 @@ fn validate_whitespace_policy(value: &Option<String>, _ctx: &()) -> garde::Resul
     }
 }
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_tabs_vs_spaces(value: &Option<String>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
         match v.as_str() {
@@ -171,29 +163,19 @@ fn validate_tabs_vs_spaces(value: &Option<String>, _ctx: &()) -> garde::Result {
     }
 }
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_newline_policy(value: &Option<String>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
         match v.as_str() {
             "require" | "allow" => Ok(()),
-            _ => Err(garde::Error::new(format!(
-                "'{v}' is not valid - use 'require' or 'allow'"
-            ))),
+            _ => Err(garde::Error::new(format!("'{v}' is not valid - use 'require' or 'allow'"))),
         }
     } else {
         Ok(())
     }
 }
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_line_endings(value: &Option<String>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
         match v.as_str() {
@@ -207,11 +189,7 @@ fn validate_line_endings(value: &Option<String>, _ctx: &()) -> garde::Result {
     }
 }
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_tab_width(value: &Option<usize>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
         if *v >= 1 && *v <= 16 {
@@ -226,11 +204,7 @@ fn validate_tab_width(value: &Option<usize>, _ctx: &()) -> garde::Result {
     }
 }
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_max_line_length(value: &Option<usize>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
         if *v >= 40 && *v <= 500 {
@@ -245,11 +219,7 @@ fn validate_max_line_length(value: &Option<usize>, _ctx: &()) -> garde::Result {
     }
 }
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_max_lines(value: &Option<usize>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
         if *v >= 50 && *v <= 5000 {
@@ -264,11 +234,7 @@ fn validate_max_lines(value: &Option<usize>, _ctx: &()) -> garde::Result {
     }
 }
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_rust_edition(value: &Option<String>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
         match v.as_str() {
@@ -282,11 +248,7 @@ fn validate_rust_edition(value: &Option<String>, _ctx: &()) -> garde::Result {
     }
 }
 
-#[allow(
-    clippy::ref_option,
-    clippy::trivially_copy_pass_by_ref,
-    clippy::option_if_let_else
-)]
+#[allow(clippy::ref_option, clippy::trivially_copy_pass_by_ref, clippy::option_if_let_else)]
 fn validate_rust_version(value: &Option<String>, _ctx: &()) -> garde::Result {
     let Some(v) = value else {
         return Ok(());
@@ -355,11 +317,7 @@ impl DictateConfig {
             .map_err(|e| ConfigError::Io(e.to_string()))?;
 
         let config: Self = toml::from_str(&content)
-            .config_context(
-                path_buf,
-                None,
-                suggestions::config_suggestions("invalid_toml"),
-            )
+            .config_context(path_buf, None, suggestions::config_suggestions("invalid_toml"))
             .map_err(|e| ConfigError::Parse(e.to_string()))?;
 
         config.validate_all_settings()?;
@@ -435,9 +393,7 @@ impl DictateConfig {
                     merge_decree_settings(base_settings, profile_settings);
                 } else {
                     // Add new decree settings from profile
-                    result
-                        .decree
-                        .insert(decree_name.clone(), profile_settings.clone());
+                    result.decree.insert(decree_name.clone(), profile_settings.clone());
                 }
             }
         }
@@ -493,8 +449,7 @@ fn merge_decree_settings(base: &mut DecreeSettings, profile: &DecreeSettings) {
         base.path.clone_from(&profile.path);
     }
     if profile.trailing_whitespace.is_some() {
-        base.trailing_whitespace
-            .clone_from(&profile.trailing_whitespace);
+        base.trailing_whitespace.clone_from(&profile.trailing_whitespace);
     }
     if profile.tabs_vs_spaces.is_some() {
         base.tabs_vs_spaces.clone_from(&profile.tabs_vs_spaces);
@@ -512,8 +467,7 @@ fn merge_decree_settings(base: &mut DecreeSettings, profile: &DecreeSettings) {
         base.max_line_length = profile.max_line_length;
     }
     if profile.blank_line_whitespace.is_some() {
-        base.blank_line_whitespace
-            .clone_from(&profile.blank_line_whitespace);
+        base.blank_line_whitespace.clone_from(&profile.blank_line_whitespace);
     }
     if profile.max_lines.is_some() {
         base.max_lines = profile.max_lines;
@@ -525,8 +479,7 @@ fn merge_decree_settings(base: &mut DecreeSettings, profile: &DecreeSettings) {
         base.ignore_blank_lines = profile.ignore_blank_lines;
     }
     if profile.method_visibility_order.is_some() {
-        base.method_visibility_order
-            .clone_from(&profile.method_visibility_order);
+        base.method_visibility_order.clone_from(&profile.method_visibility_order);
     }
     if profile.comment_spacing.is_some() {
         base.comment_spacing = profile.comment_spacing;

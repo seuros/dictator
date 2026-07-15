@@ -32,10 +32,8 @@ fn test_inconsistent_indentation() {
     let diags = lint_source(&src);
 
     assert!(
-        diags
-            .iter()
-            .any(|d| d.rule == "typescript/mixed-indentation"
-                || d.rule == "typescript/inconsistent-indentation"),
+        diags.iter().any(|d| d.rule == "typescript/mixed-indentation"
+            || d.rule == "typescript/inconsistent-indentation"),
         "Should detect indentation issues in InconsistentIndentation.ts"
     );
 }

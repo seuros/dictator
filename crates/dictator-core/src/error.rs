@@ -8,54 +8,25 @@ use std::path::PathBuf;
 #[derive(Debug, Clone)]
 pub enum DictatorError {
     /// Configuration-related errors
-    ConfigError {
-        file: PathBuf,
-        line: Option<usize>,
-        message: String,
-        suggestion: String,
-    },
+    ConfigError { file: PathBuf, line: Option<usize>, message: String, suggestion: String },
 
     /// WASM decree loading errors
-    WasmLoadError {
-        path: PathBuf,
-        abi_version: String,
-        expected: String,
-        suggestion: String,
-    },
+    WasmLoadError { path: PathBuf, abi_version: String, expected: String, suggestion: String },
 
     /// File processing errors
-    FileProcessingError {
-        path: PathBuf,
-        operation: String,
-        message: String,
-        suggestion: String,
-    },
+    FileProcessingError { path: PathBuf, operation: String, message: String, suggestion: String },
 
     /// Rule configuration errors
-    RuleConfigurationError {
-        decree: String,
-        rule: String,
-        message: String,
-        suggestion: String,
-    },
+    RuleConfigurationError { decree: String, rule: String, message: String, suggestion: String },
 
     /// Performance-related warnings
-    PerformanceWarning {
-        context: String,
-        message: String,
-        suggestion: String,
-    },
+    PerformanceWarning { context: String, message: String, suggestion: String },
 }
 
 impl fmt::Display for DictatorError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::ConfigError {
-                file,
-                line,
-                message,
-                suggestion,
-            } => {
+            Self::ConfigError { file, line, message, suggestion } => {
                 write!(f, "Configuration error")?;
                 if let Some(line_num) = line {
                     write!(f, " at {}:{}", file.display(), line_num)?;
@@ -65,12 +36,7 @@ impl fmt::Display for DictatorError {
                 write!(f, ": {message}")?;
                 write!(f, "\n💡 Suggestion: {suggestion}")?;
             }
-            Self::WasmLoadError {
-                path,
-                abi_version,
-                expected,
-                suggestion,
-            } => {
+            Self::WasmLoadError { path, abi_version, expected, suggestion } => {
                 write!(
                     f,
                     "WASM decree load error for {}: ABI version {} doesn't match expected {}",
@@ -80,12 +46,7 @@ impl fmt::Display for DictatorError {
                 )?;
                 write!(f, "\n💡 Suggestion: {suggestion}")?;
             }
-            Self::FileProcessingError {
-                path,
-                operation,
-                message,
-                suggestion,
-            } => {
+            Self::FileProcessingError { path, operation, message, suggestion } => {
                 write!(
                     f,
                     "File processing error during '{}' for {}: {}",
@@ -95,23 +56,11 @@ impl fmt::Display for DictatorError {
                 )?;
                 write!(f, "\n💡 Suggestion: {suggestion}")?;
             }
-            Self::RuleConfigurationError {
-                decree,
-                rule,
-                message,
-                suggestion,
-            } => {
-                write!(
-                    f,
-                    "Rule configuration error for {decree}::{rule}: {message}"
-                )?;
+            Self::RuleConfigurationError { decree, rule, message, suggestion } => {
+                write!(f, "Rule configuration error for {decree}::{rule}: {message}")?;
                 write!(f, "\n💡 Suggestion: {suggestion}")?;
             }
-            Self::PerformanceWarning {
-                context,
-                message,
-                suggestion,
-            } => {
+            Self::PerformanceWarning { context, message, suggestion } => {
                 write!(f, "Performance warning ({context}): {message}")?;
                 write!(f, "\n💡 Suggestion: {suggestion}")?;
             }

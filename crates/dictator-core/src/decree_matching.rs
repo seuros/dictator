@@ -26,8 +26,7 @@ pub fn decree_matches(path: &Utf8Path, meta: &dictator_decree_abi::DecreeMetadat
 
 /// Check if a file's extension matches any in the supported list.
 pub fn extension_matches(path: &Utf8Path, supported: &[String]) -> bool {
-    path.extension()
-        .is_some_and(|ext| supported.iter().any(|s| s == ext))
+    path.extension().is_some_and(|ext| supported.iter().any(|s| s == ext))
 }
 
 /// Check if supreme should be shadowed for this path.
@@ -63,12 +62,7 @@ mod tests {
 
     impl MockDecree {
         fn simple(name: &'static str, exts: Vec<String>, rule: &'static str) -> Self {
-            Self {
-                name,
-                exts,
-                filenames: vec![],
-                rule,
-            }
+            Self { name, exts, filenames: vec![], rule }
         }
     }
 
@@ -131,18 +125,12 @@ mod tests {
     #[test]
     fn non_language_decree_does_not_shadow() {
         let supreme: BoxDecree = Box::new(MockDecree::simple("supreme", vec![], "supreme/hit"));
-        let frontmatter: BoxDecree = Box::new(MockDecree::simple(
-            "frontmatter",
-            vec!["md".into()],
-            "frontmatter/hit",
-        ));
+        let frontmatter: BoxDecree =
+            Box::new(MockDecree::simple("frontmatter", vec!["md".into()], "frontmatter/hit"));
 
         let decrees = vec![supreme, frontmatter];
         let path = Utf8Path::new("README.md");
 
-        assert!(
-            !is_supreme_shadowed(&decrees, path),
-            "frontmatter should not shadow supreme"
-        );
+        assert!(!is_supreme_shadowed(&decrees, path), "frontmatter should not shadow supreme");
     }
 }
