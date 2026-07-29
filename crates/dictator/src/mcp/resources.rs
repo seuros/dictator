@@ -35,8 +35,8 @@ pub fn handle_list_resources(id: Value, watcher_state: Arc<Mutex<ServerState>>) 
     // No resources if config doesn't exist
     if !config_exists {
         return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
+            jsonrpc: "2.0".into(),
+            id: Some(id),
             result: Some(serde_json::json!({ "resources": [] })),
             error: None,
         };
@@ -59,7 +59,7 @@ pub fn handle_list_resources(id: Value, watcher_state: Arc<Mutex<ServerState>>) 
         ]
     });
 
-    JsonRpcResponse { jsonrpc: "2.0".to_string(), id, result: Some(resources), error: None }
+    JsonRpcResponse { jsonrpc: "2.0".into(), id: Some(id), result: Some(resources), error: None }
 }
 
 /// Handle resources/read request
@@ -70,8 +70,8 @@ pub fn handle_read_resource(
 ) -> JsonRpcResponse {
     let Some(params) = params else {
         return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
+            jsonrpc: "2.0".into(),
+            id: Some(id),
             result: None,
             error: Some(JsonRpcError {
                 code: -32602,
@@ -83,8 +83,8 @@ pub fn handle_read_resource(
 
     let Some(uri) = params.get("uri").and_then(|v| v.as_str()) else {
         return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
+            jsonrpc: "2.0".into(),
+            id: Some(id),
             result: None,
             error: Some(JsonRpcError {
                 code: -32602,
@@ -98,8 +98,8 @@ pub fn handle_read_resource(
         CONFIG_URI => read_config_resource(id),
         CENSUS_URI => read_census_resource(id, watcher_state),
         _ => JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
+            jsonrpc: "2.0".into(),
+            id: Some(id),
             result: None,
             error: Some(JsonRpcError {
                 code: -32002,
@@ -125,8 +125,8 @@ fn read_config_resource(id: Value) -> JsonRpcResponse {
     };
 
     JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        id,
+        jsonrpc: "2.0".into(),
+        id: Some(id),
         result: Some(serde_json::json!({
             "contents": [{
                 "uri": CONFIG_URI,
@@ -209,8 +209,8 @@ fn read_census_resource(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> Js
     });
 
     JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        id,
+        jsonrpc: "2.0".into(),
+        id: Some(id),
         result: Some(serde_json::json!({
             "contents": [{
                 "uri": CENSUS_URI,

@@ -32,6 +32,7 @@ impl WasmCache {
 
         // Load and compile the component
         let component = Component::from_file(&self.engine, path)
+            .map_err(anyhow::Error::from)
             .with_context(|| format!("failed to load wasm decree: {}", path.display()))?;
 
         let component = Arc::new(component);

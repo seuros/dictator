@@ -50,8 +50,8 @@ pub fn handle_stalint_watch(
         Ok(w) => w,
         Err(e) => {
             return JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
+                jsonrpc: "2.0".into(),
+                id: Some(id),
                 result: None,
                 error: Some(JsonRpcError {
                     code: -32000,
@@ -100,8 +100,8 @@ pub fn handle_stalint_watch(
     );
 
     JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        id,
+        jsonrpc: "2.0".into(),
+        id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": output }]
         })),
@@ -133,8 +133,8 @@ pub fn handle_stalint_unwatch(
     let _ = notif_tx.try_send(notification.to_string());
 
     JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        id,
+        jsonrpc: "2.0".into(),
+        id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": "Stopped watching for file changes." }]
         })),

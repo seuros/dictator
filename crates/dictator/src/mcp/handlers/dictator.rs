@@ -71,8 +71,8 @@ pub fn handle_dictator(
 
             let combined = format!("{kim_text}\n\n{supreme_text}");
             JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
+                jsonrpc: "2.0".into(),
+                id: Some(id),
                 result: Some(serde_json::json!({
                     "content": [{ "type": "text", "text": combined }]
                 })),
@@ -80,8 +80,8 @@ pub fn handle_dictator(
             }
         }
         _ => JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
+            jsonrpc: "2.0".into(),
+            id: Some(id),
             result: None,
             error: Some(JsonRpcError {
                 code: -32602,

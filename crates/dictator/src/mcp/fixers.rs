@@ -94,8 +94,8 @@ pub fn handle_kimjongrails(
     let output = build_summary(fixed_count, &rule_counts, &log_output);
 
     JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        id,
+        jsonrpc: "2.0".into(),
+        id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": output }]
         })),

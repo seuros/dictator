@@ -324,8 +324,10 @@ pub(crate) mod loader {
         let name = guest.call_name(&mut store).unwrap_or_else(|_| "wasm-decree".to_string());
 
         // Get and validate metadata
-        let wasm_meta =
-            guest.call_metadata(&mut store).context("failed to call metadata on wasm decree")?;
+        let wasm_meta = guest
+            .call_metadata(&mut store)
+            .map_err(anyhow::Error::from)
+            .context("failed to call metadata on wasm decree")?;
 
         let metadata = dictator_decree_abi::DecreeMetadata {
             abi_version: wasm_meta.abi_version,

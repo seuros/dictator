@@ -53,8 +53,8 @@ pub fn handle_supremecourt(
 
     if config.is_none() {
         return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
+            jsonrpc: "2.0".into(),
+            id: Some(id),
             result: Some(serde_json::json!({
                 "content": [{
                     "type": "text",
@@ -105,8 +105,8 @@ pub fn handle_supremecourt(
     }
 
     JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        id,
+        jsonrpc: "2.0".into(),
+        id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": output }]
         })),

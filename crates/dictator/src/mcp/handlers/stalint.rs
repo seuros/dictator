@@ -43,8 +43,8 @@ pub fn handle_stalint(
         let state = watcher_state.lock().unwrap();
         if state.stalint_paths.is_empty() {
             return JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
+                jsonrpc: "2.0".into(),
+                id: Some(id),
                 result: None,
                 error: Some(JsonRpcError {
                     code: -32602,
@@ -172,7 +172,7 @@ pub fn handle_stalint(
         result["structuredContent"]["nextCursor"] = serde_json::json!(cursor);
     }
 
-    JsonRpcResponse { jsonrpc: "2.0".to_string(), id, result: Some(result), error: None }
+    JsonRpcResponse { jsonrpc: "2.0".into(), id: Some(id), result: Some(result), error: None }
 }
 
 #[cfg(test)]

@@ -19,8 +19,8 @@ pub fn handle_occupy(
         Ok(p) => p,
         Err(e) => {
             return JsonRpcResponse {
-                jsonrpc: "2.0".to_string(),
-                id,
+                jsonrpc: "2.0".into(),
+                id: Some(id),
                 result: None,
                 error: Some(JsonRpcError {
                     code: -32603,
@@ -36,8 +36,8 @@ pub fn handle_occupy(
     // Check if config already exists
     if config_path.exists() {
         return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
+            jsonrpc: "2.0".into(),
+            id: Some(id),
             result: Some(serde_json::json!({
                 "content": [{ "type": "text", "text": ".dictate.toml already exists." }]
             })),
@@ -48,8 +48,8 @@ pub fn handle_occupy(
     // Write default config
     if let Err(e) = std::fs::write(&config_path, DEFAULT_CONFIG) {
         return JsonRpcResponse {
-            jsonrpc: "2.0".to_string(),
-            id,
+            jsonrpc: "2.0".into(),
+            id: Some(id),
             result: None,
             error: Some(JsonRpcError {
                 code: -32603,
@@ -101,8 +101,8 @@ pub fn handle_occupy(
     );
 
     JsonRpcResponse {
-        jsonrpc: "2.0".to_string(),
-        id,
+        jsonrpc: "2.0".into(),
+        id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": message }]
         })),
