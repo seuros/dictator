@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.21.0](https://github.com/seuros/dictator/compare/dictator-v0.20.0...dictator-v0.21.0) (2026-07-29)
+
+
+### Features
+
+* **deps:** bump mcp-host to 0.1.62 ([2a72398](https://github.com/seuros/dictator/commit/2a72398f372c67ba65fea1fb1695e6e576788d9b))
+* **deps:** bump mcp-host to 0.1.90, decree loyalty to the new Cow&lt;'static, str&gt; order ([bae39a6](https://github.com/seuros/dictator/commit/bae39a672fb2e26aef703a2d2f1732f6ca6a51eb))
+* the Dictator decrees scoped enforcement upon the uncommitted alone ([973c458](https://github.com/seuros/dictator/commit/973c45852f2e300aa10f179148cd0e326013274b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.20.0 to 0.21.0
+    * dictator-frontmatter bumped from 0.20.0 to 0.21.0
+    * dictator-golang bumped from 0.20.0 to 0.21.0
+    * dictator-decree-abi bumped from 0.20.0 to 0.21.0
+    * dictator-python bumped from 0.20.0 to 0.21.0
+    * dictator-ruby bumped from 0.20.0 to 0.21.0
+    * dictator-rust bumped from 0.20.0 to 0.21.0
+    * dictator-supreme bumped from 0.20.0 to 0.21.0
+    * dictator-typescript bumped from 0.20.0 to 0.21.0
+
 ## [0.20.0](https://github.com/seuros/dictator/compare/dictator-v0.19.0...dictator-v0.20.0) (2026-07-15)
 
 
