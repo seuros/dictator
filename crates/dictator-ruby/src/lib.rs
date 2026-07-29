@@ -9,11 +9,12 @@ use memchr::memchr_iter;
 pub struct RubyConfig {
     pub max_lines: usize,
     pub ignore_comments: bool,
+    pub comment_spacing: bool,
 }
 
 impl Default for RubyConfig {
     fn default() -> Self {
-        Self { max_lines: 300, ignore_comments: false }
+        Self { max_lines: 300, ignore_comments: false, comment_spacing: true }
     }
 }
 
@@ -78,14 +79,14 @@ fn lint_ruby_specific(source: &str, config: &RubyConfig) -> Diagnostics {
     let mut line_idx: usize = 0;
 
     for nl in memchr_iter(b'\n', bytes) {
-        process_line(source, line_start, nl, line_idx, &mut diags);
+        process_line(source, line_start, nl, line_idx, config.comment_spacing, &mut diags);
         line_start = nl + 1;
         line_idx += 1;
     }
 
     if line_start < bytes.len() {
         // Final line without trailing newline.
-        process_line(source, line_start, bytes.len(), line_idx, &mut diags);
+        process_line(source, line_start, bytes.len(), line_idx, config.comment_spacing, &mut diags);
     }
 
     diags
@@ -181,10 +182,22 @@ pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> 
     RubyConfig {
         max_lines: settings.max_lines.unwrap_or(300),
         ignore_comments: settings.ignore_comments.unwrap_or(false),
+        comment_spacing: settings.comment_spacing.unwrap_or(true),
     }
 }
 
-fn process_line(source: &str, start: usize, end: usize, line_idx: usize, diags: &mut Diagnostics) {
+fn process_line(
+    source: &str,
+    start: usize,
+    end: usize,
+    line_idx: usize,
+    comment_spacing: bool,
+    diags: &mut Diagnostics,
+) {
+    if !comment_spacing {
+        return;
+    }
+
     let line = &source[start..end];
 
     // Comment hygiene: ensure space after '#', except for known directives.
@@ -240,6 +253,22 @@ mod tests {
         let src = "#bad\n# good\n";
         let diags = lint_source(src);
         assert!(diags.iter().any(|d| d.rule == "ruby/comment-space"));
+    }
+
+    #[test]
+    fn comment_spacing_false_disables_comment_space_check() {
+        let src = "#bad\n## Section\n";
+        let config = RubyConfig { comment_spacing: false, ..Default::default() };
+        let supreme = SupremeConfig::default();
+        let diags = lint_source_with_configs(src, &config, &supreme);
+        assert!(!diags.iter().any(|d| d.rule == "ruby/comment-space"));
+    }
+
+    #[test]
+    fn config_from_decree_settings_honors_comment_spacing() {
+        let settings = dictator_core::DecreeSettings { comment_spacing: Some(false), ..Default::default() };
+        let config = config_from_decree_settings(&settings);
+        assert!(!config.comment_spacing);
     }
 
     #[test]
