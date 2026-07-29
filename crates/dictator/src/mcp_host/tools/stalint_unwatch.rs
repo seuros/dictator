@@ -52,7 +52,8 @@ impl Tool for StalintUnwatchTool {
                 batch.unhide_tool("stalint_watch");
             });
 
-            ctx.logger.info("Watch stopped. stalint_watch now available.");
+            ctx.logger
+                .info("Watch stopped. stalint_watch now available.");
 
             Ok(pretty_result_output(&result))
         })

@@ -37,7 +37,10 @@ impl Default for Regime {
 impl Regime {
     #[must_use]
     pub fn new() -> Self {
-        Self { decrees: Vec::new(), rule_ignores: rule_ignoring::RuleIgnores::new() }
+        Self {
+            decrees: Vec::new(),
+            rule_ignores: rule_ignoring::RuleIgnores::new(),
+        }
     }
 
     /// Get WASM cache statistics if available
@@ -222,7 +225,11 @@ pub(crate) mod loader {
                 .with_context(|| format!("failed to load native decree: {}", lib_path.display()))?;
             let ctor: libloading::Symbol<DecreeFactory> =
                 lib.get(DECREE_FACTORY_EXPORT.as_bytes()).with_context(|| {
-                    format!("missing symbol {} in {}", DECREE_FACTORY_EXPORT, lib_path.display())
+                    format!(
+                        "missing symbol {} in {}",
+                        DECREE_FACTORY_EXPORT,
+                        lib_path.display()
+                    )
                 })?;
 
             let decree = ctor();
@@ -230,7 +237,12 @@ pub(crate) mod loader {
             // Validate ABI compatibility
             let metadata = decree.metadata();
             metadata.validate_abi(ABI_VERSION).map_err(|e| {
-                anyhow::anyhow!("Decree '{}' from {}: {}", decree.name(), lib_path.display(), e)
+                anyhow::anyhow!(
+                    "Decree '{}' from {}: {}",
+                    decree.name(),
+                    lib_path.display(),
+                    e
+                )
             })?;
 
             tracing::info!(
@@ -260,7 +272,10 @@ pub(crate) mod loader {
 
     impl WasiView for HostState {
         fn ctx(&mut self) -> WasiCtxView<'_> {
-            WasiCtxView { ctx: &mut self.wasi, table: &mut self.table }
+            WasiCtxView {
+                ctx: &mut self.wasi,
+                table: &mut self.table,
+            }
         }
     }
 
@@ -285,7 +300,10 @@ pub(crate) mod loader {
             let result = {
                 let mut guard = self.state.lock().expect("wasm store poisoned");
                 let WasmState { plugin, store } = &mut *guard;
-                plugin.dictator_decree_lints().call_lint(store, path, source).unwrap_or_default()
+                plugin
+                    .dictator_decree_lints()
+                    .call_lint(store, path, source)
+                    .unwrap_or_default()
             };
             result
                 .into_iter()
@@ -293,7 +311,10 @@ pub(crate) mod loader {
                     rule: d.rule,
                     message: d.message,
                     enforced: matches!(d.severity, guest::Severity::Info), // Info = auto-fixed
-                    span: Span { start: d.span.start as usize, end: d.span.end as usize },
+                    span: Span {
+                        start: d.span.start as usize,
+                        end: d.span.end as usize,
+                    },
                 })
                 .collect()
         }
@@ -321,7 +342,9 @@ pub(crate) mod loader {
         let plugin = bindings::Decree::instantiate(&mut store, &component, &linker)?;
         let guest = plugin.dictator_decree_lints();
 
-        let name = guest.call_name(&mut store).unwrap_or_else(|_| "wasm-decree".to_string());
+        let name = guest
+            .call_name(&mut store)
+            .unwrap_or_else(|_| "wasm-decree".to_string());
 
         // Get and validate metadata
         let wasm_meta = guest
@@ -371,7 +394,11 @@ pub(crate) mod loader {
             metadata.abi_version
         );
 
-        Ok(Box::new(WasmDecree { name, metadata, state: Mutex::new(WasmState { store, plugin }) }))
+        Ok(Box::new(WasmDecree {
+            name,
+            metadata,
+            state: Mutex::new(WasmState { store, plugin }),
+        }))
     }
 
     pub fn load_decree(path: &Path) -> Result<BoxDecree> {
@@ -398,7 +425,13 @@ mod tests {
 
     impl MockDecree {
         fn simple(name: &'static str, exts: Vec<String>, rule: &'static str) -> Self {
-            Self { name, exts, filenames: vec![], skip: vec![], rule }
+            Self {
+                name,
+                exts,
+                filenames: vec![],
+                skip: vec![],
+                rule,
+            }
         }
     }
 
@@ -432,8 +465,11 @@ mod tests {
 
     #[test]
     fn watched_extensions_unites_declared_sets() {
-        let decree_a: BoxDecree =
-            Box::new(MockDecree::simple("a", vec!["rs".into(), "Rb".into()], "a/hit"));
+        let decree_a: BoxDecree = Box::new(MockDecree::simple(
+            "a",
+            vec!["rs".into(), "Rb".into()],
+            "a/hit",
+        ));
         let decree_b: BoxDecree = Box::new(MockDecree::simple("b", vec!["ts".into()], "b/hit"));
         let mut regime = Regime::new();
         regime.add_decree(decree_a);
@@ -491,8 +527,11 @@ mod tests {
 
     #[test]
     fn enforce_ignores_configured_rules_by_filename() {
-        let supreme: BoxDecree =
-            Box::new(MockDecree::simple("supreme", vec![], "supreme/tab-character"));
+        let supreme: BoxDecree = Box::new(MockDecree::simple(
+            "supreme",
+            vec![],
+            "supreme/tab-character",
+        ));
 
         let mut settings = DecreeSettings::default();
         settings.ignore.insert(
@@ -517,8 +556,11 @@ mod tests {
 
     #[test]
     fn enforce_ignores_configured_rules_by_extension() {
-        let supreme: BoxDecree =
-            Box::new(MockDecree::simple("supreme", vec![], "supreme/tab-character"));
+        let supreme: BoxDecree = Box::new(MockDecree::simple(
+            "supreme",
+            vec![],
+            "supreme/tab-character",
+        ));
 
         let mut settings = DecreeSettings::default();
         settings.ignore.insert(
@@ -548,8 +590,11 @@ mod tests {
 
     #[test]
     fn enforce_does_not_ignore_unconfigured_rules() {
-        let supreme: BoxDecree =
-            Box::new(MockDecree::simple("supreme", vec![], "supreme/trailing-whitespace"));
+        let supreme: BoxDecree = Box::new(MockDecree::simple(
+            "supreme",
+            vec![],
+            "supreme/trailing-whitespace",
+        ));
 
         let mut settings = DecreeSettings::default();
         settings.ignore.insert(
@@ -570,7 +615,9 @@ mod tests {
         let sources = [Source { path, text: "x" }];
         let diags = regime.enforce(&sources).unwrap();
         assert!(
-            diags.iter().any(|d| d.rule == "supreme/trailing-whitespace"),
+            diags
+                .iter()
+                .any(|d| d.rule == "supreme/trailing-whitespace"),
             "unconfigured rules should still be reported"
         );
     }
@@ -578,8 +625,11 @@ mod tests {
     #[test]
     fn enforce_does_not_shadow_supreme_for_non_language_decree() {
         let supreme: BoxDecree = Box::new(MockDecree::simple("supreme", vec![], "supreme/hit"));
-        let frontmatter: BoxDecree =
-            Box::new(MockDecree::simple("frontmatter", vec!["md".into()], "frontmatter/hit"));
+        let frontmatter: BoxDecree = Box::new(MockDecree::simple(
+            "frontmatter",
+            vec!["md".into()],
+            "frontmatter/hit",
+        ));
 
         let mut regime = Regime::new();
         regime.add_decree(supreme);
@@ -596,18 +646,27 @@ mod tests {
     #[test]
     fn enforce_golang_shadows_supreme_for_go_files() {
         let supreme: BoxDecree = Box::new(MockDecree::simple("supreme", vec![], "supreme/hit"));
-        let golang: BoxDecree =
-            Box::new(MockDecree::simple("golang", vec!["go".into()], "golang/hit"));
+        let golang: BoxDecree = Box::new(MockDecree::simple(
+            "golang",
+            vec!["go".into()],
+            "golang/hit",
+        ));
 
         let mut regime = Regime::new();
         regime.add_decree(supreme);
         regime.add_decree(golang);
 
         let path = Utf8Path::new("main.go");
-        let sources = [Source { path, text: "package main" }];
+        let sources = [Source {
+            path,
+            text: "package main",
+        }];
 
         let diags = regime.enforce(&sources).unwrap();
-        assert!(diags.iter().any(|d| d.rule == "golang/hit"), "golang should run on .go files");
+        assert!(
+            diags.iter().any(|d| d.rule == "golang/hit"),
+            "golang should run on .go files"
+        );
         assert!(
             !diags.iter().any(|d| d.rule == "supreme/hit"),
             "supreme should be shadowed by golang"
@@ -622,7 +681,10 @@ mod tests {
         regime.add_decree(supreme);
 
         let path = Utf8Path::new("main.go");
-        let sources = [Source { path, text: "package main" }];
+        let sources = [Source {
+            path,
+            text: "package main",
+        }];
 
         let diags = regime.enforce(&sources).unwrap();
         assert!(
@@ -653,7 +715,10 @@ mod tests {
             let sources = [Source { path, text: "x" }];
 
             let diags = regime.enforce(&sources).unwrap();
-            assert!(diags.iter().any(|d| d.rule == rule), "{name} should run on .{ext} files");
+            assert!(
+                diags.iter().any(|d| d.rule == rule),
+                "{name} should run on .{ext} files"
+            );
             assert!(
                 !diags.iter().any(|d| d.rule == "supreme/hit"),
                 "supreme should be shadowed by {name} on .{ext} files"
@@ -703,7 +768,10 @@ mod tests {
         let path = Utf8Path::new("Gemfile.lock");
         let sources = [Source { path, text: "x" }];
         let diags = regime.enforce(&sources).unwrap();
-        assert!(diags.is_empty(), "Gemfile.lock should be skipped (owned but not linted)");
+        assert!(
+            diags.is_empty(),
+            "Gemfile.lock should be skipped (owned but not linted)"
+        );
     }
 
     #[test]
@@ -758,7 +826,10 @@ mod tests {
         let path = Utf8Path::new("go.mod");
         let sources = [Source { path, text: "x" }];
         let diags = regime.enforce(&sources).unwrap();
-        assert!(diags.iter().any(|d| d.rule == "golang/hit"), "golang should match go.mod");
+        assert!(
+            diags.iter().any(|d| d.rule == "golang/hit"),
+            "golang should match go.mod"
+        );
         assert!(
             !diags.iter().any(|d| d.rule == "supreme/hit"),
             "supreme should be shadowed by golang for go.mod"

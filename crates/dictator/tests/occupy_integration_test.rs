@@ -15,7 +15,10 @@ fn test_occupy_creates_config_file() -> Result<()> {
     assert!(!config_path.exists());
 
     // Run occupy command
-    dictator::occupy::run_occupy(dictator::cli::OccupyArgs { path: temp_path, force: false })?;
+    dictator::occupy::run_occupy(dictator::cli::OccupyArgs {
+        path: temp_path,
+        force: false,
+    })?;
 
     // Verify file was created
     assert!(config_path.exists());
@@ -39,8 +42,10 @@ fn test_occupy_fails_without_force_if_exists() -> Result<()> {
     fs::write(&config_path, "# existing content\n")?;
 
     // Attempt occupy without --force should fail
-    let result =
-        dictator::occupy::run_occupy(dictator::cli::OccupyArgs { path: temp_path, force: false });
+    let result = dictator::occupy::run_occupy(dictator::cli::OccupyArgs {
+        path: temp_path,
+        force: false,
+    });
 
     assert!(result.is_err());
     assert!(result.unwrap_err().to_string().contains("already exists"));
@@ -64,7 +69,10 @@ fn test_occupy_overwrites_with_force() -> Result<()> {
     fs::write(&config_path, "# old content\n")?;
 
     // Occupy with --force should succeed
-    dictator::occupy::run_occupy(dictator::cli::OccupyArgs { path: temp_path, force: true })?;
+    dictator::occupy::run_occupy(dictator::cli::OccupyArgs {
+        path: temp_path,
+        force: true,
+    })?;
 
     // Content should be replaced
     let content = fs::read_to_string(&config_path)?;
@@ -78,8 +86,10 @@ fn test_occupy_overwrites_with_force() -> Result<()> {
 fn test_occupy_fails_on_nonexistent_directory() {
     let nonexistent = Utf8PathBuf::from("/nonexistent/path/that/does/not/exist");
 
-    let result =
-        dictator::occupy::run_occupy(dictator::cli::OccupyArgs { path: nonexistent, force: false });
+    let result = dictator::occupy::run_occupy(dictator::cli::OccupyArgs {
+        path: nonexistent,
+        force: false,
+    });
 
     assert!(result.is_err());
     assert!(result.unwrap_err().to_string().contains("does not exist"));

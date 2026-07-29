@@ -20,7 +20,10 @@ impl WasmCache {
         config.wasm_component_model(true);
         let engine = Engine::new(&config)?;
 
-        Ok(Self { engine, components: DashMap::new() })
+        Ok(Self {
+            engine,
+            components: DashMap::new(),
+        })
     }
 
     /// Get a compiled component from cache or load and compile it
@@ -38,7 +41,8 @@ impl WasmCache {
         let component = Arc::new(component);
 
         // Cache the compiled component
-        self.components.insert(path.to_path_buf(), component.clone());
+        self.components
+            .insert(path.to_path_buf(), component.clone());
 
         tracing::info!("Cached WASM component: {}", path.display());
         Ok(component)
@@ -53,7 +57,9 @@ impl WasmCache {
     /// Get cache statistics
     #[must_use]
     pub fn stats(&self) -> WasmCacheStats {
-        WasmCacheStats { entries: self.components.len() }
+        WasmCacheStats {
+            entries: self.components.len(),
+        }
     }
 }
 

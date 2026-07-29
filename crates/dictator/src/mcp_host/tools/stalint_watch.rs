@@ -63,7 +63,8 @@ impl Tool for StalintWatchTool {
                 }));
             });
 
-            ctx.logger.info("Watch started. stalint_unwatch now available.");
+            ctx.logger
+                .info("Watch started. stalint_unwatch now available.");
 
             Ok(pretty_result_output(&result))
         })

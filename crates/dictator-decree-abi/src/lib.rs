@@ -66,9 +66,15 @@ impl DecreeMetadata {
         if parts.len() != 3 {
             return Err(format!("invalid version format: {version}"));
         }
-        let major = parts[0].parse().map_err(|_| format!("invalid major: {}", parts[0]))?;
-        let minor = parts[1].parse().map_err(|_| format!("invalid minor: {}", parts[1]))?;
-        let patch = parts[2].parse().map_err(|_| format!("invalid patch: {}", parts[2]))?;
+        let major = parts[0]
+            .parse()
+            .map_err(|_| format!("invalid major: {}", parts[0]))?;
+        let minor = parts[1]
+            .parse()
+            .map_err(|_| format!("invalid minor: {}", parts[1]))?;
+        let patch = parts[2]
+            .parse()
+            .map_err(|_| format!("invalid patch: {}", parts[2]))?;
         Ok((major, minor, patch))
     }
 

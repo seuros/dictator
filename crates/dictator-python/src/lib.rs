@@ -20,7 +20,10 @@ pub struct PythonConfig {
 
 impl Default for PythonConfig {
     fn default() -> Self {
-        Self { max_lines: file_length::DEFAULT_MAX_LINES, ignore_comments: false }
+        Self {
+            max_lines: file_length::DEFAULT_MAX_LINES,
+            ignore_comments: false,
+        }
     }
 }
 
@@ -255,7 +258,9 @@ def test():
 ";
         let diags = lint_source(src);
         assert!(
-            diags.iter().any(|d| d.rule == "python/inconsistent-indentation"),
+            diags
+                .iter()
+                .any(|d| d.rule == "python/inconsistent-indentation"),
             "Should detect inconsistent indentation depth (3 spaces instead of 2 or 4)"
         );
     }
@@ -321,8 +326,14 @@ def test():
     fn ignores_long_comment_lines_when_configured() {
         let long_comment = format!("# {}\n", "x".repeat(150));
         let src = format!("def foo():\n{long_comment}    pass\n");
-        let config = PythonConfig { ignore_comments: true, ..Default::default() };
-        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+        let config = PythonConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
         let python = Python::new(config, supreme);
         let diags = python.lint("test.py", &src);
         assert!(
@@ -336,7 +347,10 @@ def test():
         let long_comment = format!("# {}\n", "x".repeat(150));
         let src = format!("def foo():\n{long_comment}    pass\n");
         let config = PythonConfig::default(); // ignore_comments = false
-        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
         let python = Python::new(config, supreme);
         let diags = python.lint("test.py", &src);
         assert!(
@@ -349,8 +363,14 @@ def test():
     fn still_detects_long_code_lines_with_ignore_comments() {
         let long_code = format!("    x = \"{}\"\n", "a".repeat(150));
         let src = format!("def foo():\n{long_code}    pass\n");
-        let config = PythonConfig { ignore_comments: true, ..Default::default() };
-        let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+        let config = PythonConfig {
+            ignore_comments: true,
+            ..Default::default()
+        };
+        let supreme = SupremeConfig {
+            max_line_length: Some(120),
+            ..Default::default()
+        };
         let python = Python::new(config, supreme);
         let diags = python.lint("test.py", &src);
         assert!(

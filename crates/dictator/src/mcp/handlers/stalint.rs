@@ -28,7 +28,9 @@ pub fn handle_stalint(
         cursor: Option<String>,
     }
 
-    let args: Args = arguments.and_then(|a| serde_json::from_value(a).ok()).unwrap_or_default();
+    let args: Args = arguments
+        .and_then(|a| serde_json::from_value(a).ok())
+        .unwrap_or_default();
 
     // Determine paths: use provided paths, or fall back to stored paths for pagination
     let paths = if !args.paths.is_empty() {
@@ -74,11 +76,19 @@ pub fn handle_stalint(
         .iter()
         .map(|p| {
             let path = std::path::Path::new(p);
-            if path.is_absolute() { path.to_path_buf() } else { cwd.join(path) }
+            if path.is_absolute() {
+                path.to_path_buf()
+            } else {
+                cwd.join(path)
+            }
         })
         .collect();
 
-    log_to_file(&format!("STALINT: cwd={}, paths={:?}", cwd.display(), resolved_paths));
+    log_to_file(&format!(
+        "STALINT: cwd={}, paths={:?}",
+        cwd.display(),
+        resolved_paths
+    ));
 
     let regime = init_regime_from_config();
 
@@ -88,8 +98,11 @@ pub fn handle_stalint(
     let single_file = resolved_paths.len() == 1 && resolved_paths[0].is_file();
 
     // Collect all files first for progress tracking
-    let all_files: Vec<std::path::PathBuf> =
-        resolved_paths.iter().filter(|p| p.exists()).flat_map(|p| collect_files(p)).collect();
+    let all_files: Vec<std::path::PathBuf> = resolved_paths
+        .iter()
+        .filter(|p| p.exists())
+        .flat_map(|p| collect_files(p))
+        .collect();
 
     // Start progress tracking
     let progress_token = {
@@ -113,7 +126,10 @@ pub fn handle_stalint(
         // Use relative path if within cwd (saves tokens)
         let relative = file.strip_prefix(&cwd).unwrap_or(file);
         let path_str = relative.to_str().unwrap_or("<invalid>");
-        let source = Source { path: Utf8Path::new(path_str), text: &text };
+        let source = Source {
+            path: Utf8Path::new(path_str),
+            text: &text,
+        };
 
         if let Ok(diags) = regime.enforce(&[source]) {
             for diag in &diags {
@@ -150,7 +166,11 @@ pub fn handle_stalint(
     }
 
     let total = all_violations.len();
-    let page: Vec<_> = all_violations.into_iter().skip(offset).take(limit).collect();
+    let page: Vec<_> = all_violations
+        .into_iter()
+        .skip(offset)
+        .take(limit)
+        .collect();
     let next_offset = offset + page.len();
 
     let next_cursor = if next_offset < total {
@@ -172,7 +192,12 @@ pub fn handle_stalint(
         result["structuredContent"]["nextCursor"] = serde_json::json!(cursor);
     }
 
-    JsonRpcResponse { jsonrpc: "2.0".into(), id: Some(id), result: Some(result), error: None }
+    JsonRpcResponse {
+        jsonrpc: "2.0".into(),
+        id: Some(id),
+        result: Some(result),
+        error: None,
+    }
 }
 
 #[cfg(test)]

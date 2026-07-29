@@ -117,16 +117,22 @@ impl ServerState {
         self.config = load_config();
 
         if let Some(ref cfg) = self.config {
-            log_to_file(&format!("Reloaded config with {} decrees", cfg.decree.len()));
+            log_to_file(&format!(
+                "Reloaded config with {} decrees",
+                cfg.decree.len()
+            ));
         } else {
             log_to_file("Config removed or invalid");
         }
 
         // Check if linter availability changed (affects tool list)
-        let old_has_linter =
-            old_config.as_ref().is_some_and(|c| c.decree.values().any(|d| d.linter.is_some()));
-        let new_has_linter =
-            self.config.as_ref().is_some_and(|c| c.decree.values().any(|d| d.linter.is_some()));
+        let old_has_linter = old_config
+            .as_ref()
+            .is_some_and(|c| c.decree.values().any(|d| d.linter.is_some()));
+        let new_has_linter = self
+            .config
+            .as_ref()
+            .is_some_and(|c| c.decree.values().any(|d| d.linter.is_some()));
 
         if old_has_linter != new_has_linter {
             log_to_file(&format!(

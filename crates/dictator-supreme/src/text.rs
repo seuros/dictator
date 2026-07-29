@@ -162,5 +162,7 @@ pub fn check_indentation_consistency(source: &str, rule_prefix: &str, diags: &mu
 }
 
 fn count_leading_whitespace(line: &str) -> usize {
-    line.chars().take_while(|c| c.is_whitespace() && *c != '\n' && *c != '\r').count()
+    line.chars()
+        .take_while(|c| c.is_whitespace() && *c != '\n' && *c != '\r')
+        .count()
 }

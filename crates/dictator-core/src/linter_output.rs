@@ -105,8 +105,10 @@ fn parse_ruff(json: &str) -> Result<Vec<Diagnostic>, serde_json::Error> {
 
     for diag in output {
         // Ruff fix applicability: "safe", "unsafe", or "display-only"
-        let enforced =
-            diag.fix.as_ref().is_some_and(|f| f.applicability.as_deref() == Some("safe"));
+        let enforced = diag
+            .fix
+            .as_ref()
+            .is_some_and(|f| f.applicability.as_deref() == Some("safe"));
 
         diagnostics.push(Diagnostic {
             rule: format!("ruff/{}", diag.code),
@@ -154,9 +156,10 @@ fn parse_eslint(json: &str) -> Result<Vec<Diagnostic>, serde_json::Error> {
 
     for file in output {
         for msg in file.messages {
-            let rule = msg
-                .rule_id
-                .map_or_else(|| "eslint/parse-error".to_string(), |r| format!("eslint/{r}"));
+            let rule = msg.rule_id.map_or_else(
+                || "eslint/parse-error".to_string(),
+                |r| format!("eslint/{r}"),
+            );
 
             diagnostics.push(Diagnostic {
                 rule,
@@ -248,11 +251,16 @@ fn parse_biome(json: &str) -> Result<Vec<Diagnostic>, serde_json::Error> {
             .map_or_else(String::new, |(start, _)| format!(":{start}"));
 
         // Use description or extract from message
-        let message_text =
-            diag.description.or_else(|| diag.message.and_then(|m| m.content)).unwrap_or_default();
+        let message_text = diag
+            .description
+            .or_else(|| diag.message.and_then(|m| m.content))
+            .unwrap_or_default();
 
         // Check if "fixable" tag is present
-        let enforced = diag.tags.as_ref().is_some_and(|tags| tags.iter().any(|t| t == "fixable"));
+        let enforced = diag
+            .tags
+            .as_ref()
+            .is_some_and(|tags| tags.iter().any(|t| t == "fixable"));
 
         diagnostics.push(Diagnostic {
             rule,
@@ -314,9 +322,10 @@ fn parse_clippy(json: &str) -> Vec<Diagnostic> {
             && msg.reason.as_deref() == Some("compiler-message")
             && let Some(diag) = msg.message
         {
-            let rule = diag
-                .code
-                .map_or_else(|| "clippy/unknown".to_string(), |c| format!("clippy/{}", c.code));
+            let rule = diag.code.map_or_else(
+                || "clippy/unknown".to_string(),
+                |c| format!("clippy/{}", c.code),
+            );
 
             // Get primary span for location
             let location = diag

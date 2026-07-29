@@ -21,8 +21,11 @@ pub fn run_once(
     profile: Option<String>,
 ) -> Result<()> {
     let cfg = load_config(config_path.as_ref())?;
-    let format =
-        if args.json { OutputFormat::Json } else { cfg.format.unwrap_or(OutputFormat::Human) };
+    let format = if args.json {
+        OutputFormat::Json
+    } else {
+        cfg.format.unwrap_or(OutputFormat::Human)
+    };
 
     let files = collect_all_files(&args.paths)?;
     if files.is_empty() {
@@ -73,7 +76,10 @@ pub fn run_once(
             return Ok(());
         };
         let path_ref = path.as_path();
-        let source = Source { path: path_ref, text: &text };
+        let source = Source {
+            path: path_ref,
+            text: &text,
+        };
         let diags = regime.enforce(&[source])?;
 
         if !diags.is_empty() {

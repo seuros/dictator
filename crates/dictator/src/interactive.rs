@@ -40,7 +40,11 @@ impl InteractiveFixer {
 
 impl InteractiveFixer {
     pub const fn new() -> Self {
-        Self { violations: Vec::new(), current_index: 0, auto_apply_all: false }
+        Self {
+            violations: Vec::new(),
+            current_index: 0,
+            auto_apply_all: false,
+        }
     }
 
     /// Collect all fixable violations from files
@@ -69,7 +73,10 @@ impl InteractiveFixer {
             let Some(text) = crate::files::read_source_file(path.as_std_path()) else {
                 continue;
             };
-            let source = dictator_core::Source { path: path.as_path(), text: &text };
+            let source = dictator_core::Source {
+                path: path.as_path(),
+                text: &text,
+            };
 
             let diags = regime.enforce(&[source])?;
 
@@ -104,12 +111,14 @@ impl InteractiveFixer {
 
         // Apply the fix based on the rule
         let (fixed_line, description): (String, &str) = match diag.rule.as_str() {
-            rule if rule.contains("trailing-whitespace") => {
-                (original_line.trim_end().to_string(), "Remove trailing whitespace")
-            }
-            rule if rule.contains("tab-character") => {
-                (original_line.replace('\t', "  "), "Replace tabs with spaces")
-            }
+            rule if rule.contains("trailing-whitespace") => (
+                original_line.trim_end().to_string(),
+                "Remove trailing whitespace",
+            ),
+            rule if rule.contains("tab-character") => (
+                original_line.replace('\t', "  "),
+                "Replace tabs with spaces",
+            ),
             rule if rule.contains("missing-final-newline") => {
                 // This is a file-level fix, not line-level
                 return Some(FixableViolation {
@@ -215,14 +224,25 @@ impl InteractiveFixer {
 
     /// Show current violation to user
     fn show_violation(violation: &FixableViolation) {
-        println!("📍 {}:{}:{}", violation.path, violation.line, violation.column);
+        println!(
+            "📍 {}:{}:{}",
+            violation.path, violation.line, violation.column
+        );
         println!("   Rule: {}", violation.rule);
         println!("   Issue: {}", violation.message);
         println!("   Fix: {}", violation.description);
 
         // Show a diff of the change
-        let original_line = violation.original_text.lines().nth(violation.line - 1).unwrap_or("");
-        let fixed_line = violation.fixed_text.lines().nth(violation.line - 1).unwrap_or("");
+        let original_line = violation
+            .original_text
+            .lines()
+            .nth(violation.line - 1)
+            .unwrap_or("");
+        let fixed_line = violation
+            .fixed_text
+            .lines()
+            .nth(violation.line - 1)
+            .unwrap_or("");
 
         if original_line != fixed_line {
             println!("   --- {} ---", violation.path);
@@ -269,7 +289,12 @@ impl InteractiveFixer {
         let end_line = (violation.line + context_lines).min(lines.len());
 
         println!("      Context:");
-        for (i, line) in lines.iter().enumerate().skip(start_line).take(end_line - start_line) {
+        for (i, line) in lines
+            .iter()
+            .enumerate()
+            .skip(start_line)
+            .take(end_line - start_line)
+        {
             let marker = if i + 1 == violation.line { ">>" } else { "  " };
             println!("      {} {:4} | {}", marker, i + 1, line);
         }

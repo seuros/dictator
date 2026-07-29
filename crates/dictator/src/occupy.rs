@@ -27,16 +27,24 @@ pub fn run_occupy(args: OccupyArgs) -> Result<()> {
         let cwd = Utf8PathBuf::from_path_buf(cwd).map_err(|_| anyhow::anyhow!("non-utf8 path"))?;
 
         // Avoid double-dot when path is "."
-        if args.path.as_str() == "." { cwd } else { cwd.join(&args.path) }
+        if args.path.as_str() == "." {
+            cwd
+        } else {
+            cwd.join(&args.path)
+        }
     };
 
     // Ensure target directory exists
     if !target_dir.exists() {
-        return Err(anyhow::anyhow!("Target directory does not exist: {target_dir}"));
+        return Err(anyhow::anyhow!(
+            "Target directory does not exist: {target_dir}"
+        ));
     }
 
     if !target_dir.is_dir() {
-        return Err(anyhow::anyhow!("Target path is not a directory: {target_dir}"));
+        return Err(anyhow::anyhow!(
+            "Target path is not a directory: {target_dir}"
+        ));
     }
 
     let config_path = target_dir.join(".dictate.toml");
@@ -92,14 +100,21 @@ mod tests {
     fn test_default_config_is_valid_toml() {
         // Ensure the default config parses as valid TOML
         let parsed: Result<toml::Value, _> = toml::from_str(DEFAULT_CONFIG);
-        assert!(parsed.is_ok(), "Default config must be valid TOML: {:?}", parsed.err());
+        assert!(
+            parsed.is_ok(),
+            "Default config must be valid TOML: {:?}",
+            parsed.err()
+        );
     }
 
     #[test]
     fn test_default_config_has_supreme_decree() {
         let config: toml::Value = toml::from_str(DEFAULT_CONFIG).unwrap();
         assert!(
-            config.get("decree").and_then(|d| d.get("supreme")).is_some(),
+            config
+                .get("decree")
+                .and_then(|d| d.get("supreme"))
+                .is_some(),
             "Default config must include decree.supreme"
         );
     }

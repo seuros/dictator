@@ -91,7 +91,10 @@ pub fn run_census(
             cfg.decree
                 .iter()
                 .filter_map(|(decree_name, settings)| {
-                    settings.linter.as_ref().map(|l| (decree_name.as_str(), l.command.as_str()))
+                    settings
+                        .linter
+                        .as_ref()
+                        .map(|l| (decree_name.as_str(), l.command.as_str()))
                 })
                 .collect::<Vec<_>>()
         })
@@ -138,13 +141,19 @@ fn print_settings(settings: Option<&DecreeSettings>) {
 
     push_opt!("enabled", settings.enabled);
     push_opt!("path", settings.path.as_deref());
-    push_opt!("trailing_whitespace", settings.trailing_whitespace.as_deref());
+    push_opt!(
+        "trailing_whitespace",
+        settings.trailing_whitespace.as_deref()
+    );
     push_opt!("tabs_vs_spaces", settings.tabs_vs_spaces.as_deref());
     push_opt!("tab_width", settings.tab_width);
     push_opt!("final_newline", settings.final_newline.as_deref());
     push_opt!("line_endings", settings.line_endings.as_deref());
     push_opt!("max_line_length", settings.max_line_length);
-    push_opt!("blank_line_whitespace", settings.blank_line_whitespace.as_deref());
+    push_opt!(
+        "blank_line_whitespace",
+        settings.blank_line_whitespace.as_deref()
+    );
     push_opt!("max_lines", settings.max_lines);
     push_opt!("ignore_comments", settings.ignore_comments);
     push_opt!("ignore_blank_lines", settings.ignore_blank_lines);

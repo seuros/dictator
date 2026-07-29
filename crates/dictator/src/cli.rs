@@ -15,7 +15,12 @@ pub enum OutputFormat {
 }
 
 #[derive(Debug, Parser)]
-#[command(name = "dictator", version, about = "Multi-regime linter", disable_version_flag = true)]
+#[command(
+    name = "dictator",
+    version,
+    about = "Multi-regime linter",
+    disable_version_flag = true
+)]
 #[allow(clippy::manual_non_exhaustive)] // version field is for clap -v/--version
 pub struct Args {
     /// Optional config file (TOML only). Default: .dictate.toml if present.
