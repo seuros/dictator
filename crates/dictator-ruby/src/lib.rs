@@ -266,7 +266,8 @@ mod tests {
 
     #[test]
     fn config_from_decree_settings_honors_comment_spacing() {
-        let settings = dictator_core::DecreeSettings { comment_spacing: Some(false), ..Default::default() };
+        let settings =
+            dictator_core::DecreeSettings { comment_spacing: Some(false), ..Default::default() };
         let config = config_from_decree_settings(&settings);
         assert!(!config.comment_spacing);
     }

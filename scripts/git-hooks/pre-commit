@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Mirrors the CI "Lint" job (cargo fmt --check + clippy) so drift is caught
+# before it's pushed, not after. Installed via scripts/setup-hooks.sh.
+#
+# Skip in a pinch with: SKIP_HOOKS=1 git commit ...
+set -euo pipefail
+
+if [ "${SKIP_HOOKS:-0}" = "1" ]; then
+  echo "pre-commit: SKIP_HOOKS=1, skipping checks."
+  exit 0
+fi
+
+echo "pre-commit: cargo fmt --check"
+if ! cargo fmt --all -- --check; then
+  echo "pre-commit: formatting is off. Run 'cargo fmt --all' and re-stage." >&2
+  exit 1
+fi
+
+echo "pre-commit: cargo clippy"
+if ! cargo clippy --workspace --all-targets -- -D warnings; then
+  echo "pre-commit: clippy found issues. Fix them or SKIP_HOOKS=1 to bypass." >&2
+  exit 1
+fi
