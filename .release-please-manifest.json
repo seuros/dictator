@@ -1,12 +1,12 @@
 {
-  "crates/dictator": "0.20.0",
-  "crates/dictator-core": "0.20.0",
-  "crates/dictator-decree-abi": "0.20.0",
-  "crates/dictator-supreme": "0.20.0",
-  "crates/dictator-ruby": "0.20.0",
-  "crates/dictator-typescript": "0.20.0",
-  "crates/dictator-golang": "0.20.0",
-  "crates/dictator-rust": "0.20.0",
-  "crates/dictator-python": "0.20.0",
-  "crates/dictator-frontmatter": "0.20.0"
+  "crates/dictator": "0.21.0",
+  "crates/dictator-core": "0.21.0",
+  "crates/dictator-decree-abi": "0.21.0",
+  "crates/dictator-supreme": "0.21.0",
+  "crates/dictator-ruby": "0.21.0",
+  "crates/dictator-typescript": "0.21.0",
+  "crates/dictator-golang": "0.21.0",
+  "crates/dictator-rust": "0.21.0",
+  "crates/dictator-python": "0.21.0",
+  "crates/dictator-frontmatter": "0.21.0"
 }

@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.21.0](https://github.com/seuros/dictator/compare/dictator-ruby-v0.20.0...dictator-ruby-v0.21.0) (2026-07-29)
+
+
+### Bug Fixes
+
+* appease the formatter overlords, decree a pre-commit tribunal ([e350704](https://github.com/seuros/dictator/commit/e3507040d3adda35e032fbbaece8ad7ca90a4fc7))
+* wire up dead comment_spacing config in ruby decree ([4d51464](https://github.com/seuros/dictator/commit/4d514649b657a6b93109226a124bd029cf7956bc))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.20.0 to 0.21.0
+    * dictator-core bumped from 0.20.0 to 0.21.0
+    * dictator-supreme bumped from 0.20.0 to 0.21.0
+
 ## [0.20.0](https://github.com/seuros/dictator/compare/dictator-ruby-v0.19.0...dictator-ruby-v0.20.0) (2026-07-15)
 
 
