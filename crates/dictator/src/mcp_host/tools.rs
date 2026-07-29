@@ -17,23 +17,29 @@ use tokio::sync::mpsc;
 
 use crate::mcp::handlers::{handle_dictator, handle_stalint};
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::to_json_string_pretty;
+use crate::mcp::utils::{git_uncommitted_files, to_json_string_pretty};
 use crate::mcp_host::config_exists;
 
-/// Resolve workspace paths from client roots or fall back to CWD.
+/// Resolve the lint/fix scope from client roots or CWD, narrowed to uncommitted files
+/// wherever the resolved directory sits inside a git repo.
 ///
 /// - Client advertises roots capability → request roots list
 ///   - Non-empty → use root URIs converted to filesystem paths
 ///   - Empty → return `None` (caller should hide tools and bail out)
 /// - Client has no roots capability → use CWD
+/// - Each resolved directory that's inside a git repo is replaced by its uncommitted
+///   (staged/unstaged/untracked) file list; directories outside a repo are kept as-is,
+///   preserving the old whole-tree behavior there.
+/// - Returns `Some(vec![])` when every resolved directory is a clean git repo — callers
+///   must treat that as "nothing to do", not as "no scope, so scan everything".
 async fn resolve_paths(ctx: &Ctx<'_>) -> Option<Vec<String>> {
-    if ctx.supports_roots() {
+    let dirs = if ctx.supports_roots() {
         let requester = ctx.client_requester()?;
         let roots = requester.request_roots(None).await.ok()?;
         if roots.is_empty() {
             return None;
         }
-        let paths = roots
+        roots
             .iter()
             .map(|r| {
                 // Strip file:// or file:/// prefix; leave other URIs as-is
@@ -43,13 +49,26 @@ async fn resolve_paths(ctx: &Ctx<'_>) -> Option<Vec<String>> {
                     r.uri.clone()
                 }
             })
-            .collect();
-        Some(paths)
+            .collect()
     } else {
         // Fall back to current working directory
         let cwd = std::env::current_dir().ok()?.to_string_lossy().to_string();
-        Some(vec![cwd])
+        vec![cwd]
+    };
+
+    let mut scoped = Vec::new();
+    let mut any_git = false;
+    for dir in &dirs {
+        match git_uncommitted_files(std::path::Path::new(dir)) {
+            Some(files) => {
+                any_git = true;
+                scoped.extend(files.into_iter().map(|p| p.to_string_lossy().into_owned()));
+            }
+            None => scoped.push(dir.clone()),
+        }
     }
+
+    Some(if any_git { scoped } else { dirs })
 }
 
 pub(super) fn spawn_notification_forwarder(
@@ -117,6 +136,10 @@ impl DictatorTools {
             }
         };
 
+        if paths.is_empty() {
+            return Ok(ToolOutput::text("Working tree is clean — no uncommitted files to lint."));
+        }
+
         let args = Some(serde_json::json!({ "paths": paths }));
         let response = handle_stalint(Value::Null, args, Arc::clone(&self.state));
         let result = extract_tool_result(response, "stalint")?;
@@ -138,11 +161,30 @@ impl DictatorTools {
             ));
         }
 
+        let paths = match resolve_paths(&ctx).await {
+            Some(p) => p,
+            None => {
+                // Client supports roots but returned empty — hide both tools
+                ctx.session.batch(|batch| {
+                    batch.hide_tool("stalint");
+                    batch.hide_tool("dictator");
+                });
+                return Ok(ToolOutput::text(
+                    "No workspace roots configured. Tools hidden until roots are available.",
+                ));
+            }
+        };
+
+        if paths.is_empty() {
+            return Ok(ToolOutput::text("Working tree is clean — nothing to fix."));
+        }
+
         if let Some(requester) = ctx.client_requester()
             && requester.supports_elicitation()
         {
             let lint_summary = {
-                let response = handle_stalint(Value::Null, None, Arc::clone(&self.state));
+                let args = Some(serde_json::json!({ "paths": paths }));
+                let response = handle_stalint(Value::Null, args, Arc::clone(&self.state));
                 response
                     .result
                     .and_then(|r| serde_json::to_string_pretty(&r).ok())
@@ -177,20 +219,6 @@ impl DictatorTools {
                 return Err(ToolError::Execution("Operation cancelled by user".to_string()));
             }
         }
-
-        let paths = match resolve_paths(&ctx).await {
-            Some(p) => p,
-            None => {
-                // Client supports roots but returned empty — hide both tools
-                ctx.session.batch(|batch| {
-                    batch.hide_tool("stalint");
-                    batch.hide_tool("dictator");
-                });
-                return Ok(ToolOutput::text(
-                    "No workspace roots configured. Tools hidden until roots are available.",
-                ));
-            }
-        };
 
         let args = Some(serde_json::json!({ "paths": paths }));
         let response = handle_dictator(Value::Null, args, Arc::clone(&self.state));
