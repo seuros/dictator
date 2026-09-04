@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.22.0](https://github.com/seuros/dictator/compare/dictator-v0.21.0...dictator-v0.22.0) (2026-09-04)
+
+
+### Features
+
+* decree classified materials exempt from inspection, snippets, and re-education ([629d114](https://github.com/seuros/dictator/commit/629d1147d05d9f661ea4dabad25f846336e741ae))
+* staged secrets trigger the paranoid mood, espionage will be broadcast ([c113e5b](https://github.com/seuros/dictator/commit/c113e5b9ade266e8d0590c2441ed7cec7fec439b))
+* subscribers now hear when uncommitted code defies the decrees, staged-only interrogations available ([f776e90](https://github.com/seuros/dictator/commit/f776e90257c35db36263b19c90ca1d2971606cf4))
+* the Dictator abolishes clap, usage-rs 6 now parses the party line ([fcfc5ef](https://github.com/seuros/dictator/commit/fcfc5ef2eec4adcb7a15e8680e41e53158fb37b9))
+* the Dictator now broadcasts his mood, subscribe or be surprised ([930008e](https://github.com/seuros/dictator/commit/930008e24d6a7b562d22ef71f480a784737fbeaf))
+
+
+### Bug Fixes
+
+* snippets no longer detonate on multibyte propaganda ([49ad14d](https://github.com/seuros/dictator/commit/49ad14d0e3c991cce25dc826bca3d417915a12a3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.21.0 to 0.22.0
+    * dictator-frontmatter bumped from 0.21.0 to 0.22.0
+    * dictator-golang bumped from 0.21.0 to 0.22.0
+    * dictator-decree-abi bumped from 0.21.0 to 0.22.0
+    * dictator-python bumped from 0.21.0 to 0.22.0
+    * dictator-ruby bumped from 0.21.0 to 0.22.0
+    * dictator-rust bumped from 0.21.0 to 0.22.0
+    * dictator-supreme bumped from 0.21.0 to 0.22.0
+    * dictator-typescript bumped from 0.21.0 to 0.22.0
+
 ## [0.21.0](https://github.com/seuros/dictator/compare/dictator-v0.20.0...dictator-v0.21.0) (2026-07-29)
 
 
