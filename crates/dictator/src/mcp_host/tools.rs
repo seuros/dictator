@@ -152,9 +152,30 @@ impl DictatorTools {
             )));
         }
 
+        if params.0.staged {
+            let espionage = paths.iter().any(|p| {
+                dictator_core::classified::is_classified(camino::Utf8Path::new(p.as_str()))
+            });
+            self.state.lock().unwrap().record_classified_staged(espionage);
+        }
+
         let args = Some(serde_json::json!({ "paths": paths }));
         let response = handle_stalint(Value::Null, args, Arc::clone(&self.state));
-        let result = extract_tool_result(response, "stalint")?;
+        let mut result = extract_tool_result(response, "stalint")?;
+
+        // Staged classified files are a commit-in-progress leak: escalate
+        if params.0.staged
+            && let Some(violations) =
+                result.pointer_mut("/structuredContent/violations").and_then(Value::as_array_mut)
+        {
+            for violation in violations {
+                if violation["rule"] == dictator_core::classified::CLASSIFIED_RULE {
+                    violation["message"] = Value::String(
+                        "classified material staged for commit — unstage immediately".to_string(),
+                    );
+                }
+            }
+        }
         Ok(pretty_result_output(&result))
     }
 

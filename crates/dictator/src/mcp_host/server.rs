@@ -159,6 +159,16 @@ fn start_watcher_check_loop(
             if let Ok(cwd) = std::env::current_dir()
                 && let Some(files) = git_changed_files(&cwd, GitScope::Uncommitted)
             {
+                // Staged classified material triggers the paranoid mood
+                let espionage = git_changed_files(&cwd, GitScope::Staged).is_some_and(|staged| {
+                    staged.iter().any(|p| {
+                        dictator_core::classified::is_classified(camino::Utf8Path::new(
+                            &p.to_string_lossy(),
+                        ))
+                    })
+                });
+                state.lock().unwrap().record_classified_staged(espionage);
+
                 let fingerprint = files_fingerprint(&files);
                 let stale = { state.lock().unwrap().uncommitted_fingerprint != Some(fingerprint) };
                 if stale {

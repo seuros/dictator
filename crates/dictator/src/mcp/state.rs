@@ -88,6 +88,8 @@ pub struct ServerState {
     pub uncommitted_fingerprint: Option<u64>,
     // Drained by the watcher loop into dictator://uncommitted updates
     pub uncommitted_dirty: bool,
+    // Classified file currently staged for commit
+    pub classified_staged: bool,
 }
 
 /// The Dictator's disposition, derived from the last lint result
@@ -99,6 +101,8 @@ pub enum Mood {
     Displeased,
     /// Ten or more violations: open rebellion
     Wrathful,
+    /// Classified material staged for commit: espionage suspected
+    Paranoid,
 }
 
 impl Mood {
@@ -117,6 +121,7 @@ impl Mood {
             Self::Magnanimous => "magnanimous",
             Self::Displeased => "displeased",
             Self::Wrathful => "wrathful",
+            Self::Paranoid => "paranoid",
         }
     }
 
@@ -128,6 +133,10 @@ impl Mood {
             }
             Self::Displeased => "Violations detected. The Dictator's patience wears thin.",
             Self::Wrathful => "The codebase is in open rebellion. Re-education is imminent.",
+            Self::Paranoid => {
+                "Espionage! Classified material is staged for commit. \
+                 Unstage it before the tribunal convenes."
+            }
         }
     }
 }
@@ -164,7 +173,16 @@ impl ServerState {
             uncommitted_check: None,
             uncommitted_fingerprint: None,
             uncommitted_dirty: false,
+            classified_staged: false,
         }
+    }
+
+    /// Record whether classified material is staged; flags `mood_dirty` on change
+    pub fn record_classified_staged(&mut self, staged: bool) {
+        if self.classified_staged != staged {
+            self.mood_dirty = true;
+        }
+        self.classified_staged = staged;
     }
 
     /// Record an uncommitted check; flags `uncommitted_dirty` on change, syncs mood
@@ -187,9 +205,13 @@ impl ServerState {
         }
     }
 
-    /// Current mood derived from the last lint result
+    /// Current mood; staged classified material overrides everything
     pub fn mood(&self) -> Mood {
-        Mood::from_violations(self.last_violation_total)
+        if self.classified_staged {
+            Mood::Paranoid
+        } else {
+            Mood::from_violations(self.last_violation_total)
+        }
     }
 
     /// Reload configuration from disk
@@ -227,5 +249,28 @@ impl ServerState {
             log_to_file(&format!("Loaded config with {} decrees", cfg.decree.len()));
         }
         self.config = config;
+    }
+}
+
+#[cfg(test)]
+mod mood_tests {
+    use super::{Mood, ServerState};
+
+    #[test]
+    fn staged_secrets_trump_violation_counts() {
+        let mut state = ServerState::default();
+        assert_eq!(state.mood(), Mood::Magnanimous);
+
+        state.record_classified_staged(true);
+        assert_eq!(state.mood(), Mood::Paranoid);
+        assert!(state.mood_dirty, "mood change must notify subscribers");
+
+        state.mood_dirty = false;
+        state.record_classified_staged(true);
+        assert!(!state.mood_dirty, "unchanged state must not re-notify");
+
+        state.record_classified_staged(false);
+        assert_eq!(state.mood(), Mood::Magnanimous);
+        assert!(state.mood_dirty);
     }
 }
