@@ -15,16 +15,8 @@ pub const CENSUS_URI: &str = "dictator://census";
 /// Native decrees that are always available
 const NATIVE_DECREES: &[(&str, &[&str], &[&str])] = &[
     ("supreme", &["*"], &[]),
-    (
-        "ruby",
-        &["rb", "rake"],
-        &["Gemfile", "Rakefile", ".rubocop.yml"],
-    ),
-    (
-        "typescript",
-        &["ts", "tsx", "js", "jsx", "mjs", "cjs"],
-        &["package.json", "tsconfig.json"],
-    ),
+    ("ruby", &["rb", "rake"], &["Gemfile", "Rakefile", ".rubocop.yml"]),
+    ("typescript", &["ts", "tsx", "js", "jsx", "mjs", "cjs"], &["package.json", "tsconfig.json"]),
     ("python", &["py"], &["pyproject.toml", "setup.py"]),
     ("golang", &["go"], &["go.mod", "go.work"]),
     ("rust", &["rs"], &["Cargo.toml", "build.rs"]),
@@ -67,12 +59,7 @@ pub fn handle_list_resources(id: Value, watcher_state: Arc<Mutex<ServerState>>) 
         ]
     });
 
-    JsonRpcResponse {
-        jsonrpc: "2.0".into(),
-        id: Some(id),
-        result: Some(resources),
-        error: None,
-    }
+    JsonRpcResponse { jsonrpc: "2.0".into(), id: Some(id), result: Some(resources), error: None }
 }
 
 /// Handle resources/read request
@@ -239,90 +226,52 @@ fn read_census_resource(id: Value, watcher_state: Arc<Mutex<ServerState>>) -> Js
 mod tests {
     use super::*;
 
+    fn state() -> Arc<Mutex<ServerState>> {
+        Arc::new(Mutex::new(ServerState::default()))
+    }
+
     #[test]
-    fn test_handle_list_resources() {
-        // Create state with config loaded
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        {
-            let mut s = state.lock().unwrap();
-            s.config = Some(super::super::state::DictateConfig::default());
-        }
+    fn list_resources_reflects_config_state() {
+        // Without a loaded config there is nothing to list.
+        let response = handle_list_resources(serde_json::json!(1), state());
+        assert!(response.error.is_none());
+        let result = response.result.unwrap();
+        assert_eq!(result["resources"].as_array().unwrap().len(), 0);
 
-        let response = handle_list_resources(serde_json::json!(1), state);
-
+        // With a config, both resources appear in order.
+        let loaded = state();
+        loaded.lock().unwrap().config = Some(super::super::state::DictateConfig::default());
+        let response = handle_list_resources(serde_json::json!(1), loaded);
         assert!(response.error.is_none());
         let result = response.result.unwrap();
         let resources = result["resources"].as_array().unwrap();
-
         assert_eq!(resources.len(), 2);
         assert_eq!(resources[0]["uri"], CONFIG_URI);
         assert_eq!(resources[1]["uri"], CENSUS_URI);
     }
 
     #[test]
-    fn test_handle_list_resources_no_config() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        let response = handle_list_resources(serde_json::json!(1), state);
+    fn read_resource_handles_valid_and_invalid_requests() {
+        // Missing params and missing uri are both invalid params.
+        for params in [None, Some(serde_json::json!({}))] {
+            let response = handle_read_resource(serde_json::json!(1), params, state());
+            assert_eq!(response.error.unwrap().code, -32602);
+        }
 
-        assert!(response.error.is_none());
-        let result = response.result.unwrap();
-        let resources = result["resources"].as_array().unwrap();
-
-        assert_eq!(resources.len(), 0);
-    }
-
-    #[test]
-    fn test_handle_read_resource_missing_params() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        let response = handle_read_resource(serde_json::json!(1), None, state);
-
-        assert!(response.error.is_some());
-        assert_eq!(response.error.unwrap().code, -32602);
-    }
-
-    #[test]
-    fn test_handle_read_resource_missing_uri() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        let params = Some(serde_json::json!({}));
-        let response = handle_read_resource(serde_json::json!(1), params, state);
-
-        assert!(response.error.is_some());
-        assert_eq!(response.error.unwrap().code, -32602);
-    }
-
-    #[test]
-    fn test_handle_read_resource_unknown_uri() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
+        // Unknown URI is resource-not-found.
         let params = Some(serde_json::json!({"uri": "dictator://unknown"}));
-        let response = handle_read_resource(serde_json::json!(1), params, state);
-
-        assert!(response.error.is_some());
+        let response = handle_read_resource(serde_json::json!(1), params, state());
         assert_eq!(response.error.unwrap().code, -32002);
-    }
 
-    #[test]
-    fn test_handle_read_config_resource() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        let params = Some(serde_json::json!({"uri": CONFIG_URI}));
-        let response = handle_read_resource(serde_json::json!(1), params, state);
-
-        assert!(response.error.is_none());
-        let result = response.result.unwrap();
-        let contents = result["contents"].as_array().unwrap();
-        assert_eq!(contents.len(), 1);
-        assert_eq!(contents[0]["uri"], CONFIG_URI);
-    }
-
-    #[test]
-    fn test_handle_read_census_resource() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        let params = Some(serde_json::json!({"uri": CENSUS_URI}));
-        let response = handle_read_resource(serde_json::json!(1), params, state);
-
-        assert!(response.error.is_none());
-        let result = response.result.unwrap();
-        let contents = result["contents"].as_array().unwrap();
-        assert_eq!(contents.len(), 1);
-        assert_eq!(contents[0]["uri"], CENSUS_URI);
+        // Both known URIs resolve to a single content entry echoing the URI.
+        for uri in [CONFIG_URI, CENSUS_URI] {
+            let params = Some(serde_json::json!({ "uri": uri }));
+            let response = handle_read_resource(serde_json::json!(1), params, state());
+            assert!(response.error.is_none(), "{uri} should read");
+            let result = response.result.unwrap();
+            let contents = result["contents"].as_array().unwrap();
+            assert_eq!(contents.len(), 1);
+            assert_eq!(contents[0]["uri"], uri);
+        }
     }
 }

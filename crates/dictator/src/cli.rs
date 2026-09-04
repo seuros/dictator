@@ -1,7 +1,6 @@
 //! CLI argument parsing and command definitions
 
 use camino::Utf8PathBuf;
-use clap::Parser;
 use serde::{Deserialize, Serialize};
 
 /// Default debounce interval in milliseconds for watch mode.
@@ -14,115 +13,106 @@ pub enum OutputFormat {
     Json,
 }
 
-#[derive(Debug, Parser)]
-#[command(
-    name = "dictator",
-    version,
-    about = "Multi-regime linter",
-    disable_version_flag = true
-)]
-#[allow(clippy::manual_non_exhaustive)] // version field is for clap -v/--version
+/// Multi-regime linter
+#[derive(Debug, usage::Cli)]
+#[usage(bin = "dictator", version, unknown_flags = "error", args_override_self = false)]
 pub struct Args {
     /// Optional config file (TOML only). Default: .dictate.toml if present.
-    #[arg(short, long, global = true)]
+    #[usage(short, long, global)]
     pub config: Option<Utf8PathBuf>,
 
     /// Configuration profile to use (e.g., strict, relaxed, ci)
-    #[arg(short = 'p', long, global = true)]
+    #[usage(short = 'p', long, global)]
     pub profile: Option<String>,
 
-    #[command(subcommand)]
+    #[usage(subcommand)]
     pub command: Command,
-
-    /// Print version
-    #[arg(short = 'v', long = "version", action = clap::ArgAction::Version)]
-    version: (),
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, usage::Subcommands)]
 pub enum Command {
     /// Lint files/directories once and exit
-    #[command(visible_alias = "stalint")]
+    #[usage(visible_alias = "stalint")]
     Lint(LintArgs),
     /// Fix structural issues (whitespace, newlines, line endings)
-    #[command(visible_alias = "kjr")]
+    #[usage(visible_alias = "kjr")]
     Dictate(DictateArgs),
     /// Watch paths for changes and lint on the fly
     Watch(WatchArgs),
     /// Show regime status: loaded decrees, config, external linters
     Census(CensusArgs),
     /// Initialize .dictate.toml with default configuration
-    #[command(visible_alias = "init")]
+    #[usage(visible_alias = "init")]
     Occupy(OccupyArgs),
     /// Run as MCP (Model Context Protocol) server
     Mcp,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, usage::Args)]
 pub struct CensusArgs {
     /// Show decree configuration values from .dictate.toml
-    #[arg(long)]
+    #[usage(long)]
     pub details: bool,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, usage::Args)]
 pub struct OccupyArgs {
     /// Target directory for .dictate.toml (defaults to current directory)
-    #[arg(default_value = ".")]
+    #[usage(default = ".")]
     pub path: Utf8PathBuf,
 
     /// Overwrite existing .dictate.toml if present
-    #[arg(short, long)]
+    #[usage(short, long)]
     pub force: bool,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, usage::Args)]
 pub struct LintArgs {
     /// Files or directories to lint.
-    #[arg(required = true)]
+    #[usage(required)]
     pub paths: Vec<Utf8PathBuf>,
 
     /// Auto-fix structural violations after linting
-    #[arg(short = 'f', long)]
+    #[usage(short = 'f', long)]
     pub fix: bool,
 
     /// Output JSON instead of human format
-    #[arg(long)]
+    #[usage(long)]
     pub json: bool,
 
     /// Load additional decrees (native .dylib/.so or .wasm when supported)
     #[cfg(feature = "wasm-loader")]
-    #[arg(long, value_name = "PATH", num_args = 0..)]
+    #[usage(long, value_name = "PATH", variadic)]
     pub plugin: Vec<Utf8PathBuf>,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, usage::Args)]
 pub struct DictateArgs {
     /// Files or directories to fix.
-    #[arg(required = true)]
+    #[usage(required)]
     pub paths: Vec<Utf8PathBuf>,
 
     /// Interactive mode - review each fix before applying
-    #[arg(short, long)]
+    #[usage(short, long)]
     pub interactive: bool,
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, usage::Args)]
 pub struct WatchArgs {
     /// Paths to watch (files or directories). Defaults to current dir if omitted.
-    #[arg(value_name = "PATH", default_value = ".")]
+    #[usage(value_name = "PATH", default = ".")]
     pub paths: Vec<Utf8PathBuf>,
 
     /// Debounce interval in milliseconds
-    #[arg(long, default_value_t = DEFAULT_DEBOUNCE_MS)]
+    #[usage(long, default_value_t = DEFAULT_DEBOUNCE_MS, default = "200")]
     pub debounce_ms: u64,
 
     /// Output JSON instead of human format
-    #[arg(long)]
+    #[usage(long)]
     pub json: bool,
 
     /// Load additional decrees (native .dylib/.so or .wasm when supported)
     #[cfg(feature = "wasm-loader")]
-    #[arg(long, value_name = "PATH", num_args = 0..)]
+    #[usage(long, value_name = "PATH", variadic)]
     pub plugin: Vec<Utf8PathBuf>,
 }

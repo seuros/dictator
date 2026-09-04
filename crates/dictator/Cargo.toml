@@ -16,7 +16,7 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-clap = { workspace = true }
+usage = { workspace = true }
 camino = { workspace = true }
 dictator-core = { version = "0.21.0", path = "../dictator-core" }
 dictator-frontmatter = { version = "0.21.0", path = "../dictator-frontmatter" }

@@ -117,11 +117,7 @@ pub fn classify_module(module_name: &str) -> ImportType {
     // Get the top-level package name
     let top_level = module_name.split('.').next().unwrap_or(module_name);
 
-    if is_python_stdlib(top_level) {
-        ImportType::Stdlib
-    } else {
-        ImportType::ThirdParty
-    }
+    if is_python_stdlib(top_level) { ImportType::Stdlib } else { ImportType::ThirdParty }
 }
 
 #[allow(clippy::too_many_lines)]

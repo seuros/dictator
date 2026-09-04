@@ -33,10 +33,7 @@ pub fn collect_source_files(path: &std::path::Path) -> Vec<std::path::PathBuf> {
         return files;
     }
 
-    let walker = WalkBuilder::new(path)
-        .standard_filters(true)
-        .require_git(false)
-        .build();
+    let walker = WalkBuilder::new(path).standard_filters(true).require_git(false).build();
 
     for entry in walker.flatten() {
         if entry.file_type().is_some_and(|ft| ft.is_file()) {

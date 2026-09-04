@@ -28,9 +28,7 @@ pub fn handle_stalint(
         cursor: Option<String>,
     }
 
-    let args: Args = arguments
-        .and_then(|a| serde_json::from_value(a).ok())
-        .unwrap_or_default();
+    let args: Args = arguments.and_then(|a| serde_json::from_value(a).ok()).unwrap_or_default();
 
     // Determine paths: use provided paths, or fall back to stored paths for pagination
     let paths = if !args.paths.is_empty() {
@@ -76,19 +74,11 @@ pub fn handle_stalint(
         .iter()
         .map(|p| {
             let path = std::path::Path::new(p);
-            if path.is_absolute() {
-                path.to_path_buf()
-            } else {
-                cwd.join(path)
-            }
+            if path.is_absolute() { path.to_path_buf() } else { cwd.join(path) }
         })
         .collect();
 
-    log_to_file(&format!(
-        "STALINT: cwd={}, paths={:?}",
-        cwd.display(),
-        resolved_paths
-    ));
+    log_to_file(&format!("STALINT: cwd={}, paths={:?}", cwd.display(), resolved_paths));
 
     let regime = init_regime_from_config();
 
@@ -98,11 +88,8 @@ pub fn handle_stalint(
     let single_file = resolved_paths.len() == 1 && resolved_paths[0].is_file();
 
     // Collect all files first for progress tracking
-    let all_files: Vec<std::path::PathBuf> = resolved_paths
-        .iter()
-        .filter(|p| p.exists())
-        .flat_map(|p| collect_files(p))
-        .collect();
+    let all_files: Vec<std::path::PathBuf> =
+        resolved_paths.iter().filter(|p| p.exists()).flat_map(|p| collect_files(p)).collect();
 
     // Start progress tracking
     let progress_token = {
@@ -126,10 +113,7 @@ pub fn handle_stalint(
         // Use relative path if within cwd (saves tokens)
         let relative = file.strip_prefix(&cwd).unwrap_or(file);
         let path_str = relative.to_str().unwrap_or("<invalid>");
-        let source = Source {
-            path: Utf8Path::new(path_str),
-            text: &text,
-        };
+        let source = Source { path: Utf8Path::new(path_str), text: &text };
 
         if let Ok(diags) = regime.enforce(&[source]) {
             for diag in &diags {
@@ -166,11 +150,7 @@ pub fn handle_stalint(
     }
 
     let total = all_violations.len();
-    let page: Vec<_> = all_violations
-        .into_iter()
-        .skip(offset)
-        .take(limit)
-        .collect();
+    let page: Vec<_> = all_violations.into_iter().skip(offset).take(limit).collect();
     let next_offset = offset + page.len();
 
     let next_cursor = if next_offset < total {
@@ -192,12 +172,7 @@ pub fn handle_stalint(
         result["structuredContent"]["nextCursor"] = serde_json::json!(cursor);
     }
 
-    JsonRpcResponse {
-        jsonrpc: "2.0".into(),
-        id: Some(id),
-        result: Some(result),
-        error: None,
-    }
+    JsonRpcResponse { jsonrpc: "2.0".into(), id: Some(id), result: Some(result), error: None }
 }
 
 #[cfg(test)]
@@ -206,82 +181,37 @@ mod tests {
     use crate::mcp::utils::base64_encode;
 
     #[test]
-    fn test_handle_stalint_missing_arguments_defaults_to_cwd() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        let id = serde_json::json!(1);
-        let response = handle_stalint(id, None, state);
+    fn stalint_handler_covers_defaults_paths_and_pagination() {
+        let state = || Arc::new(Mutex::new(ServerState::default()));
 
-        // Should succeed with cwd as default
+        // No arguments defaults to cwd and succeeds.
+        let response = handle_stalint(serde_json::json!(1), None, state());
         assert!(response.error.is_none());
-        let result = response.result.unwrap();
-        assert!(result["structuredContent"]["total"].is_number());
-    }
+        assert!(response.result.unwrap()["structuredContent"]["total"].is_number());
 
-    #[test]
-    fn test_handle_stalint_nonexistent_path() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        let id = serde_json::json!(1);
+        // Nonexistent path lints nothing, and a limit parses fine alongside it.
         let args = Some(serde_json::json!({
-            "paths": ["/nonexistent/path/that/does/not/exist"]
+            "paths": ["/nonexistent/path/that/does/not/exist"],
+            "limit": 5
         }));
-
-        let response = handle_stalint(id, args, state);
-
+        let response = handle_stalint(serde_json::json!(1), args, state());
         assert!(response.error.is_none());
         let result = response.result.unwrap();
         assert_eq!(result["structuredContent"]["total"], 0);
         assert_eq!(result["structuredContent"]["returned"], 0);
-    }
 
-    #[test]
-    fn test_handle_stalint_with_limit() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-        let id = serde_json::json!(1);
-        let args = Some(serde_json::json!({
-            "paths": ["/nonexistent"],
-            "limit": 5
-        }));
-
-        // Should parse limit without error even if no files found
-        let response = handle_stalint(id, args, state);
+        // Paths from a first call are stored and reused by a cursor-only follow-up.
+        let shared = state();
+        let args = Some(serde_json::json!({"paths": ["/nonexistent"]}));
+        let response = handle_stalint(serde_json::json!(1), args, Arc::clone(&shared));
         assert!(response.error.is_none());
-    }
-
-    #[test]
-    fn test_handle_stalint_pagination_with_stored_paths() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-
-        // First call with paths stores them
-        let id = serde_json::json!(1);
-        let args = Some(serde_json::json!({
-            "paths": ["/nonexistent"]
-        }));
-        let response = handle_stalint(id, args, Arc::clone(&state));
+        let args = Some(serde_json::json!({"cursor": base64_encode(b"0")}));
+        let response = handle_stalint(serde_json::json!(2), args, shared);
         assert!(response.error.is_none());
 
-        // Second call with cursor only should use stored paths
-        let id = serde_json::json!(2);
-        let cursor = base64_encode(b"0");
-        let args = Some(serde_json::json!({
-            "cursor": cursor
-        }));
-        let response = handle_stalint(id, args, state);
-        assert!(response.error.is_none());
-    }
-
-    #[test]
-    fn test_handle_stalint_cursor_without_stored_paths() {
-        let state = Arc::new(Mutex::new(ServerState::default()));
-
-        // Call with cursor but no paths stored should error
-        let id = serde_json::json!(1);
-        let cursor = base64_encode(b"10");
-        let args = Some(serde_json::json!({
-            "cursor": cursor
-        }));
-        let response = handle_stalint(id, args, state);
-
-        assert!(response.error.is_some());
+        // A cursor without stored paths is an invalid-params error.
+        let args = Some(serde_json::json!({"cursor": base64_encode(b"10")}));
+        let response = handle_stalint(serde_json::json!(1), args, state());
         let error = response.error.unwrap();
         assert_eq!(error.code, -32602);
         assert!(error.message.contains("no paths stored"));

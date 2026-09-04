@@ -17,11 +17,7 @@ pub struct SerializableDiagnostic {
 pub fn print_diagnostic(path: &str, source: &str, diag: &Diagnostic) {
     let (line, col) = byte_to_line_col(source, diag.span.start);
     let status = if diag.enforced { "🔧" } else { "❌" };
-    println!(
-        "{path}:{line}:{col}: {status} {rule}: {msg}",
-        rule = diag.rule,
-        msg = diag.message
-    );
+    println!("{path}:{line}:{col}: {status} {rule}: {msg}", rule = diag.rule, msg = diag.message);
 }
 
 pub fn byte_to_line_col(src: &str, byte_idx: usize) -> (usize, usize) {

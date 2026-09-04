@@ -106,25 +106,14 @@ pub fn lint_source_with_owner(source: &str, config: &SupremeConfig, owner: &str)
     let mut line_idx: usize = 0;
 
     for nl in memchr_iter(b'\n', bytes) {
-        check_line(
-            source, line_start, nl, true, line_idx, config, owner, &mut diags,
-        );
+        check_line(source, line_start, nl, true, line_idx, config, owner, &mut diags);
         line_start = nl + 1;
         line_idx += 1;
     }
 
     // Handle last line without newline
     if line_start < bytes.len() {
-        check_line(
-            source,
-            line_start,
-            bytes.len(),
-            false,
-            line_idx,
-            config,
-            owner,
-            &mut diags,
-        );
+        check_line(source, line_start, bytes.len(), false, line_idx, config, owner, &mut diags);
 
         // Missing final newline
         if config.final_newline {
@@ -163,12 +152,7 @@ fn detect_line_endings(bytes: &[u8]) -> LineEndingInfo {
     let lf_count = crlf_count + lf_only_count;
     let has_mixed = crlf_count > 0 && lf_only_count > 0;
 
-    LineEndingInfo {
-        crlf_count,
-        lf_only_count,
-        lf_count,
-        has_mixed,
-    }
+    LineEndingInfo { crlf_count, lf_only_count, lf_count, has_mixed }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -277,10 +261,7 @@ pub struct Supreme {
 impl Supreme {
     #[must_use]
     pub fn new(config: SupremeConfig) -> Self {
-        Self {
-            config,
-            language_overrides: HashMap::new(),
-        }
+        Self { config, language_overrides: HashMap::new() }
     }
 
     /// Create with language overrides
@@ -289,20 +270,14 @@ impl Supreme {
         config: SupremeConfig,
         overrides: HashMap<String, SupremeConfig>,
     ) -> Self {
-        Self {
-            config,
-            language_overrides: overrides,
-        }
+        Self { config, language_overrides: overrides }
     }
 
     /// Get effective config and rule owner for a file path
     /// Returns (config, owner) where owner is the language name if overridden, else "supreme"
     fn config_for_path(&self, path: &str) -> (SupremeConfig, &str) {
         // Extract extension from path
-        let ext = std::path::Path::new(path)
-            .extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("");
+        let ext = std::path::Path::new(path).extension().and_then(|e| e.to_str()).unwrap_or("");
 
         // Look up language override - "you touch it, you own it"
         if let Some(lang) = ext_to_language(ext)
@@ -366,10 +341,7 @@ pub fn init_decree_with_overrides(
 pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> SupremeConfig {
     SupremeConfig {
         max_line_length: settings.max_line_length,
-        trailing_whitespace: settings
-            .trailing_whitespace
-            .as_deref()
-            .is_none_or(|s| s == "deny"),
+        trailing_whitespace: settings.trailing_whitespace.as_deref().is_none_or(|s| s == "deny"),
         tabs_vs_spaces: settings.tabs_vs_spaces.as_deref().map_or(
             TabsOrSpaces::Spaces,
             |s| match s {
@@ -378,22 +350,16 @@ pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> 
                 _ => TabsOrSpaces::Either,
             },
         ),
-        final_newline: settings
-            .final_newline
-            .as_deref()
-            .is_none_or(|s| s == "require"),
+        final_newline: settings.final_newline.as_deref().is_none_or(|s| s == "require"),
         blank_line_whitespace: settings
             .blank_line_whitespace
             .as_deref()
             .is_none_or(|s| s == "deny"),
-        line_endings: settings
-            .line_endings
-            .as_deref()
-            .map_or(LineEnding::Lf, |s| match s {
-                "lf" => LineEnding::Lf,
-                "crlf" => LineEnding::Crlf,
-                _ => LineEnding::Either,
-            }),
+        line_endings: settings.line_endings.as_deref().map_or(LineEnding::Lf, |s| match s {
+            "lf" => LineEnding::Lf,
+            "crlf" => LineEnding::Crlf,
+            _ => LineEnding::Either,
+        }),
     }
 }
 
@@ -412,15 +378,14 @@ pub fn merged_config(
             .as_deref()
             .or(base.trailing_whitespace.as_deref())
             .is_none_or(|s| s == "deny"),
-        tabs_vs_spaces: lang
-            .tabs_vs_spaces
-            .as_deref()
-            .or(base.tabs_vs_spaces.as_deref())
-            .map_or(TabsOrSpaces::Spaces, |s| match s {
+        tabs_vs_spaces: lang.tabs_vs_spaces.as_deref().or(base.tabs_vs_spaces.as_deref()).map_or(
+            TabsOrSpaces::Spaces,
+            |s| match s {
                 "tabs" => TabsOrSpaces::Tabs,
                 "spaces" => TabsOrSpaces::Spaces,
                 _ => TabsOrSpaces::Either,
-            }),
+            },
+        ),
         final_newline: lang
             .final_newline
             .as_deref()
@@ -431,15 +396,14 @@ pub fn merged_config(
             .as_deref()
             .or(base.blank_line_whitespace.as_deref())
             .is_none_or(|s| s == "deny"),
-        line_endings: lang
-            .line_endings
-            .as_deref()
-            .or(base.line_endings.as_deref())
-            .map_or(LineEnding::Lf, |s| match s {
+        line_endings: lang.line_endings.as_deref().or(base.line_endings.as_deref()).map_or(
+            LineEnding::Lf,
+            |s| match s {
                 "lf" => LineEnding::Lf,
                 "crlf" => LineEnding::Crlf,
                 _ => LineEnding::Either,
-            }),
+            },
+        ),
     }
 }
 
@@ -451,11 +415,7 @@ mod tests {
     fn detects_trailing_whitespace() {
         let src = "hello world  \n";
         let diags = lint_source(src);
-        assert!(
-            diags
-                .iter()
-                .any(|d| d.rule == "supreme/trailing-whitespace")
-        );
+        assert!(diags.iter().any(|d| d.rule == "supreme/trailing-whitespace"));
     }
 
     #[test]
@@ -468,10 +428,7 @@ mod tests {
     #[test]
     fn allows_tabs_when_configured() {
         let src = "\thello world\n";
-        let config = SupremeConfig {
-            tabs_vs_spaces: TabsOrSpaces::Tabs,
-            ..Default::default()
-        };
+        let config = SupremeConfig { tabs_vs_spaces: TabsOrSpaces::Tabs, ..Default::default() };
         let diags = lint_source_with_config(src, &config);
         assert!(!diags.iter().any(|d| d.rule == "supreme/tab-character"));
     }
@@ -479,10 +436,7 @@ mod tests {
     #[test]
     fn detects_spaces_when_tabs_expected() {
         let src = "  hello world\n";
-        let config = SupremeConfig {
-            tabs_vs_spaces: TabsOrSpaces::Tabs,
-            ..Default::default()
-        };
+        let config = SupremeConfig { tabs_vs_spaces: TabsOrSpaces::Tabs, ..Default::default() };
         let diags = lint_source_with_config(src, &config);
         assert!(diags.iter().any(|d| d.rule == "supreme/space-indentation"));
     }
@@ -490,10 +444,7 @@ mod tests {
     #[test]
     fn detects_single_space_when_tabs_expected() {
         let src = " hello world\n";
-        let config = SupremeConfig {
-            tabs_vs_spaces: TabsOrSpaces::Tabs,
-            ..Default::default()
-        };
+        let config = SupremeConfig { tabs_vs_spaces: TabsOrSpaces::Tabs, ..Default::default() };
         let diags = lint_source_with_config(src, &config);
         assert!(diags.iter().any(|d| d.rule == "supreme/space-indentation"));
     }
@@ -501,10 +452,7 @@ mod tests {
     #[test]
     fn detects_mixed_tabs_and_spaces_when_tabs_expected() {
         let src = "\t hello world\n"; // tab then space
-        let config = SupremeConfig {
-            tabs_vs_spaces: TabsOrSpaces::Tabs,
-            ..Default::default()
-        };
+        let config = SupremeConfig { tabs_vs_spaces: TabsOrSpaces::Tabs, ..Default::default() };
         let diags = lint_source_with_config(src, &config);
         assert!(diags.iter().any(|d| d.rule == "supreme/space-indentation"));
     }
@@ -513,46 +461,28 @@ mod tests {
     fn detects_missing_final_newline() {
         let src = "hello world";
         let diags = lint_source(src);
-        assert!(
-            diags
-                .iter()
-                .any(|d| d.rule == "supreme/missing-final-newline")
-        );
+        assert!(diags.iter().any(|d| d.rule == "supreme/missing-final-newline"));
     }
 
     #[test]
     fn allows_missing_final_newline_when_configured() {
         let src = "hello world";
-        let config = SupremeConfig {
-            final_newline: false,
-            ..Default::default()
-        };
+        let config = SupremeConfig { final_newline: false, ..Default::default() };
         let diags = lint_source_with_config(src, &config);
-        assert!(
-            !diags
-                .iter()
-                .any(|d| d.rule == "supreme/missing-final-newline")
-        );
+        assert!(!diags.iter().any(|d| d.rule == "supreme/missing-final-newline"));
     }
 
     #[test]
     fn detects_blank_line_whitespace() {
         let src = "line1\n   \nline2\n";
         let diags = lint_source(src);
-        assert!(
-            diags
-                .iter()
-                .any(|d| d.rule == "supreme/blank-line-whitespace")
-        );
+        assert!(diags.iter().any(|d| d.rule == "supreme/blank-line-whitespace"));
     }
 
     #[test]
     fn detects_line_too_long() {
         let src = format!("{}\n", "x".repeat(150));
-        let config = SupremeConfig {
-            max_line_length: Some(120),
-            ..Default::default()
-        };
+        let config = SupremeConfig { max_line_length: Some(120), ..Default::default() };
         let diags = lint_source_with_config(&src, &config);
         assert!(diags.iter().any(|d| d.rule == "supreme/line-too-long"));
     }
@@ -574,10 +504,7 @@ mod tests {
     #[test]
     fn detects_crlf_when_lf_expected() {
         let src = "line1\r\nline2\r\n";
-        let config = SupremeConfig {
-            line_endings: LineEnding::Lf,
-            ..Default::default()
-        };
+        let config = SupremeConfig { line_endings: LineEnding::Lf, ..Default::default() };
         let diags = lint_source_with_config(src, &config);
         assert!(diags.iter().any(|d| d.rule == "supreme/wrong-line-ending"));
     }
@@ -585,10 +512,7 @@ mod tests {
     #[test]
     fn detects_lf_when_crlf_expected() {
         let src = "line1\nline2\n";
-        let config = SupremeConfig {
-            line_endings: LineEnding::Crlf,
-            ..Default::default()
-        };
+        let config = SupremeConfig { line_endings: LineEnding::Crlf, ..Default::default() };
         let diags = lint_source_with_config(src, &config);
         assert!(diags.iter().any(|d| d.rule == "supreme/wrong-line-ending"));
     }

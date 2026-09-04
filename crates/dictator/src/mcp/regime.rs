@@ -28,10 +28,7 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
             // Use relative path if within cwd (saves tokens)
             let relative = file.strip_prefix(&cwd).unwrap_or(&file);
             let path_str = relative.to_str().unwrap_or("<invalid>");
-            let source = Source {
-                path: Utf8Path::new(path_str),
-                text: &text,
-            };
+            let source = Source { path: Utf8Path::new(path_str), text: &text };
 
             if let Ok(diags) = regime.enforce(&[source]) {
                 for diag in &diags {
@@ -93,30 +90,22 @@ fn load_native_decrees(
             "python" => {
                 let py_config = dictator_python::config_from_decree_settings(settings);
                 let py_supreme = dictator_supreme::merged_config(supreme_settings, settings);
-                regime.add_decree(dictator_python::init_decree_with_configs(
-                    py_config, py_supreme,
-                ));
+                regime.add_decree(dictator_python::init_decree_with_configs(py_config, py_supreme));
             }
             "golang" => {
                 let go_config = dictator_golang::config_from_decree_settings(settings);
                 let go_supreme = dictator_supreme::merged_config(supreme_settings, settings);
-                regime.add_decree(dictator_golang::init_decree_with_configs(
-                    go_config, go_supreme,
-                ));
+                regime.add_decree(dictator_golang::init_decree_with_configs(go_config, go_supreme));
             }
             "rust" => {
                 let rs_config = dictator_rust::config_from_decree_settings(settings);
                 let rs_supreme = dictator_supreme::merged_config(supreme_settings, settings);
-                regime.add_decree(dictator_rust::init_decree_with_configs(
-                    rs_config, rs_supreme,
-                ));
+                regime.add_decree(dictator_rust::init_decree_with_configs(rs_config, rs_supreme));
             }
             "ruby" => {
                 let rb_config = dictator_ruby::config_from_decree_settings(settings);
                 let rb_supreme = dictator_supreme::merged_config(supreme_settings, settings);
-                regime.add_decree(dictator_ruby::init_decree_with_configs(
-                    rb_config, rb_supreme,
-                ));
+                regime.add_decree(dictator_ruby::init_decree_with_configs(rb_config, rb_supreme));
             }
             "frontmatter" => {
                 let fm_config = dictator_frontmatter::config_from_decree_settings(settings);
@@ -144,10 +133,8 @@ mod tests {
 
     #[test]
     fn native_decree_enabled_respects_false() {
-        let settings = dictator_core::config::DecreeSettings {
-            enabled: Some(false),
-            ..Default::default()
-        };
+        let settings =
+            dictator_core::config::DecreeSettings { enabled: Some(false), ..Default::default() };
 
         assert!(!native_decree_enabled(&settings));
     }

@@ -18,10 +18,7 @@ use super::tools::{DictatorTools, OccupyTool, StalintWatchTool};
 
 /// Run the MCP server with mcp-host framework
 pub fn run() -> Result<()> {
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()?
-        .block_on(run_async())
+    tokio::runtime::Builder::new_multi_thread().enable_all().build()?.block_on(run_async())
 }
 
 async fn run_async() -> Result<()> {
@@ -44,9 +41,7 @@ async fn run_async() -> Result<()> {
     let watcher_state = Arc::new(Mutex::new(ServerState::new(notification_tx.clone())));
 
     // Register macro-based tools (stalint, dictator) via unified router
-    let tools = Arc::new(DictatorTools {
-        state: Arc::clone(&watcher_state),
-    });
+    let tools = Arc::new(DictatorTools { state: Arc::clone(&watcher_state) });
     server.register_router(DictatorTools::router(), tools);
 
     // Register stateful tools (manual impl - need notification_tx)
@@ -60,9 +55,7 @@ async fn run_async() -> Result<()> {
     });
 
     // Register macro-based resources via unified router
-    let resources = Arc::new(DictatorResources {
-        state: Arc::clone(&watcher_state),
-    });
+    let resources = Arc::new(DictatorResources { state: Arc::clone(&watcher_state) });
     server.register_router(DictatorResources::router(), resources);
 
     // Register macro-based prompts via unified router
@@ -75,10 +68,7 @@ async fn run_async() -> Result<()> {
 
     // Run server with stdio transport
     let transport = StdioTransport::new();
-    server
-        .run(transport)
-        .await
-        .map_err(|e| anyhow::anyhow!("{e}"))?;
+    server.run(transport).await.map_err(|e| anyhow::anyhow!("{e}"))?;
 
     Ok(())
 }
@@ -116,11 +106,7 @@ fn start_config_watcher(
             }
         };
 
-        let watch_path = if config_path.exists() {
-            config_path.clone()
-        } else {
-            cwd.clone()
-        };
+        let watch_path = if config_path.exists() { config_path.clone() } else { cwd.clone() };
 
         if let Err(e) = watcher.watch(&watch_path, RecursiveMode::NonRecursive) {
             log_to_file(&format!("Failed to watch config: {e}"));
@@ -145,18 +131,12 @@ fn start_config_watcher(
                 }
 
                 // Send list_changed notifications
-                let _ = notif_tx.send(JsonRpcNotification::new(
-                    "notifications/tools/list_changed",
-                    None,
-                ));
-                let _ = notif_tx.send(JsonRpcNotification::new(
-                    "notifications/resources/list_changed",
-                    None,
-                ));
-                let _ = notif_tx.send(JsonRpcNotification::new(
-                    "notifications/prompts/list_changed",
-                    None,
-                ));
+                let _ = notif_tx
+                    .send(JsonRpcNotification::new("notifications/tools/list_changed", None));
+                let _ = notif_tx
+                    .send(JsonRpcNotification::new("notifications/resources/list_changed", None));
+                let _ = notif_tx
+                    .send(JsonRpcNotification::new("notifications/prompts/list_changed", None));
 
                 log_to_file("Config changed: sent list_changed for tools/resources/prompts");
             }

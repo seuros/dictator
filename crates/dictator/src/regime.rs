@@ -79,9 +79,7 @@ fn language_decrees() -> [LanguageDecree; 5] {
 /// Check if a decree should be loaded based on config.
 /// Returns true only if decree is configured and enabled != false
 fn should_load_decree(config: Option<&DictateConfig>, key: &str) -> bool {
-    config
-        .and_then(|c| c.decree.get(key))
-        .is_some_and(|s| s.enabled != Some(false))
+    config.and_then(|c| c.decree.get(key)).is_some_and(|s| s.enabled != Some(false))
 }
 
 /// Resolve the supreme config a language decree runs with: language settings
@@ -91,12 +89,10 @@ fn supreme_config_for(
     decree_config: Option<&DictateConfig>,
     settings: &DecreeSettings,
 ) -> SupremeConfig {
-    decree_config
-        .and_then(|c| c.decree.get("supreme"))
-        .map_or_else(
-            || dictator_supreme::config_from_decree_settings(settings),
-            |base| dictator_supreme::merged_config(base, settings),
-        )
+    decree_config.and_then(|c| c.decree.get("supreme")).map_or_else(
+        || dictator_supreme::config_from_decree_settings(settings),
+        |base| dictator_supreme::merged_config(base, settings),
+    )
 }
 
 /// Add the supreme decree, applying per-language overrides when configured.
@@ -119,10 +115,7 @@ pub(crate) fn add_supreme_decree(regime: &mut Regime, decree_config: Option<&Dic
             }
         }
 
-        regime.add_decree(dictator_supreme::init_decree_with_overrides(
-            supreme_config,
-            overrides,
-        ));
+        regime.add_decree(dictator_supreme::init_decree_with_overrides(supreme_config, overrides));
     } else {
         regime.add_decree(dictator_supreme::init_decree());
     }
@@ -163,9 +156,7 @@ fn load_frontmatter_decree(
         && let Some(settings) = config.decree.get("frontmatter")
     {
         let frontmatter_config = dictator_frontmatter::config_from_decree_settings(settings);
-        regime.add_decree(dictator_frontmatter::init_decree_with_config(
-            frontmatter_config,
-        ));
+        regime.add_decree(dictator_frontmatter::init_decree_with_config(frontmatter_config));
     } else {
         regime.add_decree(dictator_frontmatter::init_decree());
     }

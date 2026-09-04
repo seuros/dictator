@@ -24,11 +24,8 @@ pub fn run_watch(
     profile: Option<String>,
 ) -> Result<()> {
     let cfg = load_config(config_path.as_ref())?;
-    let format = if args.json {
-        OutputFormat::Json
-    } else {
-        cfg.format.unwrap_or(OutputFormat::Human)
-    };
+    let format =
+        if args.json { OutputFormat::Json } else { cfg.format.unwrap_or(OutputFormat::Human) };
 
     let decree_config = load_dictate_config(config_path.as_ref(), profile.as_deref())?;
 
@@ -134,10 +131,7 @@ pub fn run_watch(
                     continue;
                 };
                 let path_ref = path.as_path();
-                let source = Source {
-                    path: path_ref,
-                    text: &text,
-                };
+                let source = Source { path: path_ref, text: &text };
                 let diags = regime.enforce(&[source])?;
                 let mut seen = HashSet::new();
                 for diag in diags {

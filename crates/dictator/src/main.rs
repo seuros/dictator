@@ -21,7 +21,6 @@ mod regime;
 mod watch;
 
 use anyhow::Result;
-use clap::Parser;
 
 use census::run_census;
 use cli::{Args, Command};
@@ -39,10 +38,7 @@ fn main() -> Result<()> {
 
     if is_mcp {
         // In MCP mode, log to stderr only (stdout is for JSON-RPC protocol)
-        tracing_subscriber::fmt()
-            .with_writer(std::io::stderr)
-            .with_ansi(false)
-            .init();
+        tracing_subscriber::fmt().with_writer(std::io::stderr).with_ansi(false).init();
         return mcp_host::run();
     }
 

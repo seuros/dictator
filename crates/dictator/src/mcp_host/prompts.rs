@@ -52,9 +52,7 @@ impl DictatorPrompts {
         if files.is_empty() {
             return prompt_with_description(
                 "No staged files",
-                vec![user_message(
-                    "No files staged for commit. Stage files with `git add` first.",
-                )],
+                vec![user_message("No files staged for commit. Stage files with `git add` first.")],
             );
         }
 

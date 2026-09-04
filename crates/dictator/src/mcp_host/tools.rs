@@ -137,9 +137,7 @@ impl DictatorTools {
         };
 
         if paths.is_empty() {
-            return Ok(ToolOutput::text(
-                "Working tree is clean — no uncommitted files to lint.",
-            ));
+            return Ok(ToolOutput::text("Working tree is clean — no uncommitted files to lint."));
         }
 
         let args = Some(serde_json::json!({ "paths": paths }));
@@ -197,9 +195,8 @@ impl DictatorTools {
                  violations:\n\n{lint_summary}\n\nConfirm?"
             );
 
-            let schema = ElicitationSchema::builder()
-                .optional_bool("confirm", false)
-                .build_unchecked();
+            let schema =
+                ElicitationSchema::builder().optional_bool("confirm", false).build_unchecked();
 
             let result = requester
                 .request_elicitation(
@@ -219,9 +216,7 @@ impl DictatorTools {
                     .unwrap_or(false);
 
             if !confirmed {
-                return Err(ToolError::Execution(
-                    "Operation cancelled by user".to_string(),
-                ));
+                return Err(ToolError::Execution("Operation cancelled by user".to_string()));
             }
         }
 
