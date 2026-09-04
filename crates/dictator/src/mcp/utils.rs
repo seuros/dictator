@@ -262,7 +262,11 @@ pub fn make_snippet(source: &str, span: &dictator_decree_abi::Span, max_len: usi
         return String::new();
     }
 
-    let start = span.start.min(source.len());
+    // Clamp to a char boundary; spans may point inside a multibyte char
+    let mut start = span.start.min(source.len());
+    while start > 0 && !source.is_char_boundary(start) {
+        start -= 1;
+    }
 
     // Find line bounds containing the span start.
     let line_start = source[..start].rfind('\n').map_or(0, |idx| idx + 1);
@@ -285,6 +289,22 @@ pub fn make_snippet(source: &str, span: &dictator_decree_abi::Span, max_len: usi
 }
 
 // Tests for moved functions are now in mcp-host crate
+
+#[cfg(test)]
+mod snippet_tests {
+    use super::make_snippet;
+    use dictator_decree_abi::Span;
+
+    #[test]
+    fn snippet_survives_span_inside_multibyte_char() {
+        let source = "héllo wörld\n";
+        for start in 0..=source.len() {
+            let _ = make_snippet(source, &Span { start, end: start }, 160);
+        }
+        let snip = make_snippet(source, &Span { start: 2, end: 2 }, 160);
+        assert_eq!(snip, "héllo wörld");
+    }
+}
 
 #[cfg(test)]
 mod git_scope_tests {
