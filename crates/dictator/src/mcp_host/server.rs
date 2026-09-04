@@ -4,7 +4,6 @@ use anyhow::Result;
 use mcp_host::prelude::*;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::sync::mpsc;
 
 use crate::mcp::regime::run_stalint_check;
 use crate::mcp::state::{
@@ -27,12 +26,17 @@ async fn run_async() -> Result<()> {
     log_to_file(&format!("PID: {}", std::process::id()));
 
     // Build server with capabilities via builder
-    let server = server("dictator", env!("CARGO_PKG_VERSION"))
-        .with_instructions("Run stalint before any commit. User expects disciplined agents.")
-        .with_tools(true)
-        .with_resources(true, false)
-        .with_prompts(true)
-        .build();
+    let server = Arc::new(
+        Server::builder("dictator", env!("CARGO_PKG_VERSION"))
+            .with_title("The Dictator")
+            .with_description(env!("CARGO_PKG_DESCRIPTION"))
+            .with_website_url(env!("CARGO_PKG_HOMEPAGE"))
+            .with_instructions("Run stalint before any commit. User expects disciplined agents.")
+            .with_tools(true)
+            .with_resources(true, true)
+            .with_prompts(true)
+            .build(),
+    );
 
     // Get notification sender for background tasks
     let notification_tx = server.notification_sender();
@@ -64,7 +68,7 @@ async fn run_async() -> Result<()> {
 
     // Start background tasks
     start_config_watcher(Arc::clone(&watcher_state), notification_tx.clone());
-    start_watcher_check_loop(Arc::clone(&watcher_state), notification_tx);
+    start_watcher_check_loop(Arc::clone(&watcher_state), notification_tx, Arc::clone(&server));
 
     // Run server with stdio transport
     let transport = StdioTransport::new();
@@ -74,10 +78,7 @@ async fn run_async() -> Result<()> {
 }
 
 /// Background loop that watches .dictate.toml for changes
-fn start_config_watcher(
-    state: Arc<Mutex<ServerState>>,
-    notif_tx: mpsc::UnboundedSender<JsonRpcNotification>,
-) {
+fn start_config_watcher(state: Arc<Mutex<ServerState>>, notif_tx: NotificationSender) {
     tokio::spawn(async move {
         use notify::{RecursiveMode, Watcher};
 
@@ -147,11 +148,22 @@ fn start_config_watcher(
 /// Background loop that checks watched paths
 fn start_watcher_check_loop(
     state: Arc<Mutex<ServerState>>,
-    notif_tx: mpsc::UnboundedSender<JsonRpcNotification>,
+    notif_tx: NotificationSender,
+    server: Arc<Server>,
 ) {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(WATCHER_CHECK_INTERVAL_SECS)).await;
+
+            // Drain mood changes (from tool calls or watch checks) to subscribers
+            let mood_changed = {
+                let mut state = state.lock().unwrap();
+                std::mem::take(&mut state.mood_dirty)
+            };
+            if mood_changed {
+                server.notify_resource_updated(super::resources::MOOD_URI);
+                log_to_file("Mood shifted: notified dictator://mood subscribers");
+            }
 
             let should_lint = {
                 let state = state.lock().unwrap();
@@ -172,6 +184,10 @@ fn start_watcher_check_loop(
                 }
 
                 let violations = run_stalint_check(&paths);
+                {
+                    let mut state = state.lock().unwrap();
+                    state.record_violations(violations.len());
+                }
 
                 if !violations.is_empty() {
                     let _ = notif_tx.send(JsonRpcNotification::new(

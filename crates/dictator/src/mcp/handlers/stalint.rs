@@ -150,6 +150,10 @@ pub fn handle_stalint(
     }
 
     let total = all_violations.len();
+    {
+        let mut state = watcher_state.lock().unwrap();
+        state.record_violations(total);
+    }
     let page: Vec<_> = all_violations.into_iter().skip(offset).take(limit).collect();
     let next_offset = offset + page.len();
 

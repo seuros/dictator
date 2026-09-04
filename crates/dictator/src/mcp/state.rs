@@ -77,22 +77,67 @@ pub struct ServerState {
     pub config_dirty: bool,
     // Progress tracking for long-running operations
     pub progress_tracker: Arc<ProgressTracker>,
+    // Violations seen by the most recent lint (tool call or watch check)
+    pub last_violation_total: usize,
+    // Set when the mood tier changed; drained by the watcher loop to
+    // emit resources/updated for dictator://mood
+    pub mood_dirty: bool,
+}
+
+/// The Dictator's disposition, derived from the last lint result
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Mood {
+    /// Zero violations: the timeline is compliant
+    Magnanimous,
+    /// A few violations: patience wears thin
+    Displeased,
+    /// Ten or more violations: open rebellion
+    Wrathful,
+}
+
+impl Mood {
+    /// Mood tier for a violation count
+    pub fn from_violations(total: usize) -> Self {
+        match total {
+            0 => Self::Magnanimous,
+            1..=9 => Self::Displeased,
+            _ => Self::Wrathful,
+        }
+    }
+
+    /// Stable machine-readable label
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Magnanimous => "magnanimous",
+            Self::Displeased => "displeased",
+            Self::Wrathful => "wrathful",
+        }
+    }
+
+    /// Official proclamation for the current mood
+    pub fn proclamation(self) -> &'static str {
+        match self {
+            Self::Magnanimous => {
+                "The people write compliant code. The Dictator smiles upon the timeline."
+            }
+            Self::Displeased => "Violations detected. The Dictator's patience wears thin.",
+            Self::Wrathful => "The codebase is in open rebellion. Re-education is imminent.",
+        }
+    }
 }
 
 impl Default for ServerState {
     fn default() -> Self {
         // Create a dummy notification channel for default initialization
         // This is only used in tests; actual server uses ::new()
-        let (tx, _rx) = tokio::sync::mpsc::unbounded_channel();
+        let (tx, _rx) = mcp_host::NotificationSender::bounded(1);
         Self::new(tx)
     }
 }
 
 impl ServerState {
     /// Create new `ServerState` with notification channel
-    pub fn new(
-        notif_tx: tokio::sync::mpsc::UnboundedSender<mcp_host::transport::JsonRpcNotification>,
-    ) -> Self {
+    pub fn new(notif_tx: mcp_host::NotificationSender) -> Self {
         Self {
             paths: HashSet::new(),
             dirty: false,
@@ -108,7 +153,23 @@ impl ServerState {
             config: None,
             config_dirty: false,
             progress_tracker: Arc::new(ProgressTracker::new(notif_tx)),
+            last_violation_total: 0,
+            mood_dirty: false,
         }
+    }
+
+    /// Record a lint result, flagging `mood_dirty` when the mood tier changes
+    pub fn record_violations(&mut self, total: usize) {
+        let previous = Mood::from_violations(self.last_violation_total);
+        self.last_violation_total = total;
+        if Mood::from_violations(total) != previous {
+            self.mood_dirty = true;
+        }
+    }
+
+    /// Current mood derived from the last lint result
+    pub fn mood(&self) -> Mood {
+        Mood::from_violations(self.last_violation_total)
     }
 
     /// Reload configuration from disk

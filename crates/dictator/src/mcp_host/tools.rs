@@ -72,7 +72,7 @@ async fn resolve_paths(ctx: &Ctx<'_>) -> Option<Vec<String>> {
 }
 
 pub(super) fn spawn_notification_forwarder(
-    notification_tx: mpsc::UnboundedSender<JsonRpcNotification>,
+    notification_tx: NotificationSender,
 ) -> mpsc::Sender<String> {
     let (string_tx, mut string_rx) = mpsc::channel::<String>(100);
 

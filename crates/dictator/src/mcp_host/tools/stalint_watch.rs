@@ -3,7 +3,6 @@
 use mcp_host::prelude::*;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc;
 
 use crate::mcp::handlers::handle_stalint_watch;
 use crate::mcp::state::ServerState;
@@ -17,7 +16,7 @@ use super::{
 /// Watch files for structural changes
 pub struct StalintWatchTool {
     pub state: Arc<Mutex<ServerState>>,
-    pub notification_tx: mpsc::UnboundedSender<JsonRpcNotification>,
+    pub notification_tx: NotificationSender,
 }
 
 impl Tool for StalintWatchTool {

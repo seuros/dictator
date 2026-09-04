@@ -3,7 +3,6 @@
 use mcp_host::prelude::*;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc;
 
 use crate::mcp::handlers::handle_occupy;
 use crate::mcp::state::ServerState;
@@ -14,7 +13,7 @@ use super::{extract_tool_result, pretty_result_output, spawn_notification_forwar
 /// Initialize .dictate.toml - needs notification_tx for list_changed
 pub struct OccupyTool {
     pub state: Arc<Mutex<ServerState>>,
-    pub notification_tx: mpsc::UnboundedSender<JsonRpcNotification>,
+    pub notification_tx: NotificationSender,
 }
 
 impl Tool for OccupyTool {

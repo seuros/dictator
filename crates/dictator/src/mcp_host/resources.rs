@@ -8,6 +8,9 @@ use crate::mcp::resources::{CENSUS_URI, CONFIG_URI, handle_read_resource};
 use crate::mcp::state::ServerState;
 use crate::mcp_host::config_exists;
 
+/// URI for the mood resource
+pub const MOOD_URI: &str = "dictator://mood";
+
 /// Dictator resources using macro-based registration
 pub struct DictatorResources {
     pub state: Arc<Mutex<ServerState>>,
@@ -64,5 +67,30 @@ impl DictatorResources {
     async fn census(&self, _ctx: Ctx<'_>) -> ResourceResult {
         let text = read_text_resource(CENSUS_URI, "census", &self.state)?;
         Ok(vec![text_resource(CENSUS_URI, text)])
+    }
+
+    /// The Dictator's current disposition toward the codebase. Subscribe to be
+    /// notified when the mood shifts.
+    #[mcp_resource(
+        name = "Mood",
+        uri = "dictator://mood",
+        mime_type = "application/json",
+        subscribable = true
+    )]
+    async fn mood(&self, _ctx: Ctx<'_>) -> ResourceResult {
+        let (mood, violations) = {
+            let state = self
+                .state
+                .lock()
+                .map_err(|_| ResourceError::Read("state lock poisoned".to_string()))?;
+            (state.mood(), state.last_violation_total)
+        };
+        let text = serde_json::json!({
+            "mood": mood.label(),
+            "violations": violations,
+            "proclamation": mood.proclamation(),
+        })
+        .to_string();
+        Ok(vec![text_resource(MOOD_URI, text)])
     }
 }

@@ -127,7 +127,7 @@ version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "405da8da3de027352d71477991350edb758e88ad4339ed2a20f86770fca15717"
 dependencies = [
- "chrono-machines",
+ "chrono-machines 0.4.0",
  "hashbrown 0.15.5",
  "spin",
  "state-machines",
@@ -283,6 +283,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d14e76579ce2b100164d550a14d1307cc234666a94414c7ed4274392564005ea"
 dependencies = [
  "async-trait",
+ "rand",
+]
+
+[[package]]
+name = "chrono-machines"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f65e6f8e84e35c1e7500c110bf57f7b73b5cbc99391491e8e0ce8ed026ce7cc"
+dependencies = [
  "rand",
 ]
 
@@ -1597,14 +1606,14 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-host"
-version = "0.1.90"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f221fa83dc85958cee672a90f07dacbb4cc4f8123b5512950ecaf7b6abb9720"
+checksum = "fead29c7d1ad1f4fd841cf8444e7a2bfec973524bfef85cf07c34b7321a51d93"
 dependencies = [
  "arc-swap",
  "base64 0.22.1",
  "breaker-machines",
- "chrono-machines",
+ "chrono-machines 0.6.0",
  "dashmap",
  "fluent-uri",
  "futures",
@@ -1628,9 +1637,9 @@ dependencies = [
 
 [[package]]
 name = "mcp-host-macros"
-version = "0.1.90"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c965ab3bc93e28e5e93920d74533d838d8fab082894a21053447f45554e5b31e"
+checksum = "766da52b9d431d81188dbb82123bb9f6291b1c63fd139fedd0b17aca7d468aba"
 dependencies = [
  "darling",
  "proc-macro-crate",
