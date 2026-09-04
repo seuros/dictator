@@ -9,7 +9,7 @@ use crate::mcp::regime::run_stalint_check;
 use crate::mcp::state::{
     CONFIG_FILE, STALINT_CHECK_TIMEOUT_SECS, ServerState, WATCHER_CHECK_INTERVAL_SECS,
 };
-use crate::mcp::utils::log_to_file;
+use crate::mcp::utils::{GitScope, files_fingerprint, git_changed_files, log_to_file};
 
 use super::prompts::DictatorPrompts;
 use super::resources::DictatorResources;
@@ -155,14 +155,35 @@ fn start_watcher_check_loop(
         loop {
             tokio::time::sleep(Duration::from_secs(WATCHER_CHECK_INTERVAL_SECS)).await;
 
-            // Drain mood changes (from tool calls or watch checks) to subscribers
-            let mood_changed = {
+            // Re-lint uncommitted files when their fingerprint changes
+            if let Ok(cwd) = std::env::current_dir()
+                && let Some(files) = git_changed_files(&cwd, GitScope::Uncommitted)
+            {
+                let fingerprint = files_fingerprint(&files);
+                let stale = { state.lock().unwrap().uncommitted_fingerprint != Some(fingerprint) };
+                if stale {
+                    let paths: Vec<String> =
+                        files.iter().map(|p| p.to_string_lossy().into_owned()).collect();
+                    let violations = run_stalint_check(&paths);
+                    let mut s = state.lock().unwrap();
+                    s.record_uncommitted_check(fingerprint, violations.len(), paths.len());
+                }
+            }
+
+            let (mood_changed, uncommitted_changed) = {
                 let mut state = state.lock().unwrap();
-                std::mem::take(&mut state.mood_dirty)
+                (
+                    std::mem::take(&mut state.mood_dirty),
+                    std::mem::take(&mut state.uncommitted_dirty),
+                )
             };
             if mood_changed {
                 server.notify_resource_updated(super::resources::MOOD_URI);
                 log_to_file("Mood shifted: notified dictator://mood subscribers");
+            }
+            if uncommitted_changed {
+                server.notify_resource_updated(super::resources::UNCOMMITTED_URI);
+                log_to_file("Uncommitted status changed: notified subscribers");
             }
 
             let should_lint = {

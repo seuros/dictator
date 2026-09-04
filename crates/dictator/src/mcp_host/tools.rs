@@ -17,8 +17,16 @@ use tokio::sync::mpsc;
 
 use crate::mcp::handlers::{handle_dictator, handle_stalint};
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::{git_uncommitted_files, to_json_string_pretty};
+use crate::mcp::utils::{GitScope, git_changed_files, to_json_string_pretty};
 use crate::mcp_host::config_exists;
+
+/// Arguments for the stalint tool
+#[derive(Debug, Default, serde::Deserialize, schemars::JsonSchema)]
+pub struct StalintParams {
+    /// Lint only files staged for commit (default: all uncommitted changes)
+    #[serde(default)]
+    pub staged: bool,
+}
 
 /// Resolve the lint/fix scope from client roots or CWD, narrowed to uncommitted files
 /// wherever the resolved directory sits inside a git repo.
@@ -32,7 +40,7 @@ use crate::mcp_host::config_exists;
 ///   preserving the old whole-tree behavior there.
 /// - Returns `Some(vec![])` when every resolved directory is a clean git repo — callers
 ///   must treat that as "nothing to do", not as "no scope, so scan everything".
-async fn resolve_paths(ctx: &Ctx<'_>) -> Option<Vec<String>> {
+async fn resolve_paths(ctx: &Ctx<'_>, scope: GitScope) -> Option<Vec<String>> {
     let dirs = if ctx.supports_roots() {
         let requester = ctx.client_requester()?;
         let roots = requester.request_roots(None).await.ok()?;
@@ -59,7 +67,7 @@ async fn resolve_paths(ctx: &Ctx<'_>) -> Option<Vec<String>> {
     let mut scoped = Vec::new();
     let mut any_git = false;
     for dir in &dirs {
-        match git_uncommitted_files(std::path::Path::new(dir)) {
+        match git_changed_files(std::path::Path::new(dir), scope) {
             Some(files) => {
                 any_git = true;
                 scoped.extend(files.into_iter().map(|p| p.to_string_lossy().into_owned()));
@@ -121,8 +129,9 @@ impl DictatorTools {
         read_only = true,
         idempotent = true
     )]
-    async fn stalint(&self, ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
-        let paths = match resolve_paths(&ctx).await {
+    async fn stalint(&self, ctx: Ctx<'_>, params: Parameters<StalintParams>) -> ToolResult {
+        let scope = if params.0.staged { GitScope::Staged } else { GitScope::Uncommitted };
+        let paths = match resolve_paths(&ctx, scope).await {
             Some(p) => p,
             None => {
                 // Client supports roots but returned empty — hide both tools
@@ -137,7 +146,10 @@ impl DictatorTools {
         };
 
         if paths.is_empty() {
-            return Ok(ToolOutput::text("Working tree is clean — no uncommitted files to lint."));
+            let scope_word = if params.0.staged { "staged" } else { "uncommitted" };
+            return Ok(ToolOutput::text(format!(
+                "Working tree is clean — no {scope_word} files to lint."
+            )));
         }
 
         let args = Some(serde_json::json!({ "paths": paths }));
@@ -161,7 +173,7 @@ impl DictatorTools {
             ));
         }
 
-        let paths = match resolve_paths(&ctx).await {
+        let paths = match resolve_paths(&ctx, GitScope::Uncommitted).await {
             Some(p) => p,
             None => {
                 // Client supports roots but returned empty — hide both tools

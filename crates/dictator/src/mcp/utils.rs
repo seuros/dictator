@@ -99,13 +99,24 @@ pub fn command_available(cmd: &str) -> bool {
 // Re-export mcp-host utilities
 pub use mcp_host::utils::{base64_decode, base64_encode, byte_to_line_col, collect_files};
 
-/// List files with uncommitted changes (staged, unstaged, or untracked) in the git
-/// repository containing `dir`.
+/// Which pending changes to include when scoping to a git repo
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GitScope {
+    /// Staged, unstaged, and untracked
+    Uncommitted,
+    /// Index only
+    Staged,
+}
+
+/// List pending files in the git repository containing `dir`, per `scope`.
 ///
 /// Returns `None` when `dir` is not inside a git repo (or `git` isn't available), so
 /// callers can fall back to scanning the whole directory. Returns `Some(vec![])` for a
 /// clean repo — that's a meaningful "nothing to do" result, distinct from "not a repo".
-pub fn git_uncommitted_files(dir: &std::path::Path) -> Option<Vec<std::path::PathBuf>> {
+pub fn git_changed_files(
+    dir: &std::path::Path,
+    scope: GitScope,
+) -> Option<Vec<std::path::PathBuf>> {
     let toplevel_out = std::process::Command::new("git")
         .args(["-C", &dir.to_string_lossy(), "rev-parse", "--show-toplevel"])
         .output()
@@ -130,12 +141,34 @@ pub fn git_uncommitted_files(dir: &std::path::Path) -> Option<Vec<std::path::Pat
         .stdout
         .split(|&b| b == 0)
         .filter(|entry| entry.len() > 3)
+        // Porcelain v1: byte 0 = index status, byte 1 = worktree status.
+        .filter(|entry| match scope {
+            GitScope::Uncommitted => true,
+            GitScope::Staged => entry[0] != b' ' && entry[0] != b'?',
+        })
         .map(|entry| root.join(String::from_utf8_lossy(&entry[3..]).as_ref()))
         // Drop deleted files — nothing left to lint.
         .filter(|p| p.is_file())
         .collect();
 
     Some(files)
+}
+
+/// Hash of a file set plus each file's (len, mtime)
+#[must_use]
+pub fn files_fingerprint(files: &[std::path::PathBuf]) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    for file in files {
+        file.hash(&mut hasher);
+        if let Ok(meta) = file.metadata() {
+            meta.len().hash(&mut hasher);
+            if let Ok(mtime) = meta.modified() {
+                mtime.hash(&mut hasher);
+            }
+        }
+    }
+    hasher.finish()
 }
 
 /// Check if a path is within the current working directory (security boundary)
@@ -255,7 +288,7 @@ pub fn make_snippet(source: &str, span: &dictator_decree_abi::Span, max_len: usi
 
 #[cfg(test)]
 mod git_scope_tests {
-    use super::git_uncommitted_files;
+    use super::{GitScope, files_fingerprint, git_changed_files};
     use std::process::Command;
 
     fn git(dir: &std::path::Path, args: &[&str]) {
@@ -267,7 +300,7 @@ mod git_scope_tests {
     fn git_uncommitted_files_walkthrough() {
         // Outside a repo there is no scope at all.
         let plain = tempfile::tempdir().unwrap();
-        assert!(git_uncommitted_files(plain.path()).is_none());
+        assert!(git_changed_files(plain.path(), GitScope::Uncommitted).is_none());
 
         let tmp = tempfile::tempdir().unwrap();
         git(tmp.path(), &["init", "-q"]);
@@ -278,23 +311,40 @@ mod git_scope_tests {
         std::fs::write(tmp.path().join("committed.txt"), "v1").unwrap();
         git(tmp.path(), &["add", "."]);
         git(tmp.path(), &["commit", "-q", "-m", "init"]);
-        let files = git_uncommitted_files(tmp.path()).expect("should detect git repo");
+        let files =
+            git_changed_files(tmp.path(), GitScope::Uncommitted).expect("should detect git repo");
         assert!(files.is_empty());
 
         // Modified and untracked files are both picked up.
         std::fs::write(tmp.path().join("committed.txt"), "v2").unwrap();
         std::fs::write(tmp.path().join("new.txt"), "new").unwrap();
-        let files = git_uncommitted_files(tmp.path()).expect("should detect git repo");
+        let files =
+            git_changed_files(tmp.path(), GitScope::Uncommitted).expect("should detect git repo");
         let names: Vec<_> =
             files.iter().map(|p| p.file_name().unwrap().to_str().unwrap()).collect();
         assert!(names.contains(&"committed.txt"));
         assert!(names.contains(&"new.txt"));
 
+        // Staged scope sees only the index: stage one file, edit another unstaged.
+        git(tmp.path(), &["add", "new.txt"]);
+        let staged =
+            git_changed_files(tmp.path(), GitScope::Staged).expect("should detect git repo");
+        let staged_names: Vec<_> =
+            staged.iter().map(|p| p.file_name().unwrap().to_str().unwrap()).collect();
+        assert_eq!(staged_names, ["new.txt"]);
+
+        // Fingerprint changes when a file's content changes.
+        let all = git_changed_files(tmp.path(), GitScope::Uncommitted).unwrap();
+        let before = files_fingerprint(&all);
+        std::fs::write(tmp.path().join("committed.txt"), "v3-longer").unwrap();
+        assert_ne!(before, files_fingerprint(&all));
+
         // Deleted files drop back out of scope.
         git(tmp.path(), &["add", "."]);
         git(tmp.path(), &["commit", "-q", "-m", "second"]);
         std::fs::remove_file(tmp.path().join("new.txt")).unwrap();
-        let files = git_uncommitted_files(tmp.path()).expect("should detect git repo");
+        let files =
+            git_changed_files(tmp.path(), GitScope::Uncommitted).expect("should detect git repo");
         assert!(files.is_empty());
     }
 }

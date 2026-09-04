@@ -82,6 +82,12 @@ pub struct ServerState {
     // Set when the mood tier changed; drained by the watcher loop to
     // emit resources/updated for dictator://mood
     pub mood_dirty: bool,
+    // Last uncommitted check: (violations, files); None before first run
+    pub uncommitted_check: Option<(usize, usize)>,
+    // Uncommitted set at last check; skips redundant lints
+    pub uncommitted_fingerprint: Option<u64>,
+    // Drained by the watcher loop into dictator://uncommitted updates
+    pub uncommitted_dirty: bool,
 }
 
 /// The Dictator's disposition, derived from the last lint result
@@ -155,7 +161,21 @@ impl ServerState {
             progress_tracker: Arc::new(ProgressTracker::new(notif_tx)),
             last_violation_total: 0,
             mood_dirty: false,
+            uncommitted_check: None,
+            uncommitted_fingerprint: None,
+            uncommitted_dirty: false,
         }
+    }
+
+    /// Record an uncommitted check; flags `uncommitted_dirty` on change, syncs mood
+    pub fn record_uncommitted_check(&mut self, fingerprint: u64, violations: usize, files: usize) {
+        self.uncommitted_fingerprint = Some(fingerprint);
+        let next = Some((violations, files));
+        if self.uncommitted_check != next {
+            self.uncommitted_dirty = true;
+        }
+        self.uncommitted_check = next;
+        self.record_violations(violations);
     }
 
     /// Record a lint result, flagging `mood_dirty` when the mood tier changes

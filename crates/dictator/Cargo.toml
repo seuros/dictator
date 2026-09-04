@@ -28,6 +28,7 @@ dictator-rust = { version = "0.21.0", path = "../dictator-rust" }
 dictator-supreme = { version = "0.21.0", path = "../dictator-supreme" }
 dictator-typescript = { version = "0.21.0", path = "../dictator-typescript" }
 mcp-host = { version = "0.3.1", features = ["macros"] }
+schemars = "1.0.0-alpha.20"
 walkdir = { workspace = true }
 ignore = { workspace = true }
 tracing = { workspace = true }

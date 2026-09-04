@@ -4,12 +4,16 @@ use mcp_host::prelude::*;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 
+use crate::mcp::regime::run_stalint_check;
 use crate::mcp::resources::{CENSUS_URI, CONFIG_URI, handle_read_resource};
 use crate::mcp::state::ServerState;
+use crate::mcp::utils::{GitScope, files_fingerprint, git_changed_files};
 use crate::mcp_host::config_exists;
 
 /// URI for the mood resource
 pub const MOOD_URI: &str = "dictator://mood";
+/// URI for the uncommitted-changes resource
+pub const UNCOMMITTED_URI: &str = "dictator://uncommitted";
 
 /// Dictator resources using macro-based registration
 pub struct DictatorResources {
@@ -92,5 +96,46 @@ impl DictatorResources {
         })
         .to_string();
         Ok(vec![text_resource(MOOD_URI, text)])
+    }
+
+    /// Violation status of uncommitted files. Subscribe to be notified when
+    /// pending work starts or stops breaking decrees.
+    #[mcp_resource(
+        name = "Uncommitted",
+        uri = "dictator://uncommitted",
+        mime_type = "application/json",
+        subscribable = true
+    )]
+    async fn uncommitted(&self, _ctx: Ctx<'_>) -> ResourceResult {
+        let cwd = std::env::current_dir()
+            .map_err(|e| ResourceError::Read(format!("cannot resolve cwd: {e}")))?;
+
+        let text = match git_changed_files(&cwd, GitScope::Uncommitted) {
+            None => serde_json::json!({ "git": false }).to_string(),
+            Some(files) => {
+                let paths: Vec<String> =
+                    files.iter().map(|p| p.to_string_lossy().into_owned()).collect();
+                let violations = run_stalint_check(&paths);
+                {
+                    let mut state = self
+                        .state
+                        .lock()
+                        .map_err(|_| ResourceError::Read("state lock poisoned".to_string()))?;
+                    state.record_uncommitted_check(
+                        files_fingerprint(&files),
+                        violations.len(),
+                        paths.len(),
+                    );
+                }
+                serde_json::json!({
+                    "git": true,
+                    "clean": violations.is_empty(),
+                    "files": paths.len(),
+                    "violations": violations.len(),
+                })
+                .to_string()
+            }
+        };
+        Ok(vec![text_resource(UNCOMMITTED_URI, text)])
     }
 }
