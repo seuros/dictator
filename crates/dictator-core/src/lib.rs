@@ -1,5 +1,6 @@
 #![warn(rust_2024_compatibility, clippy::all)]
 
+pub mod classified;
 pub mod config;
 mod decree_matching;
 pub mod error;
@@ -9,7 +10,7 @@ pub mod wasm_cache;
 
 use anyhow::Result;
 use camino::Utf8Path;
-use dictator_decree_abi::{BoxDecree, Diagnostics};
+use dictator_decree_abi::{BoxDecree, Diagnostic, Diagnostics, Span};
 use std::collections::HashSet;
 
 pub use config::{DecreeSettings, DictateConfig};
@@ -125,6 +126,17 @@ impl Regime {
     pub fn enforce(&self, sources: &[Source<'_>]) -> Result<Diagnostics> {
         let mut all = Diagnostics::new();
         for src in sources {
+            // Classified files get one diagnostic and no inspection or fixes
+            if classified::is_classified(src.path) {
+                all.push(Diagnostic {
+                    rule: classified::CLASSIFIED_RULE.to_string(),
+                    message: "classified material — contents exempt from inspection".to_string(),
+                    span: Span { start: 0, end: 0 },
+                    enforced: false,
+                });
+                continue;
+            }
+
             let filename = src.path.file_name().unwrap_or("");
 
             // CSS-style specificity: if a language-specific decree is present for this file
@@ -428,6 +440,26 @@ mod tests {
                 capabilities: vec![Capability::Lint],
             }
         }
+    }
+
+    #[test]
+    fn classified_files_get_one_diag_and_no_inspection() {
+        let universal: BoxDecree = Box::new(MockDecree::simple("supreme", vec![], "supreme/hit"));
+        let mut regime = Regime::new();
+        regime.add_decree(universal);
+
+        let secret = Source {
+            path: Utf8Path::new("config/master.key"),
+            text: "27c79b585e4a73d4aa7645fe6c880533",
+        };
+        let diags = regime.enforce(&[secret]).unwrap();
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].rule, classified::CLASSIFIED_RULE);
+        assert!(!diags[0].enforced, "classified files must never be auto-fixed");
+
+        let public = Source { path: Utf8Path::new("main.rs"), text: "fn main() {}" };
+        let diags = regime.enforce(&[public]).unwrap();
+        assert_eq!(diags[0].rule, "supreme/hit");
     }
 
     #[test]

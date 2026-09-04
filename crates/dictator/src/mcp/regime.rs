@@ -32,7 +32,11 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
 
             if let Ok(diags) = regime.enforce(&[source]) {
                 for diag in &diags {
-                    let snippet = make_snippet(&text, &diag.span, 160);
+                    let snippet = if diag.rule == dictator_core::classified::CLASSIFIED_RULE {
+                        String::new()
+                    } else {
+                        make_snippet(&text, &diag.span, 160)
+                    };
                     violations.push(serde_json::json!({
                         "file": path_str,
                         "rule": diag.rule,

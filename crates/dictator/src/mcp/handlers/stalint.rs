@@ -118,7 +118,11 @@ pub fn handle_stalint(
         if let Ok(diags) = regime.enforce(&[source]) {
             for diag in &diags {
                 let (line, col) = byte_to_line_col(&text, diag.span.start);
-                let snippet = make_snippet(&text, &diag.span, 160);
+                let snippet = if diag.rule == dictator_core::classified::CLASSIFIED_RULE {
+                    String::new()
+                } else {
+                    make_snippet(&text, &diag.span, 160)
+                };
                 if single_file {
                     all_violations.push(serde_json::json!({
                         "line": line,
