@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.22.0](https://github.com/seuros/dictator/compare/dictator-core-v0.21.0...dictator-core-v0.22.0) (2026-09-04)
+
+
+### Features
+
+* decree classified materials exempt from inspection, snippets, and re-education ([629d114](https://github.com/seuros/dictator/commit/629d1147d05d9f661ea4dabad25f846336e741ae))
+* the Dictator abolishes clap, usage-rs 6 now parses the party line ([fcfc5ef](https://github.com/seuros/dictator/commit/fcfc5ef2eec4adcb7a15e8680e41e53158fb37b9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.21.0 to 0.22.0
+
 ## [0.21.0](https://github.com/seuros/dictator/compare/dictator-core-v0.20.0...dictator-core-v0.21.0) (2026-07-29)
 
 

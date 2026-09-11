@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.22.0](https://github.com/seuros/dictator/compare/dictator-ruby-v0.21.0...dictator-ruby-v0.22.0) (2026-09-04)
+
+
+### Features
+
+* the Dictator abolishes clap, usage-rs 6 now parses the party line ([fcfc5ef](https://github.com/seuros/dictator/commit/fcfc5ef2eec4adcb7a15e8680e41e53158fb37b9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-decree-abi bumped from 0.21.0 to 0.22.0
+    * dictator-core bumped from 0.21.0 to 0.22.0
+    * dictator-supreme bumped from 0.21.0 to 0.22.0
+
 ## [0.21.0](https://github.com/seuros/dictator/compare/dictator-ruby-v0.20.0...dictator-ruby-v0.21.0) (2026-07-29)
 
 
