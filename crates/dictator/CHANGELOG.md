@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.23.0](https://github.com/seuros/dictator/compare/dictator-v0.22.0...dictator-v0.23.0) (2026-09-14)
+
+
+### Features
+
+* decrees now speak through named personas, Ferris judges your tabs ([a401c71](https://github.com/seuros/dictator/commit/a401c715a5953e1d880dfa6b3b45bb2d29d33049))
+* wire dictator-freebsd into the CLI as a native decree ([17eb79e](https://github.com/seuros/dictator/commit/17eb79e1fe37ea46c01521284bd3cd7831bdcb67))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.22.0 to 0.23.0
+    * dictator-freebsd bumped from 0.1.0 to 0.1.1
+    * dictator-frontmatter bumped from 0.22.0 to 0.23.0
+    * dictator-golang bumped from 0.22.0 to 0.23.0
+    * dictator-python bumped from 0.22.0 to 0.23.0
+    * dictator-ruby bumped from 0.22.0 to 0.23.0
+    * dictator-rust bumped from 0.22.0 to 0.23.0
+    * dictator-typescript bumped from 0.22.0 to 0.23.0
+
 ## [0.22.0](https://github.com/seuros/dictator/compare/dictator-v0.21.0...dictator-v0.22.0) (2026-09-04)
 
 

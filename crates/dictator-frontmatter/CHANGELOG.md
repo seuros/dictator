@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.23.0](https://github.com/seuros/dictator/compare/dictator-frontmatter-v0.22.0...dictator-frontmatter-v0.23.0) (2026-09-14)
+
+
+### Features
+
+* decrees now speak through named personas, Ferris judges your tabs ([a401c71](https://github.com/seuros/dictator/commit/a401c715a5953e1d880dfa6b3b45bb2d29d33049))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.22.0 to 0.23.0
+
 ## [0.22.0](https://github.com/seuros/dictator/compare/dictator-frontmatter-v0.21.0...dictator-frontmatter-v0.22.0) (2026-09-04)
 
 
