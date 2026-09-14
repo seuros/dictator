@@ -21,7 +21,7 @@ struct LanguageDecree {
 
 /// The native language decrees, in load order. The order here must match the
 /// `enabled` array in [`init_regime_for_files`].
-fn language_decrees() -> [LanguageDecree; 5] {
+fn language_decrees() -> [LanguageDecree; 6] {
     [
         LanguageDecree {
             name: "ruby",
@@ -72,6 +72,13 @@ fn language_decrees() -> [LanguageDecree; 5] {
                 )
             },
             fallback: dictator_python::init_decree,
+        },
+        LanguageDecree {
+            name: "freebsd",
+            // dictator-freebsd has no per-decree settings to merge; settings/supreme
+            // are ignored, mirroring the fallback constructor.
+            with_configs: |_settings, _supreme| dictator_freebsd::init_decree(),
+            fallback: dictator_freebsd::init_decree,
         },
     ]
 }
@@ -205,6 +212,7 @@ pub fn init_regime_for_files(
         file_types.has_golang,
         file_types.has_rust,
         file_types.has_python,
+        file_types.has_freebsd,
     ];
     for (decree, &on) in language_decrees().iter().zip(enabled.iter()) {
         load_language_decree(&mut regime, decree_config, decree, on);

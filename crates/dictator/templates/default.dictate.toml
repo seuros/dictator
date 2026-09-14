@@ -96,6 +96,10 @@ extensions = ["md", "mdx"]
 # [decree.python.linter]
 # command = "ruff"
 
+# [decree.freebsd]
+# # FreeBSD style(9) C code + mdoc(7) man-page structural enforcement
+# # No settings to configure - presence in this file enables the decree.
+
 # [decree.frontmatter]
 # # YAML frontmatter ordering for .md and .mdx files only
 # # Does NOT handle: .astro (JS/TS frontmatter), .yml/.yaml, .toml

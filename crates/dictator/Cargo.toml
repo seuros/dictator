@@ -19,6 +19,7 @@ anyhow = { workspace = true }
 usage = { workspace = true }
 camino = { workspace = true }
 dictator-core = { version = "0.22.0", path = "../dictator-core" }
+dictator-freebsd = { version = "0.1.0", path = "../dictator-freebsd" }
 dictator-frontmatter = { version = "0.22.0", path = "../dictator-frontmatter" }
 dictator-golang = { version = "0.22.0", path = "../dictator-golang" }
 dictator-decree-abi.workspace = true

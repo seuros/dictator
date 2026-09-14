@@ -202,5 +202,6 @@ Native decrees are compiled into the Dictator binary:
 | rust | `dictator-rust` | `rs` | `Cargo.toml`, `build.rs`, etc. | `Cargo.lock` |
 | python | `dictator-python` | `py`, `pyi`, `pyw` | `pyproject.toml`, `setup.py`, `Pipfile`, etc. | `Pipfile.lock`, `poetry.lock`, `uv.lock` |
 | frontmatter | `dictator-frontmatter` | `md`, `mdx`, `astro` | - | - |
+| freebsd | `dictator-freebsd` | `c`, `h`, `1`-`9` | - | - |
 
 These serve as implementation references. Check their source for patterns.

@@ -212,7 +212,12 @@ impl Decree for FreeBsdDecree {
     }
 }
 
+#[must_use]
+pub fn init_decree() -> BoxDecree {
+    Box::new(FreeBsdDecree)
+}
+
 #[unsafe(no_mangle)]
 pub fn dictator_create_decree() -> BoxDecree {
-    Box::new(FreeBsdDecree)
+    init_decree()
 }

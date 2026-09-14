@@ -4,7 +4,7 @@ use camino::Utf8Path;
 use dictator_decree_abi::BoxDecree;
 
 /// Language-specific decrees that shadow decree.supreme.
-const SHADOWERS: [&str; 5] = ["ruby", "typescript", "golang", "rust", "python"];
+const SHADOWERS: [&str; 6] = ["ruby", "typescript", "golang", "rust", "python", "freebsd"];
 
 /// Check if a decree matches a file (by extension or filename).
 pub fn decree_matches(path: &Utf8Path, meta: &dictator_decree_abi::DecreeMetadata) -> bool {

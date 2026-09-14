@@ -376,6 +376,11 @@ required = ["title", "slug"]
 - Tab detection (Ruby uses spaces)
 - Blank line whitespace cleanup
 
+**`decree.freebsd`** (persona: Beastie) — uncomment `[decree.freebsd]` in `.dictate.toml` to enable:
+- `style(9)` enforcement for kernel C code (`.c`/`.h`): brace placement, operator/keyword spacing, comment style, indentation, banned constructs
+- mdoc(7)/man-page enforcement (sections `.1`-`.9`): macro ordering, `.Nd`/`.Cd`/`.Dl` quoting, SPDX header order, date format, module-load boilerplate
+- Shared `banned-license-gpl` check across both file kinds
+
 More decrees coming. Each language gets its own WASM decree for structural enforcement.
 
 ## Roadmap

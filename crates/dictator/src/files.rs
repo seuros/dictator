@@ -12,6 +12,7 @@ pub struct FileTypes {
     pub has_golang: bool,
     pub has_rust: bool,
     pub has_python: bool,
+    pub has_freebsd: bool,
     pub has_configs: bool,
 }
 
@@ -108,6 +109,9 @@ pub fn detect_file_types(files: &[Utf8PathBuf]) -> FileTypes {
             Some("go") => types.has_golang = true,
             Some("rs") => types.has_rust = true,
             Some("py") => types.has_python = true,
+            Some("c" | "h" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9") => {
+                types.has_freebsd = true;
+            }
             // Frontmatter only applies to .md and .mdx (YAML frontmatter)
             // .astro has JS/TS frontmatter - not handled by decree.frontmatter
             // .yml/.yaml/.toml are standalone config files - need separate decrees

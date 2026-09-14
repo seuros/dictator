@@ -650,6 +650,7 @@ dependencies = [
  "ctrlc",
  "dictator-core",
  "dictator-decree-abi",
+ "dictator-freebsd",
  "dictator-frontmatter",
  "dictator-golang",
  "dictator-python",
