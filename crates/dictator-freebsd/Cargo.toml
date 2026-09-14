@@ -1,0 +1,20 @@
+[package]
+name = "dictator-freebsd"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "FreeBSD style(9) enforcement decree for Dictator"
+repository = "https://github.com/seuros/dictator"
+keywords = ["freebsd", "style9", "linter", "dictator", "decree"]
+categories = ["development-tools::build-utils"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+dictator-decree-abi.workspace = true
+dictator-supreme.workspace = true
+state-machines.workspace = true
+jiff.workspace = true
