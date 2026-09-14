@@ -16,7 +16,7 @@ all = "warn"
 
 [dependencies]
 # Only the public ABI - this is how third-party decrees should be built
-dictator-decree-abi = { path = "../dictator-decree-abi" }
+dictator-decree-abi.workspace = true
 regex = "1"
 wit-bindgen = "0.22"
 

@@ -9,9 +9,54 @@ description = "coreboot coding style enforcement decree for Dictator"
 repository = "https://github.com/seuros/dictator"
 keywords = ["coreboot", "firmware", "linter", "dictator", "decree"]
 categories = ["development-tools::build-utils"]
+autotests = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 dictator-decree-abi.workspace = true
+
+[[test]]
+name = "clean_code"
+path = "tests/clean_code.rs"
+
+[[test]]
+name = "config_macro"
+path = "tests/config_macro.rs"
+
+[[test]]
+name = "coreboot_lowercase"
+path = "tests/coreboot_lowercase.rs"
+
+[[test]]
+name = "die_usage"
+path = "tests/die_usage.rs"
+
+[[test]]
+name = "free_is_noop"
+path = "tests/free_is_noop.rs"
+
+[[test]]
+name = "function_name"
+path = "tests/function_name.rs"
+
+[[test]]
+name = "no_auto_includes"
+path = "tests/no_auto_includes.rs"
+
+[[test]]
+name = "no_printf"
+path = "tests/no_printf.rs"
+
+[[test]]
+name = "non_ascii"
+path = "tests/non_ascii.rs"
+
+[[test]]
+name = "printk_log_level"
+path = "tests/printk_log_level.rs"
+
+[[test]]
+name = "style_labels"
+path = "tests/style_labels.rs"

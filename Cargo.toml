@@ -10,6 +10,8 @@ members = [
     "crates/dictator-rust",
     "crates/dictator-python",
     "crates/dictator-frontmatter",
+    "crates/dictator-coreboot",
+    "crates/dictator-freebsd",
 ]
 # WASM components require WASI SDK - build separately with:
 # WASI_SYSROOT=/path/to/wasi-sysroot cargo build -p <decree> --target wasm32-wasip1
@@ -25,11 +27,14 @@ repository = "https://github.com/seuros/dictator"
 homepage = "https://github.com/seuros/dictator"
 
 [workspace.dependencies]
+dictator-decree-abi = { version = "0.22.0", path = "crates/dictator-decree-abi" }
+dictator-supreme = { version = "0.22.0", path = "crates/dictator-supreme" }
 anyhow = "1"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_bytes = "0.11"
+jiff = "0.2"
 usage = { package = "usage-rs", version = "6" }
 rayon = "1"
 dashmap = "6"
@@ -53,6 +58,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 notify = "8"
 notify-types = "2"
+state-machines = "0.20"
 ctrlc = "3"
 tempfile = "3"
 

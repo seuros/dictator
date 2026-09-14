@@ -694,10 +694,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "dictator-coreboot"
+version = "0.1.0"
+dependencies = [
+ "dictator-decree-abi",
+]
+
+[[package]]
 name = "dictator-decree-abi"
 version = "0.22.0"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "dictator-freebsd"
+version = "0.1.0"
+dependencies = [
+ "dictator-decree-abi",
+ "dictator-supreme",
+ "jiff",
+ "state-machines",
 ]
 
 [[package]]
