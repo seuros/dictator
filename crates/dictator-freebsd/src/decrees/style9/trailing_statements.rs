@@ -85,30 +85,30 @@ pub(crate) fn check_trailing_statements(
         }
 
         // case/default labels should not have trailing general statements.
-        if trimmed.starts_with("case ") || trimmed.starts_with("default:") {
-            if let Some(colon_idx) = clean.find(':') {
-                let mut after = clean[colon_idx + 1..].trim_start();
-                let ok_return = after.starts_with("return ");
-                let ok_chain = after.starts_with("case ") || after.starts_with("default:");
-                if !ok_return {
-                    if let Some(rest) = after.strip_prefix('{') {
-                        after = rest.trim_start();
-                    }
-                    if let Some(rest) = after.strip_prefix('\\') {
-                        after = rest.trim_start();
-                    }
-                    if !after.is_empty() && !ok_chain {
-                        push_diag(
-                            decree,
-                            diags,
-                            "trailing-statement",
-                            "trailing statements should be on next line".to_string(),
-                            offset,
-                            colon_idx,
-                            colon_idx + 1,
-                            true,
-                        );
-                    }
+        if (trimmed.starts_with("case ") || trimmed.starts_with("default:"))
+            && let Some(colon_idx) = clean.find(':')
+        {
+            let mut after = clean[colon_idx + 1..].trim_start();
+            let ok_return = after.starts_with("return ");
+            let ok_chain = after.starts_with("case ") || after.starts_with("default:");
+            if !ok_return {
+                if let Some(rest) = after.strip_prefix('{') {
+                    after = rest.trim_start();
+                }
+                if let Some(rest) = after.strip_prefix('\\') {
+                    after = rest.trim_start();
+                }
+                if !after.is_empty() && !ok_chain {
+                    push_diag(
+                        decree,
+                        diags,
+                        "trailing-statement",
+                        "trailing statements should be on next line".to_string(),
+                        offset,
+                        colon_idx,
+                        colon_idx + 1,
+                        true,
+                    );
                 }
             }
         }

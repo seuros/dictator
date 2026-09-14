@@ -73,25 +73,25 @@ pub(crate) fn check_block_comment_style(
                 }
             }
 
-            if let Some(star_idx) = line.find('*') {
-                if line[..star_idx].trim().is_empty() {
-                    let star_col = expanded_len(&line[..star_idx]);
-                    if let Some(prev_col) = prev_star_col
-                        && prev_col != star_col
-                    {
-                        push_diag(
-                            decree,
-                            diags,
-                            "block-comment-align",
-                            "Block comments should align the * on each line".to_string(),
-                            offset,
-                            0,
-                            1,
-                            false,
-                        );
-                    }
-                    prev_star_col = Some(star_col);
+            if let Some(star_idx) = line.find('*')
+                && line[..star_idx].trim().is_empty()
+            {
+                let star_col = expanded_len(&line[..star_idx]);
+                if let Some(prev_col) = prev_star_col
+                    && prev_col != star_col
+                {
+                    push_diag(
+                        decree,
+                        diags,
+                        "block-comment-align",
+                        "Block comments should align the * on each line".to_string(),
+                        offset,
+                        0,
+                        1,
+                        false,
+                    );
                 }
+                prev_star_col = Some(star_col);
             }
 
             if let Some(close) = line.find("*/") {

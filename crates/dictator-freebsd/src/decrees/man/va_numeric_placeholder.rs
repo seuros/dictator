@@ -18,7 +18,7 @@ pub(crate) fn check_man_va_numeric_placeholder(
         let trimmed = line.trim();
 
         if let Some(rest) = trimmed.strip_prefix(".Va") {
-            let arg = rest.trim_start().split_whitespace().next().unwrap_or("");
+            let arg = rest.split_whitespace().next().unwrap_or("");
             let has_bare_n = arg.split('.').any(|segment| segment == "N");
 
             if has_bare_n {

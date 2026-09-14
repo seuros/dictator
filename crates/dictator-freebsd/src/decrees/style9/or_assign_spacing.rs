@@ -13,19 +13,22 @@ pub(crate) fn check_or_assign_spacing(
         return;
     }
     for i in 1..bytes.len() - 1 {
-        if bytes[i] == b'|' && bytes[i + 1] == b'=' && bytes[i - 1].is_ascii_whitespace() {
-            if i + 2 < bytes.len() && !bytes[i + 2].is_ascii_whitespace() {
-                push_diag(
-                    decree,
-                    diags,
-                    "operator-spacing",
-                    "spaces required around that '|=' (ctx:WxV)".to_string(),
-                    offset,
-                    i,
-                    i + 2,
-                    true,
-                );
-            }
+        if bytes[i] == b'|'
+            && bytes[i + 1] == b'='
+            && bytes[i - 1].is_ascii_whitespace()
+            && i + 2 < bytes.len()
+            && !bytes[i + 2].is_ascii_whitespace()
+        {
+            push_diag(
+                decree,
+                diags,
+                "operator-spacing",
+                "spaces required around that '|=' (ctx:WxV)".to_string(),
+                offset,
+                i,
+                i + 2,
+                true,
+            );
         }
     }
 }

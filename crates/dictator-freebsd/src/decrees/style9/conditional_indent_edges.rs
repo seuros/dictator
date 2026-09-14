@@ -128,7 +128,7 @@ pub(crate) fn check_conditional_indent_edges(
             {
                 let indent = leading_indent(lines[i]);
                 let sindent = leading_indent(lines[j]);
-                if (sindent % 4) != 0 {
+                if !sindent.is_multiple_of(4) {
                     push_diag(
                         decree,
                         diags,

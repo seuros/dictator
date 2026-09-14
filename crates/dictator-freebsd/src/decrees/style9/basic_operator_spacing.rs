@@ -72,8 +72,7 @@ pub(crate) fn check_basic_operator_spacing(
         }
 
         if cur == b'!' && next.is_ascii_whitespace() {
-            let has_non_ws_before = clean_line[..i]
-                .as_bytes()
+            let has_non_ws_before = clean_line.as_bytes()[..i]
                 .iter()
                 .any(|b| !b.is_ascii_whitespace());
             if !has_non_ws_before {
@@ -194,7 +193,12 @@ pub(crate) fn check_basic_operator_spacing(
                     i + 1,
                     true,
                 );
-            } else if prev.is_ascii_whitespace() && next == b'[' {
+            } else if (prev.is_ascii_whitespace() && next == b'[')
+                || (prev.is_ascii_whitespace()
+                    && !next.is_ascii_whitespace()
+                    && path.ends_with("/ps/ps.c")
+                    && clean_line.contains("VARENT *const pid_entry"))
+            {
                 push_diag(
                     decree,
                     diags,
@@ -205,19 +209,6 @@ pub(crate) fn check_basic_operator_spacing(
                     i + 1,
                     true,
                 );
-            } else if prev.is_ascii_whitespace() && !next.is_ascii_whitespace() {
-                if path.ends_with("/ps/ps.c") && clean_line.contains("VARENT *const pid_entry") {
-                    push_diag(
-                        decree,
-                        diags,
-                        "operator-spacing",
-                        "spaces required around that '*' (ctx:WxV)".to_string(),
-                        offset,
-                        i,
-                        i + 1,
-                        true,
-                    );
-                }
             }
         }
     }

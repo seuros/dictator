@@ -71,7 +71,7 @@ pub(crate) fn check_conditional_indent(
 
         let indent = leading_indent(lines[i]);
         let sindent = leading_indent(lines[j]);
-        if (sindent % 4) != 0 || sindent < indent {
+        if !sindent.is_multiple_of(4) || sindent < indent {
             push_diag(
                 decree,
                 diags,

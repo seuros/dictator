@@ -145,8 +145,8 @@ pub(crate) fn is_standalone_string_line(line: &str) -> bool {
         return true;
     }
 
-    if rest.ends_with(';') {
-        let before_semicolon = rest[..rest.len() - 1].trim();
+    if let Some(before_semicolon) = rest.strip_suffix(';') {
+        let before_semicolon = before_semicolon.trim();
         return before_semicolon.is_empty() || before_semicolon == ")";
     }
 
@@ -660,6 +660,10 @@ pub(crate) fn macro_has_multiple_statements(body: &str) -> bool {
     !body[sc + 1..].trim().is_empty()
 }
 
+// One row per Diagnostic field plus the FreeBsdDecree/Diagnostics sinks passed
+// through from every call site - splitting into a params struct would just
+// move the field list, not shrink it.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn push_diag(
     decree: &FreeBsdDecree,
     diags: &mut Diagnostics,
