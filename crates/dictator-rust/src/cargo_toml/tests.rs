@@ -8,7 +8,10 @@ name = "test"
 version = "0.1.0"
 edition = "2021"
 "#;
-    let config = RustConfig { min_edition: Some("2024".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_edition: Some("2024".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         diags.iter().any(|d| d.rule == "rust/fossil-edition"),
@@ -23,7 +26,10 @@ name = "test"
 version = "0.1.0"
 edition = "2024"
 "#;
-    let config = RustConfig { min_edition: Some("2024".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_edition: Some("2024".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         !diags.iter().any(|d| d.rule == "rust/fossil-edition"),
@@ -38,7 +44,10 @@ name = "test"
 version = "0.1.0"
 edition = "2024"
 "#;
-    let config = RustConfig { min_edition: Some("2021".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_edition: Some("2021".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         !diags.iter().any(|d| d.rule == "rust/fossil-edition"),
@@ -52,7 +61,10 @@ fn detects_missing_edition() {
 name = "test"
 version = "0.1.0"
 "#;
-    let config = RustConfig { min_edition: Some("2024".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_edition: Some("2024".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         diags.iter().any(|d| d.rule == "rust/missing-edition"),
@@ -67,9 +79,15 @@ name = "test"
 version = "0.1.0"
 edition = "2015"
 "#;
-    let config = RustConfig { min_edition: None, ..Default::default() };
+    let config = RustConfig {
+        min_edition: None,
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
-    assert!(diags.is_empty(), "Should skip edition check when min_edition is None");
+    assert!(
+        diags.is_empty(),
+        "Should skip edition check when min_edition is None"
+    );
 }
 
 #[test]
@@ -78,7 +96,10 @@ fn handles_edition_without_spaces() {
 name="test"
 edition="2021"
 "#;
-    let config = RustConfig { min_edition: Some("2024".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_edition: Some("2024".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         diags.iter().any(|d| d.rule == "rust/fossil-edition"),
@@ -93,7 +114,10 @@ name = "test"
 version = "0.1.0"
 rust-version = "1.70"
 "#;
-    let config = RustConfig { min_rust_version: Some("1.83".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_rust_version: Some("1.83".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         diags.iter().any(|d| d.rule == "rust/fossil-rust-version"),
@@ -107,7 +131,10 @@ fn accepts_rust_version_meeting_minimum() {
 name = "test"
 rust-version = "1.83"
 "#;
-    let config = RustConfig { min_rust_version: Some("1.83".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_rust_version: Some("1.83".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         !diags.iter().any(|d| d.rule == "rust/fossil-rust-version"),
@@ -121,7 +148,10 @@ fn accepts_rust_version_exceeding_minimum() {
 name = "test"
 rust-version = "1.85"
 "#;
-    let config = RustConfig { min_rust_version: Some("1.83".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_rust_version: Some("1.83".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         !diags.iter().any(|d| d.rule == "rust/fossil-rust-version"),
@@ -135,7 +165,10 @@ fn accepts_rust_version_with_patch() {
 name = "test"
 rust-version = "1.83.1"
 "#;
-    let config = RustConfig { min_rust_version: Some("1.83.0".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_rust_version: Some("1.83.0".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         !diags.iter().any(|d| d.rule == "rust/fossil-rust-version"),
@@ -149,7 +182,10 @@ fn detects_missing_rust_version() {
 name = "test"
 version = "0.1.0"
 "#;
-    let config = RustConfig { min_rust_version: Some("1.83".to_string()), ..Default::default() };
+    let config = RustConfig {
+        min_rust_version: Some("1.83".to_string()),
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         diags.iter().any(|d| d.rule == "rust/missing-rust-version"),
@@ -163,7 +199,10 @@ fn skips_rust_version_check_when_disabled() {
 name = "test"
 rust-version = "1.50"
 "#;
-    let config = RustConfig { min_rust_version: None, ..Default::default() };
+    let config = RustConfig {
+        min_rust_version: None,
+        ..Default::default()
+    };
     let diags = lint_cargo_toml(cargo_toml, &config);
     assert!(
         !diags.iter().any(|d| d.rule.contains("rust-version")),

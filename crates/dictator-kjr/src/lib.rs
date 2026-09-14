@@ -110,6 +110,7 @@ impl Decree for KimJongRails {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "Kim Jong Rails - enterprise productivity enforcement".to_string(),
+            persona: "Kim Jong Rails".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec![
                 "rb".to_string(),
@@ -171,6 +172,7 @@ impl exports::dictator::decree::lints::Guest for PluginImpl {
             abi_version: meta.abi_version,
             decree_version: meta.decree_version,
             description: meta.description,
+            persona: meta.persona,
             dectauthors: meta.dectauthors,
             supported_extensions: meta.supported_extensions,
             supported_filenames: meta.supported_filenames,

@@ -14,7 +14,11 @@ pub struct RubyConfig {
 
 impl Default for RubyConfig {
     fn default() -> Self {
-        Self { max_lines: 300, ignore_comments: false, comment_spacing: true }
+        Self {
+            max_lines: 300,
+            ignore_comments: false,
+            comment_spacing: true,
+        }
     }
 }
 
@@ -79,14 +83,28 @@ fn lint_ruby_specific(source: &str, config: &RubyConfig) -> Diagnostics {
     let mut line_idx: usize = 0;
 
     for nl in memchr_iter(b'\n', bytes) {
-        process_line(source, line_start, nl, line_idx, config.comment_spacing, &mut diags);
+        process_line(
+            source,
+            line_start,
+            nl,
+            line_idx,
+            config.comment_spacing,
+            &mut diags,
+        );
         line_start = nl + 1;
         line_idx += 1;
     }
 
     if line_start < bytes.len() {
         // Final line without trailing newline.
-        process_line(source, line_start, bytes.len(), line_idx, config.comment_spacing, &mut diags);
+        process_line(
+            source,
+            line_start,
+            bytes.len(),
+            line_idx,
+            config.comment_spacing,
+            &mut diags,
+        );
     }
 
     diags
@@ -133,6 +151,7 @@ impl Decree for RubyHygiene {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "Ruby code structure and hygiene".to_string(),
+            persona: "Matz".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec!["rb".to_string(), "rake".to_string(), "gemspec".to_string()],
             supported_filenames: vec![

@@ -11,7 +11,9 @@ fn sandbox(rel: &str) -> String {
 fn blog_config() -> FrontmatterConfig {
     // The sandbox blog contract: title, slug, pubDate, description, tags.
     FrontmatterConfig {
-        order: ["title", "slug", "pubDate", "description", "tags"].map(String::from).to_vec(),
+        order: ["title", "slug", "pubDate", "description", "tags"]
+            .map(String::from)
+            .to_vec(),
         required: ["title", "slug"].map(String::from).to_vec(),
     }
 }
@@ -20,7 +22,9 @@ fn blog_config() -> FrontmatterConfig {
 fn invalid_yaml_fixture() {
     let diags = lint_source(&sandbox("blog-invalid-yaml.md"), "blog-invalid-yaml.md");
     assert!(
-        diags.iter().any(|d| d.rule == "decree.frontmatter/invalid-yaml"),
+        diags
+            .iter()
+            .any(|d| d.rule == "decree.frontmatter/invalid-yaml"),
         "blog-invalid-yaml.md should trigger invalid-yaml"
     );
 }
@@ -33,7 +37,9 @@ fn wrong_field_order_fixture() {
         &blog_config(),
     );
     assert!(
-        diags.iter().any(|d| d.rule == "decree.frontmatter/field-order"),
+        diags
+            .iter()
+            .any(|d| d.rule == "decree.frontmatter/field-order"),
         "blog-wrong-frontmatter-order.md should trigger field-order"
     );
 }
@@ -46,7 +52,9 @@ fn missing_required_field_fixture() {
         &blog_config(),
     );
     assert!(
-        diags.iter().any(|d| d.rule == "decree.frontmatter/missing-required-field"),
+        diags
+            .iter()
+            .any(|d| d.rule == "decree.frontmatter/missing-required-field"),
         "blog-missing-required-field.md should trigger missing-required-field (slug)"
     );
 }
@@ -55,6 +63,10 @@ fn missing_required_field_fixture() {
 fn valid_fixtures_stay_clean() {
     for rel in ["blog-valid-frontmatter.md", "blog-no-frontmatter.md"] {
         let diags = lint_source_with_config(&sandbox(rel), rel, &blog_config());
-        assert!(diags.is_empty(), "{rel} should be violation-free, got: {:?}", diags);
+        assert!(
+            diags.is_empty(),
+            "{rel} should be violation-free, got: {:?}",
+            diags
+        );
     }
 }

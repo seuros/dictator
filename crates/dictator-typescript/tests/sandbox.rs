@@ -3,7 +3,10 @@
 use dictator_typescript::lint_source;
 
 fn sandbox(rel: &str) -> String {
-    let path = format!("{}/../../sandbox/typescript/{rel}", env!("CARGO_MANIFEST_DIR"));
+    let path = format!(
+        "{}/../../sandbox/typescript/{rel}",
+        env!("CARGO_MANIFEST_DIR")
+    );
     std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("sandbox fixture {rel}: {e}"))
 }
 
@@ -29,7 +32,9 @@ fn wrong_import_order_fixture() {
 fn inconsistent_indentation_fixture() {
     let diags = lint_source(&sandbox("InconsistentIndentation.ts"));
     assert!(
-        diags.iter().any(|d| d.rule == "typescript/inconsistent-indentation"),
+        diags
+            .iter()
+            .any(|d| d.rule == "typescript/inconsistent-indentation"),
         "InconsistentIndentation.ts should trigger typescript/inconsistent-indentation"
     );
 }

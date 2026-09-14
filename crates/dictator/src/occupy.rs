@@ -27,16 +27,24 @@ pub fn run_occupy(args: OccupyArgs) -> Result<()> {
         let cwd = Utf8PathBuf::from_path_buf(cwd).map_err(|_| anyhow::anyhow!("non-utf8 path"))?;
 
         // Avoid double-dot when path is "."
-        if args.path.as_str() == "." { cwd } else { cwd.join(&args.path) }
+        if args.path.as_str() == "." {
+            cwd
+        } else {
+            cwd.join(&args.path)
+        }
     };
 
     // Ensure target directory exists
     if !target_dir.exists() {
-        return Err(anyhow::anyhow!("Target directory does not exist: {target_dir}"));
+        return Err(anyhow::anyhow!(
+            "Target directory does not exist: {target_dir}"
+        ));
     }
 
     if !target_dir.is_dir() {
-        return Err(anyhow::anyhow!("Target path is not a directory: {target_dir}"));
+        return Err(anyhow::anyhow!(
+            "Target path is not a directory: {target_dir}"
+        ));
     }
 
     let config_path = target_dir.join(".dictate.toml");

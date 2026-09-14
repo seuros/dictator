@@ -15,7 +15,12 @@ pub enum OutputFormat {
 
 /// Multi-regime linter
 #[derive(Debug, usage::Cli)]
-#[usage(bin = "dictator", version, unknown_flags = "error", args_override_self = false)]
+#[usage(
+    bin = "dictator",
+    version,
+    unknown_flags = "error",
+    args_override_self = false
+)]
 pub struct Args {
     /// Optional config file (TOML only). Default: .dictate.toml if present.
     #[usage(short, long, global)]

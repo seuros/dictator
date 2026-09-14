@@ -130,7 +130,11 @@ impl DictatorTools {
         idempotent = true
     )]
     async fn stalint(&self, ctx: Ctx<'_>, params: Parameters<StalintParams>) -> ToolResult {
-        let scope = if params.0.staged { GitScope::Staged } else { GitScope::Uncommitted };
+        let scope = if params.0.staged {
+            GitScope::Staged
+        } else {
+            GitScope::Uncommitted
+        };
         let paths = match resolve_paths(&ctx, scope).await {
             Some(p) => p,
             None => {
@@ -146,7 +150,11 @@ impl DictatorTools {
         };
 
         if paths.is_empty() {
-            let scope_word = if params.0.staged { "staged" } else { "uncommitted" };
+            let scope_word = if params.0.staged {
+                "staged"
+            } else {
+                "uncommitted"
+            };
             return Ok(ToolOutput::text(format!(
                 "Working tree is clean — no {scope_word} files to lint."
             )));
@@ -156,7 +164,10 @@ impl DictatorTools {
             let espionage = paths.iter().any(|p| {
                 dictator_core::classified::is_classified(camino::Utf8Path::new(p.as_str()))
             });
-            self.state.lock().unwrap().record_classified_staged(espionage);
+            self.state
+                .lock()
+                .unwrap()
+                .record_classified_staged(espionage);
         }
 
         let args = Some(serde_json::json!({ "paths": paths }));
@@ -165,8 +176,9 @@ impl DictatorTools {
 
         // Staged classified files are a commit-in-progress leak: escalate
         if params.0.staged
-            && let Some(violations) =
-                result.pointer_mut("/structuredContent/violations").and_then(Value::as_array_mut)
+            && let Some(violations) = result
+                .pointer_mut("/structuredContent/violations")
+                .and_then(Value::as_array_mut)
         {
             for violation in violations {
                 if violation["rule"] == dictator_core::classified::CLASSIFIED_RULE {
@@ -228,8 +240,9 @@ impl DictatorTools {
                  violations:\n\n{lint_summary}\n\nConfirm?"
             );
 
-            let schema =
-                ElicitationSchema::builder().optional_bool("confirm", false).build_unchecked();
+            let schema = ElicitationSchema::builder()
+                .optional_bool("confirm", false)
+                .build_unchecked();
 
             let result = requester
                 .request_elicitation(
@@ -249,7 +262,9 @@ impl DictatorTools {
                     .unwrap_or(false);
 
             if !confirmed {
-                return Err(ToolError::Execution("Operation cancelled by user".to_string()));
+                return Err(ToolError::Execution(
+                    "Operation cancelled by user".to_string(),
+                ));
             }
         }
 

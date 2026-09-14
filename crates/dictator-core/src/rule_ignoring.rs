@@ -59,7 +59,10 @@ pub fn is_rule_ignored_for_path(
     let Some(ext) = path.extension() else {
         return false;
     };
-    ignore.extensions.iter().any(|e| e.eq_ignore_ascii_case(ext))
+    ignore
+        .extensions
+        .iter()
+        .any(|e| e.eq_ignore_ascii_case(ext))
 }
 
 #[cfg(test)]

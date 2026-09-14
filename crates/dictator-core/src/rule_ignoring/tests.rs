@@ -7,7 +7,10 @@ fn ignores_by_filename() {
     let mut settings = DecreeSettings::default();
     settings.ignore.insert(
         "tab-character".to_string(),
-        RuleIgnore { filenames: vec!["Makefile".to_string()], extensions: vec![] },
+        RuleIgnore {
+            filenames: vec!["Makefile".to_string()],
+            extensions: vec![],
+        },
     );
     let mut config = DictateConfig::default();
     config.decree.insert("supreme".to_string(), settings);
@@ -21,8 +24,16 @@ fn ignores_by_filename() {
         enforced: false,
     };
 
-    assert!(is_rule_ignored_for_path(&ignores, Utf8Path::new("Makefile"), &diag));
-    assert!(!is_rule_ignored_for_path(&ignores, Utf8Path::new("other.txt"), &diag));
+    assert!(is_rule_ignored_for_path(
+        &ignores,
+        Utf8Path::new("Makefile"),
+        &diag
+    ));
+    assert!(!is_rule_ignored_for_path(
+        &ignores,
+        Utf8Path::new("other.txt"),
+        &diag
+    ));
 }
 
 #[test]
@@ -30,7 +41,10 @@ fn ignores_by_extension() {
     let mut settings = DecreeSettings::default();
     settings.ignore.insert(
         "tab-character".to_string(),
-        RuleIgnore { filenames: vec![], extensions: vec!["md".to_string(), "MDX".to_string()] },
+        RuleIgnore {
+            filenames: vec![],
+            extensions: vec!["md".to_string(), "MDX".to_string()],
+        },
     );
     let mut config = DictateConfig::default();
     config.decree.insert("supreme".to_string(), settings);
@@ -44,9 +58,21 @@ fn ignores_by_extension() {
         enforced: false,
     };
 
-    assert!(is_rule_ignored_for_path(&ignores, Utf8Path::new("README.md"), &diag));
-    assert!(is_rule_ignored_for_path(&ignores, Utf8Path::new("doc.mdx"), &diag));
-    assert!(!is_rule_ignored_for_path(&ignores, Utf8Path::new("code.rs"), &diag));
+    assert!(is_rule_ignored_for_path(
+        &ignores,
+        Utf8Path::new("README.md"),
+        &diag
+    ));
+    assert!(is_rule_ignored_for_path(
+        &ignores,
+        Utf8Path::new("doc.mdx"),
+        &diag
+    ));
+    assert!(!is_rule_ignored_for_path(
+        &ignores,
+        Utf8Path::new("code.rs"),
+        &diag
+    ));
 }
 
 #[test]
@@ -54,7 +80,10 @@ fn does_not_ignore_unconfigured_rules() {
     let mut settings = DecreeSettings::default();
     settings.ignore.insert(
         "tab-character".to_string(),
-        RuleIgnore { filenames: vec!["Makefile".to_string()], extensions: vec![] },
+        RuleIgnore {
+            filenames: vec!["Makefile".to_string()],
+            extensions: vec![],
+        },
     );
     let mut config = DictateConfig::default();
     config.decree.insert("supreme".to_string(), settings);
@@ -69,5 +98,9 @@ fn does_not_ignore_unconfigured_rules() {
     };
 
     // Different rule, should not be ignored
-    assert!(!is_rule_ignored_for_path(&ignores, Utf8Path::new("Makefile"), &diag));
+    assert!(!is_rule_ignored_for_path(
+        &ignores,
+        Utf8Path::new("Makefile"),
+        &diag
+    ));
 }

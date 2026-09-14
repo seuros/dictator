@@ -4,14 +4,21 @@ use super::*;
 fn test_default_config_is_valid_toml() {
     // Ensure the default config parses as valid TOML
     let parsed: Result<toml::Value, _> = toml::from_str(DEFAULT_CONFIG);
-    assert!(parsed.is_ok(), "Default config must be valid TOML: {:?}", parsed.err());
+    assert!(
+        parsed.is_ok(),
+        "Default config must be valid TOML: {:?}",
+        parsed.err()
+    );
 }
 
 #[test]
 fn test_default_config_has_supreme_decree() {
     let config: toml::Value = toml::from_str(DEFAULT_CONFIG).unwrap();
     assert!(
-        config.get("decree").and_then(|d| d.get("supreme")).is_some(),
+        config
+            .get("decree")
+            .and_then(|d| d.get("supreme"))
+            .is_some(),
         "Default config must include decree.supreme"
     );
 }

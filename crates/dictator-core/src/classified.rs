@@ -6,8 +6,9 @@ use camino::Utf8Path;
 /// Rule id emitted for classified files
 pub const CLASSIFIED_RULE: &str = "supreme/classified";
 
-const CLASSIFIED_EXTENSIONS: &[&str] =
-    &["pem", "key", "enc", "p12", "pfx", "der", "jks", "keystore", "kdbx", "keytab"];
+const CLASSIFIED_EXTENSIONS: &[&str] = &[
+    "pem", "key", "enc", "p12", "pfx", "der", "jks", "keystore", "kdbx", "keytab",
+];
 
 const CLASSIFIED_FILENAMES: &[&str] = &[
     "master.key",
@@ -33,7 +34,10 @@ pub fn is_classified(path: &Utf8Path) -> bool {
     };
     let lower = name.to_ascii_lowercase();
 
-    if TEMPLATE_SUFFIXES.iter().any(|suffix| lower.ends_with(suffix)) {
+    if TEMPLATE_SUFFIXES
+        .iter()
+        .any(|suffix| lower.ends_with(suffix))
+    {
         return false;
     }
     if CLASSIFIED_FILENAMES.contains(&lower.as_str()) || lower.starts_with(".env") {

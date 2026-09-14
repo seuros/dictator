@@ -56,7 +56,9 @@ fn detects_spaces_instead_of_tabs() {
     let src = "package main\n\nfunc test() {\n    x := 1\n}\n";
     let diags = lint_source(src);
     assert!(
-        diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Should detect spaces used for indentation"
     );
 }
@@ -66,7 +68,9 @@ fn allows_tabs_for_indentation() {
     let src = "package main\n\nfunc test() {\n\tx := 1\n}\n";
     let diags = lint_source(src);
     assert!(
-        !diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        !diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Should allow tabs for indentation"
     );
 }
@@ -76,7 +80,9 @@ fn detects_spaces_at_line_start() {
     let src = "package main\n\nfunc test() {\n    \tx := 1\n}\n";
     let diags = lint_source(src);
     assert!(
-        diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Should detect spaces at start of indented line"
     );
 }
@@ -103,7 +109,9 @@ fn allows_blank_lines() {
     let src = "package main\n\n\nfunc test() {\n\tx := 1\n}\n";
     let diags = lint_source(src);
     assert!(
-        !diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        !diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Should allow blank lines"
     );
 }
@@ -118,7 +126,9 @@ fn allows_spaces_inside_raw_string_literals() {
     );
     let diags = lint_source(src);
     assert!(
-        !diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        !diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Should allow spaces inside raw string literals (backtick strings)"
     );
 }
@@ -128,7 +138,9 @@ fn allows_spaces_in_multiline_raw_string() {
     let src = "package main\n\nvar help = `\n  Usage:\n    command [flags]\n`\n";
     let diags = lint_source(src);
     assert!(
-        !diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        !diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Should allow spaces in multiline raw string"
     );
 }
@@ -138,7 +150,9 @@ fn detects_spaces_after_raw_string_closes() {
     let src = "package main\n\nvar x = `raw`\n  y := 1\n";
     let diags = lint_source(src);
     assert!(
-        diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Should detect spaces after raw string closes"
     );
 }
@@ -148,7 +162,9 @@ fn handles_multiple_raw_strings() {
     let src = "package main\n\nvar a = `\n  first\n`\nvar b = `\n  second\n`\n";
     let diags = lint_source(src);
     assert!(
-        !diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        !diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Should handle multiple raw strings correctly"
     );
 }
@@ -159,7 +175,9 @@ fn handles_raw_string_with_backticks_inline() {
     let src = "package main\n\nvar x = `inline`\n  y := 1\n";
     let diags = lint_source(src);
     assert!(
-        diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "Inline raw strings should not affect next line"
     );
 }
@@ -168,8 +186,14 @@ fn handles_raw_string_with_backticks_inline() {
 fn ignores_long_comment_lines_when_configured() {
     let long_comment = format!("// {}\n", "x".repeat(150));
     let src = format!("package main\n{long_comment}func main() {{}}\n");
-    let config = GolangConfig { ignore_comments: true, ..Default::default() };
-    let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+    let config = GolangConfig {
+        ignore_comments: true,
+        ..Default::default()
+    };
+    let supreme = SupremeConfig {
+        max_line_length: Some(120),
+        ..Default::default()
+    };
     let diags = lint_source_with_configs(&src, &config, &supreme);
     assert!(
         !diags.iter().any(|d| d.rule == "golang/line-too-long"),
@@ -182,7 +206,10 @@ fn detects_long_comment_lines_when_not_configured() {
     let long_comment = format!("// {}\n", "x".repeat(150));
     let src = format!("package main\n{long_comment}func main() {{}}\n");
     let config = GolangConfig::default(); // ignore_comments = false
-    let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+    let supreme = SupremeConfig {
+        max_line_length: Some(120),
+        ..Default::default()
+    };
     let diags = lint_source_with_configs(&src, &config, &supreme);
     assert!(
         diags.iter().any(|d| d.rule == "golang/line-too-long"),
@@ -194,8 +221,14 @@ fn detects_long_comment_lines_when_not_configured() {
 fn still_detects_long_code_lines_with_ignore_comments() {
     let long_code = format!("\tx := \"{}\"\n", "a".repeat(150));
     let src = format!("package main\n{long_code}func main() {{}}\n");
-    let config = GolangConfig { ignore_comments: true, ..Default::default() };
-    let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+    let config = GolangConfig {
+        ignore_comments: true,
+        ..Default::default()
+    };
+    let supreme = SupremeConfig {
+        max_line_length: Some(120),
+        ..Default::default()
+    };
     let diags = lint_source_with_configs(&src, &config, &supreme);
     assert!(
         diags.iter().any(|d| d.rule == "golang/line-too-long"),

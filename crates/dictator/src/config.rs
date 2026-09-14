@@ -15,12 +15,17 @@ pub struct ConfigFile {
 
 impl Default for ConfigFile {
     fn default() -> Self {
-        Self { format: Some(OutputFormat::Human), enable_native: Some(true) }
+        Self {
+            format: Some(OutputFormat::Human),
+            enable_native: Some(true),
+        }
     }
 }
 
 pub fn load_config(path: Option<&Utf8PathBuf>) -> Result<ConfigFile> {
-    let config_path = path.cloned().unwrap_or_else(|| Utf8PathBuf::from(".dictate.toml"));
+    let config_path = path
+        .cloned()
+        .unwrap_or_else(|| Utf8PathBuf::from(".dictate.toml"));
 
     if config_path.exists() {
         let content = fs::read_to_string(&config_path)?;

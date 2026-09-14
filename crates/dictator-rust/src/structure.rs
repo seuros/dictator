@@ -31,7 +31,10 @@ pub fn check_mod_rs_structure(path: &str, diags: &mut Diagnostics) {
 
     // Violation: mod.rs with no siblings should be file.rs
     if sibling_count == 0 {
-        let module_name = parent.file_name().and_then(|n| n.to_str()).unwrap_or("module");
+        let module_name = parent
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("module");
 
         diags.push(Diagnostic {
             rule: "rust/unnecessary-mod-rs".to_string(),

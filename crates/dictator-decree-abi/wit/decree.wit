@@ -22,6 +22,7 @@ interface lints {
     abi-version: string,
     decree-version: string,
     description: string,
+    persona: string,
     dectauthors: option<string>,
     supported-extensions: list<string>,
     supported-filenames: list<string>,

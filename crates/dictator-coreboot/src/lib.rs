@@ -21,6 +21,7 @@ impl Decree for CorebootDecree {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "coreboot coding style enforcement for firmware C code".to_string(),
+            persona: "Bootie".to_string(),
             dectauthors: Some("Abdelkader Boudih <terminale@gmail.com>".to_string()),
             supported_extensions: vec!["c".to_string(), "h".to_string()],
             supported_filenames: vec![],

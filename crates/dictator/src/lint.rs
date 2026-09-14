@@ -12,7 +12,9 @@ use crate::cli::{LintArgs, OutputFormat};
 use crate::config::{load_config, load_dictate_config};
 use crate::dictate::apply_single_fix;
 use crate::files::{collect_all_files, detect_file_types};
-use crate::output::{SerializableDiagnostic, byte_to_line_col, print_diagnostic};
+use crate::output::{
+    SerializableDiagnostic, byte_to_line_col, print_diagnostic, print_persona_summary,
+};
 use crate::regime::init_regime_for_files;
 
 pub fn run_once(
@@ -21,8 +23,11 @@ pub fn run_once(
     profile: Option<String>,
 ) -> Result<()> {
     let cfg = load_config(config_path.as_ref())?;
-    let format =
-        if args.json { OutputFormat::Json } else { cfg.format.unwrap_or(OutputFormat::Human) };
+    let format = if args.json {
+        OutputFormat::Json
+    } else {
+        cfg.format.unwrap_or(OutputFormat::Human)
+    };
 
     let files = collect_all_files(&args.paths)?;
     if files.is_empty() {
@@ -63,6 +68,8 @@ pub fn run_once(
         regime.add_wasm_decree(p)?;
     }
 
+    let personas = regime.personas();
+
     let exit_code = Arc::new(Mutex::new(0));
     let json_out = Arc::new(Mutex::new(Vec::new()));
     let fixed_count = Arc::new(Mutex::new(0usize));
@@ -73,27 +80,35 @@ pub fn run_once(
             return Ok(());
         };
         let path_ref = path.as_path();
-        let source = Source { path: path_ref, text: &text };
+        let source = Source {
+            path: path_ref,
+            text: &text,
+        };
         let diags = regime.enforce(&[source])?;
 
         if !diags.is_empty() {
             let mut seen = HashSet::new();
             let mut fixed_text = text.clone();
             let mut file_was_fixed = false;
+            let unique_diags: Vec<_> = diags
+                .iter()
+                .filter(|diag| {
+                    seen.insert((
+                        path_ref.as_str().to_string(),
+                        diag.span.start,
+                        diag.span.end,
+                        diag.rule.clone(),
+                        diag.message.clone(),
+                        diag.enforced,
+                    ))
+                })
+                .collect();
 
-            for diag in &diags {
-                let key = (
-                    path_ref.as_str().to_string(),
-                    diag.span.start,
-                    diag.span.end,
-                    diag.rule.clone(),
-                    diag.message.clone(),
-                    diag.enforced,
-                );
-                if !seen.insert(key) {
-                    continue;
-                }
+            if matches!(format, OutputFormat::Human) {
+                print_persona_summary(path_ref.as_str(), &unique_diags, &personas);
+            }
 
+            for diag in unique_diags {
                 // Apply fix if --fix is set and this is a fixable violation
                 if args.fix
                     && diag.enforced

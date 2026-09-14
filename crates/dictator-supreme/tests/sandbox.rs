@@ -10,7 +10,10 @@ fn sandbox(rel: &str) -> String {
 }
 
 fn rules(rel: &str) -> Vec<String> {
-    lint_source(&sandbox(rel)).into_iter().map(|d| d.rule).collect()
+    lint_source(&sandbox(rel))
+        .into_iter()
+        .map(|d| d.rule)
+        .collect()
 }
 
 #[test]
@@ -22,7 +25,9 @@ fn trailing_whitespace_fixtures() {
         "typescript/BadReactComponent.tsx",
     ] {
         assert!(
-            rules(rel).iter().any(|r| r == "supreme/trailing-whitespace"),
+            rules(rel)
+                .iter()
+                .any(|r| r == "supreme/trailing-whitespace"),
             "{rel} should trigger supreme/trailing-whitespace"
         );
     }
@@ -40,7 +45,9 @@ fn missing_final_newline_fixtures() {
         "typescript/InconsistentIndentation.ts",
     ] {
         assert!(
-            rules(rel).iter().any(|r| r == "supreme/missing-final-newline"),
+            rules(rel)
+                .iter()
+                .any(|r| r == "supreme/missing-final-newline"),
             "{rel} should trigger supreme/missing-final-newline"
         );
     }

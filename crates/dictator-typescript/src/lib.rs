@@ -9,7 +9,11 @@ use memchr::memchr_iter;
 /// Lint TypeScript source for structural violations.
 #[must_use]
 pub fn lint_source(source: &str) -> Diagnostics {
-    lint_source_with_configs(source, &TypeScriptConfig::default(), &SupremeConfig::default())
+    lint_source_with_configs(
+        source,
+        &TypeScriptConfig::default(),
+        &SupremeConfig::default(),
+    )
 }
 
 /// Lint TypeScript source with custom configuration.
@@ -58,7 +62,10 @@ pub struct TypeScriptConfig {
 
 impl Default for TypeScriptConfig {
     fn default() -> Self {
-        Self { max_lines: 350, ignore_comments: false }
+        Self {
+            max_lines: 350,
+            ignore_comments: false,
+        }
     }
 }
 
@@ -255,6 +262,7 @@ impl Decree for TypeScript {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "TypeScript/JavaScript structural rules".to_string(),
+            persona: "Anders".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec![
                 "ts".to_string(),

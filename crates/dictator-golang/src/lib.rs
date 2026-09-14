@@ -15,7 +15,10 @@ pub struct GolangConfig {
 
 impl Default for GolangConfig {
     fn default() -> Self {
-        Self { max_lines: 450, ignore_comments: false }
+        Self {
+            max_lines: 450,
+            ignore_comments: false,
+        }
     }
 }
 
@@ -166,6 +169,7 @@ impl Decree for Golang {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "Go structural rules".to_string(),
+            persona: "Gopher".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec!["go".to_string()],
             supported_filenames: vec!["go.mod".to_string(), "go.work".to_string()],

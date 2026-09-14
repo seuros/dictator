@@ -11,7 +11,9 @@ fn sandbox(rel: &str) -> String {
 fn mixed_tabs_spaces_fixture_uses_spaces() {
     let diags = lint_source(&sandbox("mixed_tabs_spaces.go"));
     assert!(
-        diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "mixed_tabs_spaces.go should trigger golang/spaces-instead-of-tabs"
     );
 }
@@ -31,7 +33,9 @@ fn raw_string_help_fixture_is_clean() {
     // Cobra-style help text indented with spaces inside backtick strings.
     let diags = lint_source(&sandbox("raw_string_help.go"));
     assert!(
-        !diags.iter().any(|d| d.rule == "golang/spaces-instead-of-tabs"),
+        !diags
+            .iter()
+            .any(|d| d.rule == "golang/spaces-instead-of-tabs"),
         "raw_string_help.go spaces live inside raw strings and must not be flagged"
     );
 }

@@ -44,7 +44,10 @@ fn ignores_blank_lines_in_count() {
         src.push('\n');
     }
     let diags = lint_source(&src);
-    assert!(!diags.iter().any(|d| d.rule == "rust/file-too-long"), "Should not count blank lines");
+    assert!(
+        !diags.iter().any(|d| d.rule == "rust/file-too-long"),
+        "Should not count blank lines"
+    );
 }
 
 #[test]

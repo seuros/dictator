@@ -24,6 +24,12 @@ pub enum Capability {
     RichDiagnostics,
 }
 
+/// Fallback persona for decrees that don't declare one (e.g. older WASM
+/// plugins compiled before the `persona` field existed).
+fn default_persona() -> String {
+    "The Dictator".to_string()
+}
+
 /// Metadata for decree versioning and capabilities
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecreeMetadata {
@@ -33,6 +39,10 @@ pub struct DecreeMetadata {
     pub decree_version: String,
     /// Human-readable description
     pub description: String,
+    /// The named persona that speaks for this decree in diagnostics
+    /// (e.g. FreeBSD -> "Beastie", Rust -> "Ferris").
+    #[serde(default = "default_persona")]
+    pub persona: String,
     /// Decree authors (from workspace, optional)
     pub dectauthors: Option<String>,
     /// File extensions this decree handles (e.g., `["rb", "rake"]`)
@@ -66,9 +76,15 @@ impl DecreeMetadata {
         if parts.len() != 3 {
             return Err(format!("invalid version format: {version}"));
         }
-        let major = parts[0].parse().map_err(|_| format!("invalid major: {}", parts[0]))?;
-        let minor = parts[1].parse().map_err(|_| format!("invalid minor: {}", parts[1]))?;
-        let patch = parts[2].parse().map_err(|_| format!("invalid patch: {}", parts[2]))?;
+        let major = parts[0]
+            .parse()
+            .map_err(|_| format!("invalid major: {}", parts[0]))?;
+        let minor = parts[1]
+            .parse()
+            .map_err(|_| format!("invalid minor: {}", parts[1]))?;
+        let patch = parts[2]
+            .parse()
+            .map_err(|_| format!("invalid patch: {}", parts[2]))?;
         Ok((major, minor, patch))
     }
 

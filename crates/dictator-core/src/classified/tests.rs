@@ -14,7 +14,10 @@ fn classification_table() {
         ".netrc",
         "store.p12",
     ] {
-        assert!(is_classified(Utf8Path::new(secret)), "{secret} should be classified");
+        assert!(
+            is_classified(Utf8Path::new(secret)),
+            "{secret} should be classified"
+        );
     }
     for public in [
         ".env.example",
@@ -25,6 +28,9 @@ fn classification_table() {
         ".ssh/id_rsa.pub",
         "keyboard.rs",
     ] {
-        assert!(!is_classified(Utf8Path::new(public)), "{public} should be lintable");
+        assert!(
+            !is_classified(Utf8Path::new(public)),
+            "{public} should be lintable"
+        );
     }
 }

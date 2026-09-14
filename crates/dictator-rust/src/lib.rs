@@ -26,7 +26,12 @@ pub struct RustConfig {
 
 impl Default for RustConfig {
     fn default() -> Self {
-        Self { max_lines: 400, min_edition: None, min_rust_version: None, ignore_comments: false }
+        Self {
+            max_lines: 400,
+            min_edition: None,
+            min_rust_version: None,
+            ignore_comments: false,
+        }
     }
 }
 
@@ -64,7 +69,9 @@ pub fn lint_source_with_configs(
         diags.extend(supreme_diags.into_iter().filter(|d| {
             if d.rule == "rust/line-too-long" {
                 let line_idx = source[..d.span.start].matches('\n').count();
-                !lines.get(line_idx).is_some_and(|line| line.trim_start().starts_with("//"))
+                !lines
+                    .get(line_idx)
+                    .is_some_and(|line| line.trim_start().starts_with("//"))
             } else {
                 true
             }
@@ -98,8 +105,10 @@ impl Decree for RustDecree {
     }
 
     fn lint(&self, path: &str, source: &str) -> Diagnostics {
-        let filename =
-            std::path::Path::new(path).file_name().and_then(|f| f.to_str()).unwrap_or("");
+        let filename = std::path::Path::new(path)
+            .file_name()
+            .and_then(|f| f.to_str())
+            .unwrap_or("");
 
         // Cargo.toml gets edition check only (no supreme formatting rules)
         if filename == "Cargo.toml" {
@@ -120,6 +129,7 @@ impl Decree for RustDecree {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "Rust structural rules".to_string(),
+            persona: "Ferris".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec!["rs".to_string()],
             supported_filenames: vec![

@@ -11,7 +11,7 @@ pub mod wasm_cache;
 use anyhow::Result;
 use camino::Utf8Path;
 use dictator_decree_abi::{BoxDecree, Diagnostic, Diagnostics, Span};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 pub use config::{DecreeSettings, DictateConfig};
 pub use error::{DictatorContext, DictatorError, suggestions};
@@ -38,7 +38,10 @@ impl Default for Regime {
 impl Regime {
     #[must_use]
     pub fn new() -> Self {
-        Self { decrees: Vec::new(), rule_ignores: rule_ignoring::RuleIgnores::new() }
+        Self {
+            decrees: Vec::new(),
+            rule_ignores: rule_ignoring::RuleIgnores::new(),
+        }
     }
 
     /// Get WASM cache statistics if available
@@ -70,6 +73,16 @@ impl Regime {
     /// Configure per-rule ignores from a loaded `.dictate.toml`.
     pub fn set_rule_ignores_from_config(&mut self, config: Option<&DictateConfig>) {
         self.rule_ignores = rule_ignoring::build_rule_ignores(config);
+    }
+
+    /// Map each loaded decree's name to its persona (e.g. `"freebsd"` ->
+    /// `"Beastie"`), for persona-voiced diagnostic summaries.
+    #[must_use]
+    pub fn personas(&self) -> HashMap<String, String> {
+        self.decrees
+            .iter()
+            .map(|d| (d.name().to_string(), d.metadata().persona))
+            .collect()
     }
 
     /// Return the union of supported extensions for all loaded decrees.
@@ -234,7 +247,11 @@ pub(crate) mod loader {
                 .with_context(|| format!("failed to load native decree: {}", lib_path.display()))?;
             let ctor: libloading::Symbol<DecreeFactory> =
                 lib.get(DECREE_FACTORY_EXPORT.as_bytes()).with_context(|| {
-                    format!("missing symbol {} in {}", DECREE_FACTORY_EXPORT, lib_path.display())
+                    format!(
+                        "missing symbol {} in {}",
+                        DECREE_FACTORY_EXPORT,
+                        lib_path.display()
+                    )
                 })?;
 
             let decree = ctor();
@@ -242,7 +259,12 @@ pub(crate) mod loader {
             // Validate ABI compatibility
             let metadata = decree.metadata();
             metadata.validate_abi(ABI_VERSION).map_err(|e| {
-                anyhow::anyhow!("Decree '{}' from {}: {}", decree.name(), lib_path.display(), e)
+                anyhow::anyhow!(
+                    "Decree '{}' from {}: {}",
+                    decree.name(),
+                    lib_path.display(),
+                    e
+                )
             })?;
 
             tracing::info!(
@@ -272,7 +294,10 @@ pub(crate) mod loader {
 
     impl WasiView for HostState {
         fn ctx(&mut self) -> WasiCtxView<'_> {
-            WasiCtxView { ctx: &mut self.wasi, table: &mut self.table }
+            WasiCtxView {
+                ctx: &mut self.wasi,
+                table: &mut self.table,
+            }
         }
     }
 
@@ -297,7 +322,10 @@ pub(crate) mod loader {
             let result = {
                 let mut guard = self.state.lock().expect("wasm store poisoned");
                 let WasmState { plugin, store } = &mut *guard;
-                plugin.dictator_decree_lints().call_lint(store, path, source).unwrap_or_default()
+                plugin
+                    .dictator_decree_lints()
+                    .call_lint(store, path, source)
+                    .unwrap_or_default()
             };
             result
                 .into_iter()
@@ -305,7 +333,10 @@ pub(crate) mod loader {
                     rule: d.rule,
                     message: d.message,
                     enforced: matches!(d.severity, guest::Severity::Info), // Info = auto-fixed
-                    span: Span { start: d.span.start as usize, end: d.span.end as usize },
+                    span: Span {
+                        start: d.span.start as usize,
+                        end: d.span.end as usize,
+                    },
                 })
                 .collect()
         }
@@ -333,7 +364,9 @@ pub(crate) mod loader {
         let plugin = bindings::Decree::instantiate(&mut store, &component, &linker)?;
         let guest = plugin.dictator_decree_lints();
 
-        let name = guest.call_name(&mut store).unwrap_or_else(|_| "wasm-decree".to_string());
+        let name = guest
+            .call_name(&mut store)
+            .unwrap_or_else(|_| "wasm-decree".to_string());
 
         // Get and validate metadata
         let wasm_meta = guest
@@ -345,6 +378,7 @@ pub(crate) mod loader {
             abi_version: wasm_meta.abi_version,
             decree_version: wasm_meta.decree_version,
             description: wasm_meta.description,
+            persona: wasm_meta.persona,
             dectauthors: wasm_meta.dectauthors,
             supported_extensions: wasm_meta.supported_extensions,
             supported_filenames: wasm_meta.supported_filenames,
@@ -383,7 +417,11 @@ pub(crate) mod loader {
             metadata.abi_version
         );
 
-        Ok(Box::new(WasmDecree { name, metadata, state: Mutex::new(WasmState { store, plugin }) }))
+        Ok(Box::new(WasmDecree {
+            name,
+            metadata,
+            state: Mutex::new(WasmState { store, plugin }),
+        }))
     }
 
     pub fn load_decree(path: &Path) -> Result<BoxDecree> {

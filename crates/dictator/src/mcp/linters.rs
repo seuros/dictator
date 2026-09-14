@@ -150,8 +150,10 @@ fn run_linter(command: &str, paths: &[&str], output: &mut String) {
     let _ = writeln!(output, "\n>> Dictator conducting {command} inquisition...");
 
     // For linters without JSON output (gofmt, rustfmt, etc.), list files first
-    let has_json_output =
-        matches!(command, "rubocop" | "eslint" | "biome" | "ruff" | "clippy" | "cargo-clippy");
+    let has_json_output = matches!(
+        command,
+        "rubocop" | "eslint" | "biome" | "ruff" | "clippy" | "cargo-clippy"
+    );
 
     if has_json_output {
         run_json_linter(command, &args, paths, output);

@@ -118,8 +118,13 @@ fn is_struct_field_or_impl_item(trimmed: &str) -> bool {
         let before_colon = field_part[..colon_pos].trim();
         // Valid field name: starts with letter/underscore, contains only alphanumeric/underscore
         !before_colon.is_empty()
-            && before_colon.chars().next().is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
-            && before_colon.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+            && before_colon
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+            && before_colon
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_')
     })
 }
 

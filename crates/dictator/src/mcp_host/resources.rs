@@ -113,8 +113,10 @@ impl DictatorResources {
         let text = match git_changed_files(&cwd, GitScope::Uncommitted) {
             None => serde_json::json!({ "git": false }).to_string(),
             Some(files) => {
-                let paths: Vec<String> =
-                    files.iter().map(|p| p.to_string_lossy().into_owned()).collect();
+                let paths: Vec<String> = files
+                    .iter()
+                    .map(|p| p.to_string_lossy().into_owned())
+                    .collect();
                 let violations = run_stalint_check(&paths);
                 {
                     let mut state = self

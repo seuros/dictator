@@ -20,7 +20,10 @@ pub struct PythonConfig {
 
 impl Default for PythonConfig {
     fn default() -> Self {
-        Self { max_lines: file_length::DEFAULT_MAX_LINES, ignore_comments: false }
+        Self {
+            max_lines: file_length::DEFAULT_MAX_LINES,
+            ignore_comments: false,
+        }
     }
 }
 
@@ -85,6 +88,7 @@ impl Decree for Python {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "Python structural rules".to_string(),
+            persona: "Monty".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec!["py".to_string(), "pyi".to_string(), "pyw".to_string()],
             supported_filenames: vec![

@@ -43,7 +43,9 @@ max_line_length = 140
 "#,
     );
 
-    let config = load_dictate_config(Some(&path), Some("relaxed")).unwrap().unwrap();
+    let config = load_dictate_config(Some(&path), Some("relaxed"))
+        .unwrap()
+        .unwrap();
 
     assert_eq!(config.decree["supreme"].max_line_length, Some(140));
 }

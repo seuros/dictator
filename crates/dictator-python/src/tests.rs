@@ -115,7 +115,9 @@ def test():
 ";
     let diags = lint_source(src);
     assert!(
-        diags.iter().any(|d| d.rule == "python/inconsistent-indentation"),
+        diags
+            .iter()
+            .any(|d| d.rule == "python/inconsistent-indentation"),
         "Should detect inconsistent indentation depth (3 spaces instead of 2 or 4)"
     );
 }
@@ -183,8 +185,14 @@ fn classifies_modules_correctly() {
 fn ignores_long_comment_lines_when_configured() {
     let long_comment = format!("# {}\n", "x".repeat(150));
     let src = format!("def foo():\n{long_comment}    pass\n");
-    let config = PythonConfig { ignore_comments: true, ..Default::default() };
-    let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+    let config = PythonConfig {
+        ignore_comments: true,
+        ..Default::default()
+    };
+    let supreme = SupremeConfig {
+        max_line_length: Some(120),
+        ..Default::default()
+    };
     let python = Python::new(config, supreme);
     let diags = python.lint("test.py", &src);
     assert!(
@@ -198,7 +206,10 @@ fn detects_long_comment_lines_when_not_configured() {
     let long_comment = format!("# {}\n", "x".repeat(150));
     let src = format!("def foo():\n{long_comment}    pass\n");
     let config = PythonConfig::default(); // ignore_comments = false
-    let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+    let supreme = SupremeConfig {
+        max_line_length: Some(120),
+        ..Default::default()
+    };
     let python = Python::new(config, supreme);
     let diags = python.lint("test.py", &src);
     assert!(
@@ -211,8 +222,14 @@ fn detects_long_comment_lines_when_not_configured() {
 fn still_detects_long_code_lines_with_ignore_comments() {
     let long_code = format!("    x = \"{}\"\n", "a".repeat(150));
     let src = format!("def foo():\n{long_code}    pass\n");
-    let config = PythonConfig { ignore_comments: true, ..Default::default() };
-    let supreme = SupremeConfig { max_line_length: Some(120), ..Default::default() };
+    let config = PythonConfig {
+        ignore_comments: true,
+        ..Default::default()
+    };
+    let supreme = SupremeConfig {
+        max_line_length: Some(120),
+        ..Default::default()
+    };
     let python = Python::new(config, supreme);
     let diags = python.lint("test.py", &src);
     assert!(

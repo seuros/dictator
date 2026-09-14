@@ -26,7 +26,8 @@ pub fn decree_matches(path: &Utf8Path, meta: &dictator_decree_abi::DecreeMetadat
 
 /// Check if a file's extension matches any in the supported list.
 pub fn extension_matches(path: &Utf8Path, supported: &[String]) -> bool {
-    path.extension().is_some_and(|ext| supported.iter().any(|s| s == ext))
+    path.extension()
+        .is_some_and(|ext| supported.iter().any(|s| s == ext))
 }
 
 /// Check if supreme should be shadowed for this path.

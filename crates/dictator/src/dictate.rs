@@ -92,7 +92,10 @@ fn run_batch_dictate(
         let Some(original) = crate::files::read_source_file(path.as_std_path()) else {
             continue;
         };
-        let source = dictator_core::Source { path: path.as_path(), text: &original };
+        let source = dictator_core::Source {
+            path: path.as_path(),
+            text: &original,
+        };
 
         let diags = regime.enforce(&[source])?;
         let mut fixed_text = original.clone();

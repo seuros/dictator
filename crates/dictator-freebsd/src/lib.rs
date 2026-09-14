@@ -126,6 +126,7 @@ impl Decree for FreeBsdDecree {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "FreeBSD style(9) enforcement for kernel C code".to_string(),
+            persona: "Beastie".to_string(),
             dectauthors: Some("Abdelkader Boudih <terminale@gmail.com>".to_string()),
             supported_extensions: vec![
                 "c".to_string(),

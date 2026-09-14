@@ -29,7 +29,11 @@ pub struct FrontmatterConfig {
 }
 
 fn default_order() -> Vec<String> {
-    vec!["title".to_string(), "description".to_string(), "pubDate".to_string()]
+    vec![
+        "title".to_string(),
+        "description".to_string(),
+        "pubDate".to_string(),
+    ]
 }
 
 fn default_required() -> Vec<String> {
@@ -38,7 +42,10 @@ fn default_required() -> Vec<String> {
 
 impl Default for FrontmatterConfig {
     fn default() -> Self {
-        Self { order: default_order(), required: default_required() }
+        Self {
+            order: default_order(),
+            required: default_required(),
+        }
     }
 }
 
@@ -48,7 +55,9 @@ const FRONTMATTER_EXTENSIONS: &[&str] = &["md", "mdx"];
 fn has_frontmatter_extension(file_path: &str) -> bool {
     Path::new(file_path).extension().is_some_and(|ext| {
         let ext_lower = ext.to_ascii_lowercase();
-        FRONTMATTER_EXTENSIONS.iter().any(|&supported| supported == ext_lower)
+        FRONTMATTER_EXTENSIONS
+            .iter()
+            .any(|&supported| supported == ext_lower)
     })
 }
 
@@ -126,7 +135,11 @@ fn extract_frontmatter(source: &str) -> Option<ExtractedFrontmatter> {
         let start_offset = 3 + newline_pos + 1;
         let end_offset = start_offset + closing_pos;
 
-        ExtractedFrontmatter { content, start_offset, end_offset }
+        ExtractedFrontmatter {
+            content,
+            start_offset,
+            end_offset,
+        }
     })
 }
 
@@ -207,6 +220,7 @@ impl Decree for Frontmatter {
             abi_version: dictator_decree_abi::ABI_VERSION.to_string(),
             decree_version: env!("CARGO_PKG_VERSION").to_string(),
             description: "Frontmatter field ordering and validation".to_string(),
+            persona: "The Registrar".to_string(),
             dectauthors: Some(env!("CARGO_PKG_AUTHORS").to_string()),
             supported_extensions: vec!["md".to_string(), "mdx".to_string(), "astro".to_string()],
             supported_filenames: vec![],

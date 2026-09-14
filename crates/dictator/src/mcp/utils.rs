@@ -43,9 +43,16 @@ pub fn get_log_path(filename: &str) -> std::path::PathBuf {
 pub fn log_to_file(msg: &str) {
     let log_file = get_log_path("mcp.log");
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(&log_file) {
-        let now =
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
-        let _ = writeln!(file, "[{}.{:03}] {}", now.as_secs(), now.subsec_millis(), msg);
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default();
+        let _ = writeln!(
+            file,
+            "[{}.{:03}] {}",
+            now.as_secs(),
+            now.subsec_millis(),
+            msg
+        );
     }
 }
 
@@ -124,12 +131,21 @@ pub fn git_changed_files(
     if !toplevel_out.status.success() {
         return None;
     }
-    let toplevel = String::from_utf8_lossy(&toplevel_out.stdout).trim().to_string();
+    let toplevel = String::from_utf8_lossy(&toplevel_out.stdout)
+        .trim()
+        .to_string();
 
     // -z: NUL-separated, unquoted paths. --no-renames: report renames as plain
     // delete+add so each entry is a single path, not "old -> new".
     let status_out = std::process::Command::new("git")
-        .args(["-C", &toplevel, "status", "--porcelain=v1", "--no-renames", "-z"])
+        .args([
+            "-C",
+            &toplevel,
+            "status",
+            "--porcelain=v1",
+            "--no-renames",
+            "-z",
+        ])
         .output()
         .ok()?;
     if !status_out.status.success() {
@@ -270,17 +286,24 @@ pub fn make_snippet(source: &str, span: &dictator_decree_abi::Span, max_len: usi
 
     // Find line bounds containing the span start.
     let line_start = source[..start].rfind('\n').map_or(0, |idx| idx + 1);
-    let line_end = source[start..].find('\n').map_or_else(|| source.len(), |off| start + off);
+    let line_end = source[start..]
+        .find('\n')
+        .map_or_else(|| source.len(), |off| start + off);
 
     let line = &source[line_start..line_end];
 
     // Sanitize control characters (except tab) to spaces and trim trailing whitespace.
-    let mut cleaned: String =
-        line.chars().map(|c| if c.is_control() && c != '\t' { ' ' } else { c }).collect();
+    let mut cleaned: String = line
+        .chars()
+        .map(|c| if c.is_control() && c != '\t' { ' ' } else { c })
+        .collect();
     cleaned.truncate(cleaned.trim_end().len());
 
     if cleaned.len() > max_len {
-        let mut out = cleaned.chars().take(max_len.saturating_sub(1)).collect::<String>();
+        let mut out = cleaned
+            .chars()
+            .take(max_len.saturating_sub(1))
+            .collect::<String>();
         out.push('…');
         out
     } else {
@@ -312,7 +335,11 @@ mod git_scope_tests {
     use std::process::Command;
 
     fn git(dir: &std::path::Path, args: &[&str]) {
-        let status = Command::new("git").current_dir(dir).args(args).status().unwrap();
+        let status = Command::new("git")
+            .current_dir(dir)
+            .args(args)
+            .status()
+            .unwrap();
         assert!(status.success(), "git {args:?} failed in {dir:?}");
     }
 
@@ -340,8 +367,10 @@ mod git_scope_tests {
         std::fs::write(tmp.path().join("new.txt"), "new").unwrap();
         let files =
             git_changed_files(tmp.path(), GitScope::Uncommitted).expect("should detect git repo");
-        let names: Vec<_> =
-            files.iter().map(|p| p.file_name().unwrap().to_str().unwrap()).collect();
+        let names: Vec<_> = files
+            .iter()
+            .map(|p| p.file_name().unwrap().to_str().unwrap())
+            .collect();
         assert!(names.contains(&"committed.txt"));
         assert!(names.contains(&"new.txt"));
 
@@ -349,8 +378,10 @@ mod git_scope_tests {
         git(tmp.path(), &["add", "new.txt"]);
         let staged =
             git_changed_files(tmp.path(), GitScope::Staged).expect("should detect git repo");
-        let staged_names: Vec<_> =
-            staged.iter().map(|p| p.file_name().unwrap().to_str().unwrap()).collect();
+        let staged_names: Vec<_> = staged
+            .iter()
+            .map(|p| p.file_name().unwrap().to_str().unwrap())
+            .collect();
         assert_eq!(staged_names, ["new.txt"]);
 
         // Fingerprint changes when a file's content changes.

@@ -12,7 +12,13 @@ struct MockDecree {
 
 impl MockDecree {
     fn simple(name: &'static str, exts: Vec<String>, rule: &'static str) -> Self {
-        Self { name, exts, filenames: vec![], skip: vec![], rule }
+        Self {
+            name,
+            exts,
+            filenames: vec![],
+            skip: vec![],
+            rule,
+        }
     }
 }
 
@@ -35,6 +41,7 @@ impl Decree for MockDecree {
             abi_version: "1".into(),
             decree_version: "1".into(),
             description: String::new(),
+            persona: "The Dictator".into(),
             dectauthors: None,
             supported_extensions: self.exts.clone(),
             supported_filenames: self.filenames.clone(),
@@ -57,17 +64,26 @@ fn classified_files_get_one_diag_and_no_inspection() {
     let diags = regime.enforce(&[secret]).unwrap();
     assert_eq!(diags.len(), 1);
     assert_eq!(diags[0].rule, classified::CLASSIFIED_RULE);
-    assert!(!diags[0].enforced, "classified files must never be auto-fixed");
+    assert!(
+        !diags[0].enforced,
+        "classified files must never be auto-fixed"
+    );
 
-    let public = Source { path: Utf8Path::new("main.rs"), text: "fn main() {}" };
+    let public = Source {
+        path: Utf8Path::new("main.rs"),
+        text: "fn main() {}",
+    };
     let diags = regime.enforce(&[public]).unwrap();
     assert_eq!(diags[0].rule, "supreme/hit");
 }
 
 #[test]
 fn watched_extensions_unites_declared_sets() {
-    let decree_a: BoxDecree =
-        Box::new(MockDecree::simple("a", vec!["rs".into(), "Rb".into()], "a/hit"));
+    let decree_a: BoxDecree = Box::new(MockDecree::simple(
+        "a",
+        vec!["rs".into(), "Rb".into()],
+        "a/hit",
+    ));
     let decree_b: BoxDecree = Box::new(MockDecree::simple("b", vec!["ts".into()], "b/hit"));
     let mut regime = Regime::new();
     regime.add_decree(decree_a);
@@ -125,13 +141,19 @@ fn enforce_runs_supreme_when_language_specific_does_not_match() {
 
 #[test]
 fn enforce_ignores_configured_rules_by_filename() {
-    let supreme: BoxDecree =
-        Box::new(MockDecree::simple("supreme", vec![], "supreme/tab-character"));
+    let supreme: BoxDecree = Box::new(MockDecree::simple(
+        "supreme",
+        vec![],
+        "supreme/tab-character",
+    ));
 
     let mut settings = DecreeSettings::default();
     settings.ignore.insert(
         "tab-character".to_string(),
-        crate::config::RuleIgnore { filenames: vec!["Makefile".to_string()], extensions: vec![] },
+        crate::config::RuleIgnore {
+            filenames: vec!["Makefile".to_string()],
+            extensions: vec![],
+        },
     );
     let mut config = DictateConfig::default();
     config.decree.insert("supreme".to_string(), settings);
@@ -148,8 +170,11 @@ fn enforce_ignores_configured_rules_by_filename() {
 
 #[test]
 fn enforce_ignores_configured_rules_by_extension() {
-    let supreme: BoxDecree =
-        Box::new(MockDecree::simple("supreme", vec![], "supreme/tab-character"));
+    let supreme: BoxDecree = Box::new(MockDecree::simple(
+        "supreme",
+        vec![],
+        "supreme/tab-character",
+    ));
 
     let mut settings = DecreeSettings::default();
     settings.ignore.insert(
@@ -179,8 +204,11 @@ fn enforce_ignores_configured_rules_by_extension() {
 
 #[test]
 fn enforce_does_not_ignore_unconfigured_rules() {
-    let supreme: BoxDecree =
-        Box::new(MockDecree::simple("supreme", vec![], "supreme/trailing-whitespace"));
+    let supreme: BoxDecree = Box::new(MockDecree::simple(
+        "supreme",
+        vec![],
+        "supreme/trailing-whitespace",
+    ));
 
     let mut settings = DecreeSettings::default();
     settings.ignore.insert(
@@ -201,7 +229,9 @@ fn enforce_does_not_ignore_unconfigured_rules() {
     let sources = [Source { path, text: "x" }];
     let diags = regime.enforce(&sources).unwrap();
     assert!(
-        diags.iter().any(|d| d.rule == "supreme/trailing-whitespace"),
+        diags
+            .iter()
+            .any(|d| d.rule == "supreme/trailing-whitespace"),
         "unconfigured rules should still be reported"
     );
 }
@@ -209,8 +239,11 @@ fn enforce_does_not_ignore_unconfigured_rules() {
 #[test]
 fn enforce_does_not_shadow_supreme_for_non_language_decree() {
     let supreme: BoxDecree = Box::new(MockDecree::simple("supreme", vec![], "supreme/hit"));
-    let frontmatter: BoxDecree =
-        Box::new(MockDecree::simple("frontmatter", vec!["md".into()], "frontmatter/hit"));
+    let frontmatter: BoxDecree = Box::new(MockDecree::simple(
+        "frontmatter",
+        vec!["md".into()],
+        "frontmatter/hit",
+    ));
 
     let mut regime = Regime::new();
     regime.add_decree(supreme);
@@ -227,18 +260,31 @@ fn enforce_does_not_shadow_supreme_for_non_language_decree() {
 #[test]
 fn enforce_golang_shadows_supreme_for_go_files() {
     let supreme: BoxDecree = Box::new(MockDecree::simple("supreme", vec![], "supreme/hit"));
-    let golang: BoxDecree = Box::new(MockDecree::simple("golang", vec!["go".into()], "golang/hit"));
+    let golang: BoxDecree = Box::new(MockDecree::simple(
+        "golang",
+        vec!["go".into()],
+        "golang/hit",
+    ));
 
     let mut regime = Regime::new();
     regime.add_decree(supreme);
     regime.add_decree(golang);
 
     let path = Utf8Path::new("main.go");
-    let sources = [Source { path, text: "package main" }];
+    let sources = [Source {
+        path,
+        text: "package main",
+    }];
 
     let diags = regime.enforce(&sources).unwrap();
-    assert!(diags.iter().any(|d| d.rule == "golang/hit"), "golang should run on .go files");
-    assert!(!diags.iter().any(|d| d.rule == "supreme/hit"), "supreme should be shadowed by golang");
+    assert!(
+        diags.iter().any(|d| d.rule == "golang/hit"),
+        "golang should run on .go files"
+    );
+    assert!(
+        !diags.iter().any(|d| d.rule == "supreme/hit"),
+        "supreme should be shadowed by golang"
+    );
 }
 
 #[test]
@@ -249,7 +295,10 @@ fn enforce_supreme_runs_on_go_files_when_golang_not_loaded() {
     regime.add_decree(supreme);
 
     let path = Utf8Path::new("main.go");
-    let sources = [Source { path, text: "package main" }];
+    let sources = [Source {
+        path,
+        text: "package main",
+    }];
 
     let diags = regime.enforce(&sources).unwrap();
     assert!(
@@ -280,7 +329,10 @@ fn enforce_all_shadowers_work() {
         let sources = [Source { path, text: "x" }];
 
         let diags = regime.enforce(&sources).unwrap();
-        assert!(diags.iter().any(|d| d.rule == rule), "{name} should run on .{ext} files");
+        assert!(
+            diags.iter().any(|d| d.rule == rule),
+            "{name} should run on .{ext} files"
+        );
         assert!(
             !diags.iter().any(|d| d.rule == "supreme/hit"),
             "supreme should be shadowed by {name} on .{ext} files"
@@ -307,7 +359,10 @@ fn enforce_matches_by_filename() {
     let path = Utf8Path::new("Gemfile");
     let sources = [Source { path, text: "x" }];
     let diags = regime.enforce(&sources).unwrap();
-    assert!(diags.iter().any(|d| d.rule == "ruby/hit"), "ruby should match Gemfile by filename");
+    assert!(
+        diags.iter().any(|d| d.rule == "ruby/hit"),
+        "ruby should match Gemfile by filename"
+    );
 }
 
 #[test]
@@ -327,7 +382,10 @@ fn enforce_skips_skip_filenames() {
     let path = Utf8Path::new("Gemfile.lock");
     let sources = [Source { path, text: "x" }];
     let diags = regime.enforce(&sources).unwrap();
-    assert!(diags.is_empty(), "Gemfile.lock should be skipped (owned but not linted)");
+    assert!(
+        diags.is_empty(),
+        "Gemfile.lock should be skipped (owned but not linted)"
+    );
 }
 
 #[test]
@@ -382,7 +440,10 @@ fn enforce_filename_shadows_supreme() {
     let path = Utf8Path::new("go.mod");
     let sources = [Source { path, text: "x" }];
     let diags = regime.enforce(&sources).unwrap();
-    assert!(diags.iter().any(|d| d.rule == "golang/hit"), "golang should match go.mod");
+    assert!(
+        diags.iter().any(|d| d.rule == "golang/hit"),
+        "golang should match go.mod"
+    );
     assert!(
         !diags.iter().any(|d| d.rule == "supreme/hit"),
         "supreme should be shadowed by golang for go.mod"

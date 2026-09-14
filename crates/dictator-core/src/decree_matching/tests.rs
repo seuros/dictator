@@ -11,7 +11,12 @@ struct MockDecree {
 
 impl MockDecree {
     fn simple(name: &'static str, exts: Vec<String>, rule: &'static str) -> Self {
-        Self { name, exts, filenames: vec![], rule }
+        Self {
+            name,
+            exts,
+            filenames: vec![],
+            rule,
+        }
     }
 }
 
@@ -34,6 +39,7 @@ impl Decree for MockDecree {
             abi_version: "1".into(),
             decree_version: "1".into(),
             description: String::new(),
+            persona: "The Dictator".into(),
             dectauthors: None,
             supported_extensions: self.exts.clone(),
             supported_filenames: self.filenames.clone(),
@@ -65,17 +71,26 @@ fn supreme_not_shadowed_for_unmatched_extension() {
     let decrees = vec![supreme, ruby];
     let path = Utf8Path::new("test.txt");
 
-    assert!(!is_supreme_shadowed(&decrees, path), "supreme should not be shadowed for .txt files");
+    assert!(
+        !is_supreme_shadowed(&decrees, path),
+        "supreme should not be shadowed for .txt files"
+    );
 }
 
 #[test]
 fn non_language_decree_does_not_shadow() {
     let supreme: BoxDecree = Box::new(MockDecree::simple("supreme", vec![], "supreme/hit"));
-    let frontmatter: BoxDecree =
-        Box::new(MockDecree::simple("frontmatter", vec!["md".into()], "frontmatter/hit"));
+    let frontmatter: BoxDecree = Box::new(MockDecree::simple(
+        "frontmatter",
+        vec!["md".into()],
+        "frontmatter/hit",
+    ));
 
     let decrees = vec![supreme, frontmatter];
     let path = Utf8Path::new("README.md");
 
-    assert!(!is_supreme_shadowed(&decrees, path), "frontmatter should not shadow supreme");
+    assert!(
+        !is_supreme_shadowed(&decrees, path),
+        "frontmatter should not shadow supreme"
+    );
 }
