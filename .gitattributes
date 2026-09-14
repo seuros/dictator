@@ -1,0 +1,3 @@
+# Sandbox files are byte-exact linter fixtures (CRLF, missing newlines,
+# trailing whitespace). Never normalize them.
+sandbox/** -text

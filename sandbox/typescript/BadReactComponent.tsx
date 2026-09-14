@@ -1,17 +1,17 @@
 import React from 'react'
-import { FC } from 'react'
+import { FC } from 'react'   
 import axios from 'axios'
 import { Button } from '@mui/material'
 import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react'   
 
 interface Props {
   title: string;
-	name: string;
+	name: string;   
   disabled?: boolean;
 }
 
-export const BadReactComponent: FC<Props> = ({ title, name, disabled = false }) => {
+export const BadReactComponent: FC<Props> = ({ title, name, disabled = false }) => {   
 	const [loading, setLoading] = React.useState(false);
   const [data, setData] = useState<string | null>(null);
 	const [error, setError] = useState<Error | null>(null);
@@ -19,7 +19,7 @@ export const BadReactComponent: FC<Props> = ({ title, name, disabled = false }) 
 	useEffect(() => {
 		const fetchData = async () => {
       setLoading(true);
-			try {
+			try {   
         const response = await axios.get('/api/data');
 				setData(response.data);
       } catch (err) {

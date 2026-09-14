@@ -1,45 +1,29 @@
-class OrdersController < ApplicationController
-  #Authenticate user before proceeding
-  before_action :authenticate_user!
-  #Check admin status for admin actions
-  before_action :check_admin, only: [:destroy, :bulk_update]
+#!/usr/bin/env ruby
+# frozen_string_literal: true
 
-  def index
-    #Fetch all orders for current user
-    @orders = current_user.orders.includes(:items)
-    #Sort by created date descending
-    @orders = @orders.order(created_at: :desc)
-    render :index
-  end
-
-  def show
-    #Find order by id
-    @order = Order.find(params[:id])
-    #Check authorization
-    authorize_user(@order)
-    render :show
-  end
-
-  def create
-    #Build new order from params
-    @order = current_user.orders.build(order_params)
-    #Save and render response
-    if @order.save
-      render :show, status: :created
-    else
-      render :errors, status: :unprocessable_entity
-    end
-  end
-
-  private
-
-  def order_params
-    #Permit order attributes
-    params.require(:order).permit(:status, :notes, items_attributes: [:id, :quantity])
-  end
-
-  def check_admin
-    #Redirect if not admin
-    redirect_to root_path unless current_user.admin?
-  end
-end
+#comment number 0 without a space
+x0 = 0
+#comment number 1 without a space
+x1 = 1
+#comment number 2 without a space
+x2 = 2
+#comment number 3 without a space
+x3 = 3
+#comment number 4 without a space
+x4 = 4
+#comment number 5 without a space
+x5 = 5
+#comment number 6 without a space
+x6 = 6
+#comment number 7 without a space
+x7 = 7
+#comment number 8 without a space
+x8 = 8
+#comment number 9 without a space
+x9 = 9
+#comment number 10 without a space
+x10 = 10
+#comment number 11 without a space
+x11 = 11
+#comment number 12 without a space
+x12 = 12
