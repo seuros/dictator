@@ -131,9 +131,6 @@ detect_platform() {
     freebsd)
       os="freebsd"
       ;;
-    msys*|mingw*|cygwin*)
-      os="windows"
-      ;;
     *)
       fail "Unsupported operating system: ${uname_s}"
       ;;
@@ -200,9 +197,6 @@ map_target() {
     freebsd-x86_64)
       echo "x86_64-unknown-freebsd"
       ;;
-    windows-x86_64)
-      echo "x86_64-pc-windows-msvc"
-      ;;
     *)
       fail "No binary available for ${os}/${arch}"
       ;;
@@ -221,14 +215,7 @@ download_binary() {
   # Extract version from tag (dictator-v0.2.0 -> v0.2.0)
   version="${TAG#dictator-}"
 
-  # Determine file extension
-  local archive_ext
-  case "$OS" in
-    windows) archive_ext="zip" ;;
-    *) archive_ext="tar.gz" ;;
-  esac
-
-  BINARY_NAME="dictator-${version}-${target_triple}.${archive_ext}"
+  BINARY_NAME="dictator-${version}-${target_triple}.tar.gz"
   download_url="https://github.com/${REPO}/releases/download/${TAG}/${BINARY_NAME}"
 
   info "Downloading dictator ${TAG} for ${OS}/${ARCH}"
@@ -239,19 +226,10 @@ download_binary() {
   fi
 
   # Extract binary
-  if [ "$OS" = "windows" ]; then
-    command -v unzip >/dev/null 2>&1 || fail "unzip required to extract Windows release"
-    unzip -q "${TMP_DIR}/${BINARY_NAME}" -d "$TMP_DIR"
-    if [ ! -f "${TMP_DIR}/dictator.exe" ]; then
-      fail "Could not find dictator.exe in release archive"
-    fi
-    tmp_bin="${TMP_DIR}/dictator.exe"
-  else
-    command -v tar >/dev/null 2>&1 || fail "tar required to extract release"
-    tar xzf "${TMP_DIR}/${BINARY_NAME}" -C "$TMP_DIR"
-    if [ ! -f "${TMP_DIR}/dictator" ]; then
-      fail "Could not find dictator binary in release archive"
-    fi
+  command -v tar >/dev/null 2>&1 || fail "tar required to extract release"
+  tar xzf "${TMP_DIR}/${BINARY_NAME}" -C "$TMP_DIR"
+  if [ ! -f "${TMP_DIR}/dictator" ]; then
+    fail "Could not find dictator binary in release archive"
   fi
 
   if [ ! -s "$tmp_bin" ]; then
