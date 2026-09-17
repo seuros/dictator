@@ -225,6 +225,7 @@ impl Decree for Frontmatter {
             supported_extensions: vec!["md".to_string(), "mdx".to_string(), "astro".to_string()],
             supported_filenames: vec![],
             skip_filenames: vec![],
+            file_scope_rules: vec!["missing-required-field".to_string()],
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

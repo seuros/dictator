@@ -10,6 +10,7 @@ mod census;
 mod cli;
 mod config;
 mod dictate;
+mod diff;
 mod files;
 mod interactive;
 mod lint;

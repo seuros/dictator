@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 /// Bumped when Plugin trait or core types change.
 /// Pre-1.0: exact major.minor match required (0.1.x ↔ 0.1.y ✓, 0.1.x ↔ 0.2.y ✗)
 /// Post-1.0: major must match, decree minor ≤ host minor
-pub const ABI_VERSION: &str = "0.1.0";
+pub const ABI_VERSION: &str = "0.2.0";
 
 /// Capability flags for decrees
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -54,6 +54,11 @@ pub struct DecreeMetadata {
     /// Decree owns these to prevent other decrees from touching them.
     #[serde(default)]
     pub skip_filenames: Vec<String>,
+    /// Rules that describe the whole file, not a line. Reported by `--diff`
+    /// whenever the file is touched, since their span is pinned to 0 or EOF.
+    /// Bare names, no decree prefix: `"file-too-long"`.
+    #[serde(default)]
+    pub file_scope_rules: Vec<String>,
     /// Capabilities this decree provides
     pub capabilities: Vec<Capability>,
 }
@@ -63,6 +68,13 @@ impl DecreeMetadata {
     #[must_use]
     pub fn has_capability(&self, cap: Capability) -> bool {
         self.capabilities.contains(&cap)
+    }
+
+    /// Is `rule` (`"rust/file-too-long"`) declared file-scoped?
+    #[must_use]
+    pub fn is_file_scope(&self, rule: &str) -> bool {
+        let bare = rule.rsplit('/').next().unwrap_or(rule);
+        self.file_scope_rules.iter().any(|known| known == bare)
     }
 
     /// Parse semver version string.

@@ -85,6 +85,15 @@ impl Regime {
             .collect()
     }
 
+    /// Union of every loaded decree's file-scope rule names (bare, unprefixed).
+    #[must_use]
+    pub fn file_scope_rules(&self) -> HashSet<String> {
+        self.decrees
+            .iter()
+            .flat_map(|d| d.metadata().file_scope_rules)
+            .collect()
+    }
+
     /// Return the union of supported extensions for all loaded decrees.
     ///
     /// - If at least one decree declares specific extensions, returns `Some(HashSet)` of
@@ -383,6 +392,7 @@ pub(crate) mod loader {
             supported_extensions: wasm_meta.supported_extensions,
             supported_filenames: wasm_meta.supported_filenames,
             skip_filenames: wasm_meta.skip_filenames,
+            file_scope_rules: wasm_meta.file_scope_rules,
             capabilities: wasm_meta
                 .capabilities
                 .into_iter()

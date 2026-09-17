@@ -109,6 +109,7 @@ impl Decree for Python {
                 "uv.lock".to_string(),
                 "pdm.lock".to_string(),
             ],
+            file_scope_rules: dictator_supreme::file_scope_rules(&["file-too-long"]),
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

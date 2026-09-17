@@ -1,4 +1,4 @@
-package dictator:decree@0.1.0;
+package dictator:decree@0.2.0;
 
 interface lints {
   record span { start: u32, end: u32 }
@@ -27,6 +27,8 @@ interface lints {
     supported-extensions: list<string>,
     supported-filenames: list<string>,
     skip-filenames: list<string>,
+    /// Rules describing the whole file, not a line. Bare names, no prefix.
+    file-scope-rules: list<string>,
     capabilities: list<capability>,
   }
 

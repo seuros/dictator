@@ -25,6 +25,21 @@ pub fn print_diagnostic(path: &str, source: &str, diag: &Diagnostic) {
     );
 }
 
+/// Emit a GitHub Actions workflow command, which the runner renders as an
+/// inline annotation on the pull request diff.
+pub fn print_github_annotation(path: &str, source: &str, diag: &Diagnostic) {
+    let (line, col) = byte_to_line_col(source, diag.span.start);
+    let level = if diag.enforced { "warning" } else { "error" };
+    // GitHub matches annotations on repo-relative paths, so "./" must go.
+    let path = path.strip_prefix("./").unwrap_or(path);
+    // Newlines and carriage returns terminate a workflow command; escape them.
+    let message = diag.message.replace('%', "%25").replace(['\n', '\r'], " ");
+    println!(
+        "::{level} file={path},line={line},col={col},title={rule}::{message}",
+        rule = diag.rule
+    );
+}
+
 /// Print one persona-voiced summary line per decree that flagged violations
 /// in this file, e.g. "Beastie is not happy with foo.8 (3 violations)".
 pub fn print_persona_summary(

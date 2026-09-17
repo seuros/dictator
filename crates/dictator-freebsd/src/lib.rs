@@ -143,6 +143,11 @@ impl Decree for FreeBsdDecree {
             ],
             supported_filenames: vec![],
             skip_filenames: vec![],
+            file_scope_rules: vec![
+                "man-missing-macro".to_string(),
+                "man-missing-section".to_string(),
+                "man-name-mismatch".to_string(),
+            ],
             capabilities: vec![Capability::Lint],
         }
     }

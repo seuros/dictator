@@ -9,6 +9,24 @@ use std::collections::HashMap;
 mod text;
 pub use text::{check_indentation_consistency, count_code_lines, retain_long_line_diags};
 
+/// Supreme rules whose span is pinned to offset 0 or EOF, not an author line.
+pub const FILE_SCOPE_RULES: &[&str] = &[
+    "missing-final-newline",
+    "mixed-line-endings",
+    "wrong-line-ending",
+    "mixed-indentation",
+];
+
+/// Supreme's file-scope rules plus a decree's own, as owned strings.
+#[must_use]
+pub fn file_scope_rules(extra: &[&str]) -> Vec<String> {
+    FILE_SCOPE_RULES
+        .iter()
+        .chain(extra)
+        .map(|rule| (*rule).to_string())
+        .collect()
+}
+
 /// Configuration for supreme decree (will be loaded from .dictate.toml)
 #[derive(Debug, Clone)]
 pub struct SupremeConfig {
@@ -336,6 +354,7 @@ impl Decree for Supreme {
             supported_extensions: vec![],
             supported_filenames: vec![],
             skip_filenames: vec![],
+            file_scope_rules: file_scope_rules(&[]),
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

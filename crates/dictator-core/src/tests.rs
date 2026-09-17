@@ -46,6 +46,7 @@ impl Decree for MockDecree {
             supported_extensions: self.exts.clone(),
             supported_filenames: self.filenames.clone(),
             skip_filenames: self.skip.clone(),
+            file_scope_rules: vec![],
             capabilities: vec![Capability::Lint],
         }
     }

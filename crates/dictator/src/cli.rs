@@ -11,6 +11,21 @@ pub const DEFAULT_DEBOUNCE_MS: u64 = 200;
 pub enum OutputFormat {
     Human,
     Json,
+    /// GitHub Actions workflow commands, rendered as PR annotations.
+    Github,
+}
+
+impl std::str::FromStr for OutputFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "human" => Ok(Self::Human),
+            "json" => Ok(Self::Json),
+            "github" => Ok(Self::Github),
+            other => Err(format!("unknown format '{other}' (human, json, github)")),
+        }
+    }
 }
 
 /// Multi-regime linter
@@ -73,17 +88,28 @@ pub struct OccupyArgs {
 
 #[derive(Debug, usage::Args)]
 pub struct LintArgs {
-    /// Files or directories to lint.
-    #[usage(required)]
+    /// Files or directories to lint. Defaults to "." with --diff/--staged.
     pub paths: Vec<Utf8PathBuf>,
 
     /// Auto-fix structural violations after linting
     #[usage(short = 'f', long)]
     pub fix: bool,
 
-    /// Output JSON instead of human format
+    /// Output format: human, json, or github (PR annotations)
+    #[usage(long, value_name = "FMT")]
+    pub format: Option<String>,
+
+    /// Only report lines changed since REV (e.g. origin/master, HEAD~3)
+    #[usage(long, value_name = "REV")]
+    pub diff: Option<String>,
+
+    /// Only report lines staged for commit
     #[usage(long)]
-    pub json: bool,
+    pub staged: bool,
+
+    /// Widen each changed hunk by N lines
+    #[usage(long, default_value_t = 0, default = "0")]
+    pub diff_context: usize,
 
     /// Load additional decrees (native .dylib/.so or .wasm when supported)
     #[cfg(feature = "wasm-loader")]
@@ -93,13 +119,24 @@ pub struct LintArgs {
 
 #[derive(Debug, usage::Args)]
 pub struct DictateArgs {
-    /// Files or directories to fix.
-    #[usage(required)]
+    /// Files or directories to fix. Defaults to "." with --diff/--staged.
     pub paths: Vec<Utf8PathBuf>,
 
     /// Interactive mode - review each fix before applying
     #[usage(short, long)]
     pub interactive: bool,
+
+    /// Only fix lines changed since REV (e.g. origin/master, HEAD~3)
+    #[usage(long, value_name = "REV")]
+    pub diff: Option<String>,
+
+    /// Only fix lines staged for commit
+    #[usage(long)]
+    pub staged: bool,
+
+    /// Widen each changed hunk by N lines
+    #[usage(long, default_value_t = 0, default = "0")]
+    pub diff_context: usize,
 }
 
 #[derive(Debug, usage::Args)]
@@ -112,9 +149,9 @@ pub struct WatchArgs {
     #[usage(long, default_value_t = DEFAULT_DEBOUNCE_MS, default = "200")]
     pub debounce_ms: u64,
 
-    /// Output JSON instead of human format
-    #[usage(long)]
-    pub json: bool,
+    /// Output format: human, json, or github (PR annotations)
+    #[usage(long, value_name = "FMT")]
+    pub format: Option<String>,
 
     /// Load additional decrees (native .dylib/.so or .wasm when supported)
     #[cfg(feature = "wasm-loader")]

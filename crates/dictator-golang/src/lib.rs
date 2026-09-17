@@ -174,6 +174,7 @@ impl Decree for Golang {
             supported_extensions: vec!["go".to_string()],
             supported_filenames: vec!["go.mod".to_string(), "go.work".to_string()],
             skip_filenames: vec!["go.sum".to_string()],
+            file_scope_rules: dictator_supreme::file_scope_rules(&["file-too-long"]),
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

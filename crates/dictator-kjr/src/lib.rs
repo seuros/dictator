@@ -122,6 +122,7 @@ impl Decree for KimJongRails {
             ],
             supported_filenames: vec![],
             skip_filenames: vec![],
+            file_scope_rules: vec![],
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }
@@ -177,6 +178,7 @@ impl exports::dictator::decree::lints::Guest for PluginImpl {
             supported_extensions: meta.supported_extensions,
             supported_filenames: meta.supported_filenames,
             skip_filenames: meta.skip_filenames,
+            file_scope_rules: meta.file_scope_rules,
             capabilities: meta
                 .capabilities
                 .into_iter()

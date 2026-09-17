@@ -287,6 +287,10 @@ dictator watch .
 
 # Specify custom config
 dictator --config .dictate.dev.toml lint src/
+
+# Only what this branch touched (see "Diff-Scoped Enforcement" below)
+dictator lint --diff origin/master
+dictator lint --staged
 ```
 
 | Command | Alias | Mode | Description |
@@ -295,6 +299,70 @@ dictator --config .dictate.dev.toml lint src/
 | `lint` | `stalint` | Read-only | Reports violations without modifying files |
 | `dictate` | `kjr` | Destructive | Fixes whitespace, line endings, final newline |
 | `watch` | - | Read-only | Monitors files and reports on change |
+
+## Diff-Scoped Enforcement
+
+Point Dictator at a kernel-sized tree and every pre-existing violation lights up.
+That is correct, and useless on a pull request. Nobody reads 40,000 annotations
+about code they did not write.
+
+`--diff` narrows enforcement to the lines the author actually touched:
+
+```bash
+dictator lint --diff origin/master        # everything since the branch point
+dictator lint --diff HEAD~3 crates/       # a range, restricted to a subtree
+dictator lint --staged                    # what is staged, for a pre-commit hook
+dictator lint --diff origin/master --diff-context 2   # widen each hunk
+```
+
+Filtering is per **line**, not per file. Touching one line of a 6,000-line file
+reports that line and withholds the rest, with a count, because silently hiding
+debt is how a codebase rots:
+
+```
+Beastie is not happy with sys/kern/vfs_bio.c (1 violation)
+sys/kern/vfs_bio.c:2841:9: 🔧 freebsd/style9/conditional-indent: ...
+412 legacy violation(s) withheld (outside the diff)
+```
+
+`--fix` obeys the same boundary: only the lines in range are rewritten. Without
+a diff selector, `--fix` still rewrites the whole file as before.
+
+**Whole-file rules still fire.** A missing final newline, an over-long file, a
+`.Nm` that disagrees with its filename: these describe the file, not a line, so
+their span never lands inside a hunk. Each decree declares them via
+`file_scope_rules` in its metadata (native and WASM alike, the field lives in
+`decree.wit`), and they report whenever the file is touched.
+
+**Details that will bite you:**
+
+- The diff is taken between the base commit and your **working tree**, never
+  `base..HEAD`. Decrees parse the bytes on disk, so line numbers must describe
+  those same bytes. Dirty trees and pre-commit hooks work correctly as a result.
+- Untracked files are entirely in scope under `--diff`, because `git diff` omits
+  them and a brand-new file is all the author's work. `.gitignore` is respected.
+  `--staged` ignores them until you `git add`, which is the point of `--staged`.
+- `--diff main...HEAD` and a bare `--diff main` both resolve through
+  `merge-base`, so commits that landed on the base branch after you branched are
+  not blamed on you. `--diff a..b` is taken at its left side, verbatim.
+- Shallow clones fail with instructions. In GitHub Actions set
+  `fetch-depth: 0`; locally run `git fetch --unshallow`.
+
+### GitHub Actions
+
+`--format github` emits workflow commands, which the runner renders as inline
+annotations on the PR diff. Combined with `--diff`, they land only on lines the
+pull request changed:
+
+```yaml
+- uses: actions/checkout@v7
+  with:
+    fetch-depth: 0          # --diff needs the merge base
+- run: dictator lint --diff origin/${{ github.base_ref }} --format github .
+```
+
+`--format` accepts `human` (default), `json`, or `github`, and works on `lint`
+and `watch` alike.
 
 ## Watch Mode: Real-Time Enforcement
 
@@ -542,6 +610,14 @@ command = "gofmt"
   run: dictator lint .  # Fails fast if structure is wrong
 - name: Formatting check (fast)
   run: rubyfmt --check .   # legacy projects may swap in: bundle exec rubocop
+```
+
+**Pull request review (only what changed):**
+```yaml
+- uses: actions/checkout@v7
+  with:
+    fetch-depth: 0
+- run: dictator lint --diff origin/${{ github.base_ref }} --format github .
 ```
 
 **Pre-commit workflow:**
