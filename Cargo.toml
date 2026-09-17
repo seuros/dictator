@@ -27,8 +27,8 @@ repository = "https://github.com/seuros/dictator"
 homepage = "https://github.com/seuros/dictator"
 
 [workspace.dependencies]
-dictator-decree-abi = { version = "0.22.0", path = "crates/dictator-decree-abi" }
-dictator-supreme = { version = "0.22.0", path = "crates/dictator-supreme" }
+dictator-decree-abi = { version = "0.23.0", path = "crates/dictator-decree-abi" }
+dictator-supreme = { version = "0.23.0", path = "crates/dictator-supreme" }
 anyhow = "1"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
