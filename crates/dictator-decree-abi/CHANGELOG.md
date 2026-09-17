@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.0](https://github.com/seuros/dictator/compare/dictator-decree-abi-v0.22.0...dictator-decree-abi-v0.23.0) (2026-09-17)
+
+
+### Features
+
+* decrees now speak through named personas, Ferris judges your tabs ([a401c71](https://github.com/seuros/dictator/commit/a401c715a5953e1d880dfa6b3b45bb2d29d33049))
+
 ## [0.22.0](https://github.com/seuros/dictator/compare/dictator-decree-abi-v0.21.0...dictator-decree-abi-v0.22.0) (2026-09-04)
 
 
