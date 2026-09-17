@@ -25,7 +25,8 @@
   ],
   "packages": {
     "crates/dictator": {
-      "component": "dictator"
+      "component": "dictator",
+      "extra-files": ["/Cargo.toml"]
     },
     "crates/dictator-core": {
       "component": "dictator-core"
