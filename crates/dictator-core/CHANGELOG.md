@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0](https://github.com/seuros/dictator/compare/dictator-core-v0.23.0...dictator-core-v0.24.0) (2026-09-17)
+
+
+### Features
+
+* the Dictator judges only what you touched, not the legacy timeline ([#49](https://github.com/seuros/dictator/issues/49)) ([6e4af55](https://github.com/seuros/dictator/commit/6e4af5574c867cf5bad5fd6e0c2781f59d860582))
+
 ## [0.23.0](https://github.com/seuros/dictator/compare/dictator-core-v0.22.0...dictator-core-v0.23.0) (2026-09-17)
 
 
