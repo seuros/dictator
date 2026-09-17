@@ -72,5 +72,9 @@ unused_must_use = "warn"
 [workspace.lints.clippy]
 all = "warn"
 
+[profile.release]
+# Release binaries are downloaded, not built, so size is a user-facing cost.
+strip = true
+
 [workspace.metadata]
 # Placeholder for tool config.

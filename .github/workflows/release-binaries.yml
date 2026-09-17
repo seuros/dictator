@@ -1,0 +1,115 @@
+name: release-binaries
+
+# Asset names are a contract with scripts/install.sh, which resolves
+# dictator-${version}-${triple}.${ext} where version keeps its leading "v".
+# Changing either side alone breaks the curl-pipe-bash install.
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to build and upload, e.g. dictator-v0.24.0
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and upload, e.g. dictator-v0.24.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    # One bad target must not hide the state of the other four.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+          # No FreeBSD runner exists and the C build scripts in zstd-sys and
+          # wasmtime need a FreeBSD sysroot, so this one goes through cross.
+          - target: x86_64-unknown-freebsd
+            os: ubuntu-latest
+            cross: true
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.98"
+          targets: ${{ matrix.target }}
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.cross
+        run: cargo install cross --locked
+
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.cross || false }}" = "true" ]; then
+            cross build --release -p dictator --target ${{ matrix.target }}
+          else
+            cargo build --release -p dictator --target ${{ matrix.target }}
+          fi
+
+      - name: Package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ inputs.tag }}"
+          version="${version#dictator-}"
+          name="dictator-${version}-${{ matrix.target }}"
+          out="target/${{ matrix.target }}/release"
+          root="$(pwd)"
+
+          # install.sh extracts the archive and expects the binary at its root.
+          if [ "${{ matrix.target }}" = "x86_64-pc-windows-msvc" ]; then
+            (cd "$out" && 7z a "${root}/${name}.zip" dictator.exe)
+            echo "ASSET=${name}.zip" >> "$GITHUB_ENV"
+          else
+            tar czf "${name}.tar.gz" -C "$out" dictator
+            echo "ASSET=${name}.tar.gz" >> "$GITHUB_ENV"
+          fi
+
+      - name: Verify the archive matches what install.sh expects
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.target }}" = "x86_64-pc-windows-msvc" ]; then
+            7z l "$ASSET" | grep -q 'dictator\.exe'
+          else
+            tar tzf "$ASSET" | grep -qx 'dictator'
+          fi
+          test -s "$ASSET"
+          echo "$ASSET -> $(du -h "$ASSET" | cut -f1)"
+
+      - name: Upload to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.tag }}" "$ASSET" --clobber
