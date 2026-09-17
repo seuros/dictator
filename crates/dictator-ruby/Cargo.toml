@@ -1,6 +1,6 @@
 [package]
 name = "dictator-ruby"
-version = "0.22.0"
+version = "0.23.0"
 description = "Ruby language decree for Dictator structural linter"
 edition.workspace = true
 rust-version.workspace = true
@@ -13,6 +13,6 @@ workspace = true
 
 [dependencies]
 dictator-decree-abi.workspace = true
-dictator-core = { version = "0.22.0", path = "../dictator-core" }
+dictator-core = { version = "0.23.0", path = "../dictator-core" }
 dictator-supreme.workspace = true
 memchr = "2"
