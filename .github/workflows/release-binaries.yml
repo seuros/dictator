@@ -39,8 +39,6 @@ jobs:
             os: macos-latest
           - target: aarch64-apple-darwin
             os: macos-latest
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
           # No FreeBSD runner exists and the C build scripts in zstd-sys and
           # wasmtime need a FreeBSD sysroot, so this one goes through cross.
           - target: x86_64-unknown-freebsd
@@ -85,26 +83,16 @@ jobs:
           version="${version#dictator-}"
           name="dictator-${version}-${{ matrix.target }}"
           out="target/${{ matrix.target }}/release"
-          root="$(pwd)"
 
           # install.sh extracts the archive and expects the binary at its root.
-          if [ "${{ matrix.target }}" = "x86_64-pc-windows-msvc" ]; then
-            (cd "$out" && 7z a "${root}/${name}.zip" dictator.exe)
-            echo "ASSET=${name}.zip" >> "$GITHUB_ENV"
-          else
-            tar czf "${name}.tar.gz" -C "$out" dictator
-            echo "ASSET=${name}.tar.gz" >> "$GITHUB_ENV"
-          fi
+          tar czf "${name}.tar.gz" -C "$out" dictator
+          echo "ASSET=${name}.tar.gz" >> "$GITHUB_ENV"
 
       - name: Verify the archive matches what install.sh expects
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ matrix.target }}" = "x86_64-pc-windows-msvc" ]; then
-            7z l "$ASSET" | grep -q 'dictator\.exe'
-          else
-            tar tzf "$ASSET" | grep -qx 'dictator'
-          fi
+          tar tzf "$ASSET" | grep -qx 'dictator'
           test -s "$ASSET"
           echo "$ASSET -> $(du -h "$ASSET" | cut -f1)"
 
