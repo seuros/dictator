@@ -26,6 +26,7 @@ impl Decree for CorebootDecree {
             supported_extensions: vec!["c".to_string(), "h".to_string()],
             supported_filenames: vec![],
             skip_filenames: vec![],
+            file_scope_rules: vec![],
             capabilities: vec![Capability::Lint],
         }
     }

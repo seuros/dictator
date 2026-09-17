@@ -27,8 +27,10 @@ repository = "https://github.com/seuros/dictator"
 homepage = "https://github.com/seuros/dictator"
 
 [workspace.dependencies]
-dictator-decree-abi = { version = "0.22.0", path = "crates/dictator-decree-abi" }
-dictator-supreme = { version = "0.22.0", path = "crates/dictator-supreme" }
+# release-please bumps these two via extra-files; cargo-workspace does not
+# rewrite the workspace table. Keep the annotations on the same line.
+dictator-decree-abi = { version = "0.23.0", path = "crates/dictator-decree-abi" } # x-release-please-version
+dictator-supreme = { version = "0.23.0", path = "crates/dictator-supreme" } # x-release-please-version
 anyhow = "1"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }

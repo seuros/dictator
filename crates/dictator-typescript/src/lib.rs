@@ -294,6 +294,7 @@ impl Decree for TypeScript {
                 "deno.lock".to_string(),
                 "npm-shrinkwrap.json".to_string(),
             ],
+            file_scope_rules: dictator_supreme::file_scope_rules(&["file-too-long"]),
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

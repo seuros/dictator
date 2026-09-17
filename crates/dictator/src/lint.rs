@@ -10,10 +10,12 @@ use std::sync::{Arc, Mutex};
 
 use crate::cli::{LintArgs, OutputFormat};
 use crate::config::{load_config, load_dictate_config};
-use crate::dictate::apply_single_fix;
-use crate::files::{collect_all_files, detect_file_types};
+use crate::dictate::{apply_fix_at_span, apply_single_fix};
+use crate::diff;
+use crate::files::{collect_all_files, detect_file_types, resolve_paths};
 use crate::output::{
-    SerializableDiagnostic, byte_to_line_col, print_diagnostic, print_persona_summary,
+    SerializableDiagnostic, byte_to_line_col, print_diagnostic, print_github_annotation,
+    print_persona_summary,
 };
 use crate::regime::init_regime_for_files;
 
@@ -23,13 +25,26 @@ pub fn run_once(
     profile: Option<String>,
 ) -> Result<()> {
     let cfg = load_config(config_path.as_ref())?;
-    let format = if args.json {
-        OutputFormat::Json
-    } else {
-        cfg.format.unwrap_or(OutputFormat::Human)
+    let format = match args.format.as_deref() {
+        Some(raw) => raw.parse().map_err(anyhow::Error::msg)?,
+        None => cfg.format.unwrap_or(OutputFormat::Human),
     };
 
-    let files = collect_all_files(&args.paths)?;
+    let selector = diff::selector_from_flags(args.diff.as_deref(), args.staged)?;
+    let paths = resolve_paths(&args.paths, selector.is_some())?;
+    let changed = selector
+        .as_ref()
+        .map(|sel| diff::changed_lines(sel, &paths, args.diff_context))
+        .transpose()?;
+
+    let mut files = collect_all_files(&paths)?;
+    if let Some(changed) = &changed {
+        files.retain(|f| changed.contains_file(f));
+        if files.is_empty() {
+            eprintln!("No changed files in range");
+            return Ok(());
+        }
+    }
     if files.is_empty() {
         eprintln!("No files found");
         return Ok(());
@@ -69,10 +84,12 @@ pub fn run_once(
     }
 
     let personas = regime.personas();
+    let scope = changed.map(|c| diff::Scope::new(c, regime.file_scope_rules()));
 
     let exit_code = Arc::new(Mutex::new(0));
     let json_out = Arc::new(Mutex::new(Vec::new()));
     let fixed_count = Arc::new(Mutex::new(0usize));
+    let withheld = Arc::new(Mutex::new(0usize));
 
     // Process files in parallel using rayon
     files.par_iter().try_for_each(|path| -> Result<()> {
@@ -90,7 +107,7 @@ pub fn run_once(
             let mut seen = HashSet::new();
             let mut fixed_text = text.clone();
             let mut file_was_fixed = false;
-            let unique_diags: Vec<_> = diags
+            let mut unique_diags: Vec<_> = diags
                 .iter()
                 .filter(|diag| {
                     seen.insert((
@@ -104,15 +121,31 @@ pub fn run_once(
                 })
                 .collect();
 
+            if let Some(scope) = &scope {
+                let before = unique_diags.len();
+                unique_diags.retain(|diag| scope.allows(path_ref, &text, diag));
+                *withheld.lock().unwrap() += before - unique_diags.len();
+                if unique_diags.is_empty() {
+                    return Ok(());
+                }
+            }
+
             if matches!(format, OutputFormat::Human) {
                 print_persona_summary(path_ref.as_str(), &unique_diags, &personas);
             }
 
             for diag in unique_diags {
                 // Apply fix if --fix is set and this is a fixable violation
+                // Whole-file rewrite only for file-scope rules; line rules get
+                // spliced so a scoped run leaves untouched lines alone.
                 if args.fix
                     && diag.enforced
-                    && let Some(new_text) = apply_single_fix(&fixed_text, diag)
+                    && let Some(new_text) = match &scope {
+                        Some(s) if !s.is_file_scope(&diag.rule) => {
+                            apply_fix_at_span(&fixed_text, diag)
+                        }
+                        _ => apply_single_fix(&fixed_text, diag),
+                    }
                     && new_text != fixed_text
                 {
                     fixed_text = new_text;
@@ -124,6 +157,11 @@ pub fn run_once(
                         let stdout = std::io::stdout();
                         let _handle = stdout.lock();
                         print_diagnostic(path_ref.as_str(), &text, diag);
+                    }
+                    OutputFormat::Github => {
+                        let stdout = std::io::stdout();
+                        let _handle = stdout.lock();
+                        print_github_annotation(path_ref.as_str(), &text, diag);
                     }
                     OutputFormat::Json => {
                         let (line, col) = byte_to_line_col(&text, diag.span.start);
@@ -153,9 +191,14 @@ pub fn run_once(
 
     let final_exit_code = *exit_code.lock().unwrap();
     let total_fixed = *fixed_count.lock().unwrap();
+    let total_withheld = *withheld.lock().unwrap();
 
     if args.fix && total_fixed > 0 {
         eprintln!("Fixed {total_fixed} file(s)");
+    }
+
+    if total_withheld > 0 {
+        eprintln!("{total_withheld} legacy violation(s) withheld (outside the diff)");
     }
 
     if matches!(format, OutputFormat::Json) {

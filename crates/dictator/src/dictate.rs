@@ -6,7 +6,8 @@ use std::fs;
 
 use crate::cli::DictateArgs;
 use crate::config::load_dictate_config;
-use crate::files::collect_all_files;
+use crate::diff::{self, ChangedLines};
+use crate::files::{collect_all_files, resolve_paths};
 use crate::interactive::InteractiveFixer;
 use crate::regime::init_regime_for_files;
 
@@ -15,16 +16,24 @@ pub fn run_dictate(
     config_path: Option<Utf8PathBuf>,
     profile: Option<String>,
 ) -> Result<()> {
+    let selector = diff::selector_from_flags(args.diff.as_deref(), args.staged)?;
+    let paths = resolve_paths(&args.paths, selector.is_some())?;
+    let changed = selector
+        .as_ref()
+        .map(|sel| diff::changed_lines(sel, &paths, args.diff_context))
+        .transpose()?;
+
     if args.interactive {
-        run_interactive_dictate(&args.paths, config_path, profile)
+        run_interactive_dictate(&paths, changed, config_path, profile)
     } else {
-        run_batch_dictate(&args.paths, config_path, profile)
+        run_batch_dictate(&paths, changed, config_path, profile)
     }
 }
 
 /// Run interactive fix mode
 fn run_interactive_dictate(
     paths: &[Utf8PathBuf],
+    changed: Option<ChangedLines>,
     config_path: Option<Utf8PathBuf>,
     profile: Option<String>,
 ) -> Result<()> {
@@ -36,7 +45,7 @@ fn run_interactive_dictate(
     let mut fixer = InteractiveFixer::new();
 
     println!("🔍 Collecting fixable violations...");
-    fixer.collect_violations(paths, decree_config.as_ref())?;
+    fixer.collect_violations(paths, changed.as_ref(), decree_config.as_ref())?;
 
     if !fixer.has_violations() {
         println!("✨ No fixable violations found!");
@@ -53,10 +62,14 @@ fn run_interactive_dictate(
 /// Run batch fix mode (original behavior)
 fn run_batch_dictate(
     paths: &[Utf8PathBuf],
+    changed: Option<ChangedLines>,
     config_path: Option<Utf8PathBuf>,
     profile: Option<String>,
 ) -> Result<()> {
-    let files = collect_all_files(paths)?;
+    let mut files = collect_all_files(paths)?;
+    if let Some(changed) = &changed {
+        files.retain(|f| changed.contains_file(f));
+    }
     if files.is_empty() {
         eprintln!("No files found");
         return Ok(());
@@ -85,6 +98,8 @@ fn run_batch_dictate(
         }
     }
 
+    let scope = changed.map(|c| diff::Scope::new(c, regime.file_scope_rules()));
+
     let mut fixed_count = 0;
     let mut file_count = 0;
 
@@ -103,8 +118,20 @@ fn run_batch_dictate(
 
         // Apply all fixable violations
         for diag in diags {
+            // Spans index the original text, so scope-check before any rewrite.
+            if scope
+                .as_ref()
+                .is_some_and(|s| !s.allows(path.as_path(), &original, &diag))
+            {
+                continue;
+            }
             if diag.enforced
-                && let Some(new_text) = apply_single_fix(&fixed_text, &diag)
+                && let Some(new_text) = match &scope {
+                    Some(s) if !s.is_file_scope(&diag.rule) => {
+                        apply_fix_at_span(&fixed_text, &diag)
+                    }
+                    _ => apply_single_fix(&fixed_text, &diag),
+                }
                 && new_text != fixed_text
             {
                 fixed_text = new_text;
@@ -127,6 +154,40 @@ fn run_batch_dictate(
     }
 
     Ok(())
+}
+
+/// Apply `diag`'s fix but confine the rewrite to the lines its span covers.
+///
+/// The fixers below rewrite the whole file. Splicing the untouched lines back is
+/// what stops `--diff --fix` from reformatting code the author never edited.
+/// Only valid for line-anchored rules; file-scope rules must fix whole-file.
+pub(crate) fn apply_fix_at_span(
+    content: &str,
+    diag: &dictator_decree_abi::Diagnostic,
+) -> Option<String> {
+    let fixed = apply_single_fix(content, diag)?;
+
+    let (start, _) = crate::output::byte_to_line_col(content, diag.span.start);
+    let (end, _) = crate::output::byte_to_line_col(content, diag.span.end.max(diag.span.start));
+
+    let original_lines: Vec<&str> = content.split('\n').collect();
+    let fixed_lines: Vec<&str> = fixed.split('\n').collect();
+    if original_lines.len() != fixed_lines.len() {
+        return Some(fixed);
+    }
+
+    let spliced: Vec<&str> = original_lines
+        .iter()
+        .enumerate()
+        .map(|(idx, original)| {
+            if (start..=end).contains(&(idx + 1)) {
+                fixed_lines[idx]
+            } else {
+                *original
+            }
+        })
+        .collect();
+    Some(spliced.join("\n"))
 }
 
 /// Apply a single fix based on a diagnostic

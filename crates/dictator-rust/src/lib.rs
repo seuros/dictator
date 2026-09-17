@@ -143,6 +143,12 @@ impl Decree for RustDecree {
                 ".clippy.toml".to_string(),
             ],
             skip_filenames: vec!["Cargo.lock".to_string()],
+            file_scope_rules: dictator_supreme::file_scope_rules(&[
+                "file-too-long",
+                "missing-edition",
+                "missing-rust-version",
+                "unnecessary-mod-rs",
+            ]),
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

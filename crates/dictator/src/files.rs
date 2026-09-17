@@ -59,6 +59,18 @@ pub fn collect_all_files(paths: &[Utf8PathBuf]) -> Result<Vec<Utf8PathBuf>> {
     Ok(files)
 }
 
+/// Fall back to the current directory when a diff selector narrows the scope
+/// anyway; otherwise paths stay mandatory.
+pub fn resolve_paths(paths: &[Utf8PathBuf], has_selector: bool) -> Result<Vec<Utf8PathBuf>> {
+    if !paths.is_empty() {
+        return Ok(paths.to_vec());
+    }
+    if has_selector {
+        return Ok(vec![Utf8PathBuf::from(".")]);
+    }
+    anyhow::bail!("no paths given; pass files/directories, or --diff <REV> to scope to a range")
+}
+
 pub fn detect_file_types(files: &[Utf8PathBuf]) -> FileTypes {
     let mut types = FileTypes::default();
     for file in files {

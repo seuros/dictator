@@ -172,6 +172,7 @@ impl Decree for RubyHygiene {
                 ".irbrc".to_string(),
             ],
             skip_filenames: vec!["Gemfile.lock".to_string(), "Podfile.lock".to_string()],
+            file_scope_rules: dictator_supreme::file_scope_rules(&["file-too-long"]),
             capabilities: vec![dictator_decree_abi::Capability::Lint],
         }
     }

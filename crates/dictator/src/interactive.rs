@@ -51,9 +51,13 @@ impl InteractiveFixer {
     pub fn collect_violations(
         &mut self,
         paths: &[Utf8PathBuf],
+        changed: Option<&crate::diff::ChangedLines>,
         config: Option<&DictateConfig>,
     ) -> Result<()> {
-        let files = crate::files::collect_all_files(paths)?;
+        let mut files = crate::files::collect_all_files(paths)?;
+        if let Some(changed) = changed {
+            files.retain(|f| changed.contains_file(f));
+        }
         let file_types = crate::files::detect_file_types(&files);
         let mut regime = crate::regime::init_regime_for_files(&file_types, config);
 
@@ -69,6 +73,8 @@ impl InteractiveFixer {
             }
         }
 
+        let scope = changed.map(|c| crate::diff::Scope::new(c.clone(), regime.file_scope_rules()));
+
         for path in files {
             let Some(text) = crate::files::read_source_file(path.as_std_path()) else {
                 continue;
@@ -81,6 +87,12 @@ impl InteractiveFixer {
             let diags = regime.enforce(&[source])?;
 
             for diag in diags {
+                if scope
+                    .as_ref()
+                    .is_some_and(|s| !s.allows(path.as_path(), &text, &diag))
+                {
+                    continue;
+                }
                 if diag.enforced {
                     // This is a fixable violation
                     if let Some(fix) = Self::create_fix(&path, &text, &diag) {

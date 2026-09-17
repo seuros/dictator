@@ -24,10 +24,9 @@ pub fn run_watch(
     profile: Option<String>,
 ) -> Result<()> {
     let cfg = load_config(config_path.as_ref())?;
-    let format = if args.json {
-        OutputFormat::Json
-    } else {
-        cfg.format.unwrap_or(OutputFormat::Human)
+    let format = match args.format.as_deref() {
+        Some(raw) => raw.parse().map_err(anyhow::Error::msg)?,
+        None => cfg.format.unwrap_or(OutputFormat::Human),
     };
 
     let decree_config = load_dictate_config(config_path.as_ref(), profile.as_deref())?;
@@ -155,6 +154,9 @@ pub fn run_watch(
                     match format {
                         OutputFormat::Human => {
                             print_diagnostic(path_ref.as_str(), &text, &diag);
+                        }
+                        OutputFormat::Github => {
+                            crate::output::print_github_annotation(path_ref.as_str(), &text, &diag);
                         }
                         OutputFormat::Json => {
                             let (line, col) = byte_to_line_col(&text, diag.span.start);
