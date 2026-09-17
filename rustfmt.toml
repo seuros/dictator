@@ -1,0 +1,5 @@
+# Pins the style this repo is actually committed in. Without it, rustfmt walks
+# up and finds the fleet-wide `use_small_heuristics = "Max"`, which CI never
+# sees, so `cargo fmt --check` fails locally on 345 untouched hunks and passes
+# in CI. Nearest rustfmt.toml wins, so this file ends the disagreement.
+use_small_heuristics = "Default"
