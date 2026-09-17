@@ -379,6 +379,7 @@ required = ["title", "slug"]
 **`decree.freebsd`** (persona: Beastie) — uncomment `[decree.freebsd]` in `.dictate.toml` to enable:
 - `style(9)` enforcement for kernel C code (`.c`/`.h`): brace placement, operator/keyword spacing, comment style, indentation, banned constructs
 - mdoc(7)/man-page enforcement (sections `.1`-`.9`): macro ordering, `.Nd`/`.Cd`/`.Dl` quoting, SPDX header order, date format, module-load boilerplate
+- C99 preference (emaste@ suggestion): K&R definitions, `foo()` instead of `foo(void)`, `register`/`auto`, `u_int32_t`/`quad_t`, hand-rolled `TRUE`/`FALSE`, `__inline`, GNU named variadic macro parameters
 - Shared `banned-license-gpl` check across both file kinds
 
 More decrees coming. Each language gets its own WASM decree for structural enforcement.

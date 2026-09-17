@@ -191,6 +191,14 @@ impl Decree for FreeBsdDecree {
             check_printf_format(self, line, &mut in_block_comment_printf, offset, &mut diags);
             check_quoted_newline_spacing(self, line, offset, &mut diags);
 
+            // C99 spellings over their C89/GNU predecessors.
+            check_c99_obsolete_storage_class(self, &clean, offset, &mut diags);
+            check_c99_empty_param_list(self, &clean, offset, &mut diags);
+            check_c99_legacy_int_types(self, &clean, offset, &mut diags);
+            check_c99_bool_macros(self, &clean, offset, &mut diags);
+            check_c99_gnu_inline(self, &clean, offset, &mut diags);
+            check_c99_named_variadic_macro(self, &clean, offset, &mut diags);
+
             offset += raw.len();
         }
 
@@ -207,6 +215,7 @@ impl Decree for FreeBsdDecree {
         check_macro_complex_values(self, source, &mut diags);
         check_else_follow_close_brace(self, path, source, &mut diags);
         check_macro_statement_wrapping(self, path, source, &mut diags);
+        check_c99_knr_definition(self, source, &mut diags);
 
         diags
     }

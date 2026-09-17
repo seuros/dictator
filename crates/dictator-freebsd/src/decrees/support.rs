@@ -203,6 +203,36 @@ pub(crate) fn is_ident_byte(b: u8) -> bool {
     b.is_ascii_alphanumeric() || b == b'_'
 }
 
+/// `word` as a whole identifier: no match inside `pci_register`/`register_t`.
+pub(crate) fn find_word(line: &str, word: &str) -> Option<usize> {
+    let bytes = line.as_bytes();
+    let mut start = 0usize;
+
+    while let Some(pos) = line[start..].find(word) {
+        let idx = start + pos;
+        let end = idx + word.len();
+        let prev_ok = idx == 0 || !is_ident_byte(bytes[idx - 1]);
+        let next_ok = end >= bytes.len() || !is_ident_byte(bytes[end]);
+        if prev_ok && next_ok {
+            return Some(idx);
+        }
+        start = idx + 1;
+    }
+
+    None
+}
+
+/// No lowercase — `SYSCTL_HANDLER_ARGS`-style, so a macro, not an identifier.
+pub(crate) fn looks_like_macro_name(word: &str) -> bool {
+    !word.is_empty() && !word.bytes().any(|b| b.is_ascii_lowercase())
+}
+
+/// Member access (`p->register`, `s.auto`) rather than a declaration keyword.
+pub(crate) fn is_member_access(line: &str, idx: usize) -> bool {
+    let before = line[..idx].trim_end();
+    before.ends_with('.') || before.ends_with("->")
+}
+
 pub(crate) fn is_define_prefix(ctx_before: &str) -> bool {
     let trimmed = ctx_before.trim_start();
     let Some(rest) = trimmed.strip_prefix('#') else {
