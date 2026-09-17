@@ -13,8 +13,20 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.release.outputs['crates/dictator--release_created'] }}
+      tag: ${{ steps.release.outputs['crates/dictator--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@v5
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Called here rather than triggered by the tag push: tags created with
+  # GITHUB_TOKEN do not start new workflow runs.
+  binaries:
+    needs: release-please
+    if: needs.release-please.outputs.released == 'true'
+    uses: ./.github/workflows/release-binaries.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag }}
