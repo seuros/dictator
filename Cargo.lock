@@ -123,14 +123,14 @@ checksum = "dc0b364ead1874514c8c2855ab558056ebfeb775653e7ae45ff72f28f8f3166c"
 
 [[package]]
 name = "breaker-machines"
-version = "0.16.0"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "405da8da3de027352d71477991350edb758e88ad4339ed2a20f86770fca15717"
+checksum = "8b5ab71c85f50ed1eac1832dc86d47e690a2056ac6d4b465b023f880c8f1a859"
 dependencies = [
- "chrono-machines 0.4.0",
- "hashbrown 0.15.5",
+ "chrono-machines 0.6.0",
+ "hashbrown 0.17.1",
  "spin",
- "state-machines",
+ "state-machines 0.20.1",
 ]
 
 [[package]]
@@ -278,19 +278,18 @@ dependencies = [
 
 [[package]]
 name = "chrono-machines"
-version = "0.4.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d14e76579ce2b100164d550a14d1307cc234666a94414c7ed4274392564005ea"
+checksum = "4f65e6f8e84e35c1e7500c110bf57f7b73b5cbc99391491e8e0ce8ed026ce7cc"
 dependencies = [
- "async-trait",
  "rand",
 ]
 
 [[package]]
 name = "chrono-machines"
-version = "0.6.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f65e6f8e84e35c1e7500c110bf57f7b73b5cbc99391491e8e0ce8ed026ce7cc"
+checksum = "59e159e84cd8e14f285181f1189c87fbd9720ab06735a792746dc446c152a7e0"
 dependencies = [
  "rand",
 ]
@@ -715,7 +714,7 @@ dependencies = [
  "dictator-decree-abi",
  "dictator-supreme",
  "jiff",
- "state-machines",
+ "state-machines 0.20.1",
 ]
 
 [[package]]
@@ -924,12 +923,6 @@ name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
-
-[[package]]
-name = "foldhash"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
 
 [[package]]
 name = "foldhash"
@@ -1156,17 +1149,6 @@ checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 
 [[package]]
 name = "hashbrown"
-version = "0.15.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
-dependencies = [
- "allocator-api2",
- "equivalent",
- "foldhash 0.1.5",
-]
-
-[[package]]
-name = "hashbrown"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
@@ -1177,7 +1159,9 @@ version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 dependencies = [
- "foldhash 0.2.0",
+ "allocator-api2",
+ "equivalent",
+ "foldhash",
  "serde",
  "serde_core",
 ]
@@ -1625,14 +1609,14 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-host"
-version = "0.3.1"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a3cc5f7ca987c8cb90f9363cfc14e9c5db7ecb0813004bb5e1db199a55c213d"
+checksum = "bb186a08b3006c119de68ccd2ff62f782c7d01a6361bb6b833b9c6d09a4831af"
 dependencies = [
  "arc-swap",
  "base64 0.22.1",
  "breaker-machines",
- "chrono-machines 0.6.0",
+ "chrono-machines 0.8.0",
  "dashmap",
  "fluent-uri",
  "futures",
@@ -1645,7 +1629,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
- "state-machines",
+ "state-machines 0.21.0",
  "strum",
  "thiserror 2.0.19",
  "throttle-machines",
@@ -1656,9 +1640,9 @@ dependencies = [
 
 [[package]]
 name = "mcp-host-macros"
-version = "0.3.1"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "912baad702f7195de9274e1887d9f53375579c2d84190a6589989f0388e721e7"
+checksum = "0c2a904c3e52aed5f8d2f2283b6fd6dd141ec87438c7969b95be0f0a69067de9"
 dependencies = [
  "darling",
  "proc-macro-crate",
@@ -2291,8 +2275,18 @@ version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4085a22c58f0cb2e44848846197b7aa1e270ac080554e2c27fe318ba8f5d3ad2"
 dependencies = [
- "state-machines-core",
- "state-machines-macro",
+ "state-machines-core 0.9.0",
+ "state-machines-macro 0.21.0",
+]
+
+[[package]]
+name = "state-machines"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f47a189a4799c870b5f7c7aaa7fb9cf232ba53724dfb9f70c6df6f6fcc5457c"
+dependencies = [
+ "state-machines-core 0.10.0",
+ "state-machines-macro 0.22.0",
 ]
 
 [[package]]
@@ -2306,10 +2300,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "state-machines-core"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44c9ff2addb025d92b75ddc3984f6a2751cba4b5a86259f4dec6a251a1aac901"
+
+[[package]]
 name = "state-machines-macro"
 version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2cda45f33b02ad3a74b0b38cf704586230e3fcbf0178e0cf4824ded7b088961b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "state-machines-macro"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d080f1606ea7ed35fd0870d051573df2c0a99251186005f0da13c32260086e1a"
 dependencies = [
  "proc-macro2",
  "quote",
