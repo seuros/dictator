@@ -42,27 +42,26 @@ fmt:
 
 # === Release Commands ===
 
-# Crates in dependency order for publishing
+# Linked-version crates (the release-please group) - drives `versions` and `bump`
 CRATES := "dictator-decree-abi dictator-core dictator-supreme dictator-frontmatter dictator-ruby dictator-typescript dictator-golang dictator-rust dictator-python dictator"
 
-# Dry-run publish base crate (full chain requires sequential publishing)
+# Everything that goes to crates.io. Decree crates version independently, but
+# `dictator` depends on dictator-freebsd, so it must ship in the same pass.
+# dictator-coreboot stays unpublished; dictator-kjr is `publish = false`.
+PUBLISH_CRATES := CRATES + " dictator-freebsd"
+
+# Dry-run the full publish set - packages and verifies, uploads nothing
 publish-dry:
-    cargo publish -p dictator-decree-abi --dry-run
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cargo publish --dry-run $(printf -- '-p %s ' {{PUBLISH_CRATES}})
 
 # Publish all crates to crates.io (requires login)
 publish:
     #!/usr/bin/env bash
     set -euo pipefail
-    for crate in {{CRATES}}; do
-        echo "Publishing $crate..."
-        cargo publish -p "$crate"
-        echo "$crate published"
-        # Sleep to let crates.io index
-        if [ "$crate" != "dictator" ]; then
-            echo "Waiting for crates.io to index..."
-            sleep 30
-        fi
-    done
+    # cargo resolves publish order and waits on the index itself
+    cargo publish $(printf -- '-p %s ' {{PUBLISH_CRATES}})
     echo "All crates published. The Dictator is pleased."
 
 # Publish a specific crate
