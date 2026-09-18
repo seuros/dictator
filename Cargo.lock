@@ -627,7 +627,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-coreboot"
-version = "0.1.2"
+version = "0.24.0"
 dependencies = [
  "dictator-decree-abi",
 ]
@@ -641,7 +641,7 @@ dependencies = [
 
 [[package]]
 name = "dictator-freebsd"
-version = "0.1.2"
+version = "0.24.0"
 dependencies = [
  "dictator-decree-abi",
  "dictator-supreme",

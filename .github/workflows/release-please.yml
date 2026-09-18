@@ -14,8 +14,9 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     outputs:
-      released: ${{ steps.release.outputs['crates/dictator--release_created'] }}
-      tag: ${{ steps.release.outputs['crates/dictator--tag_name'] }}
+      # The release package sits at the repo root, so outputs are unprefixed.
+      released: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v5
         id: release

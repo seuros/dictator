@@ -1,6 +1,6 @@
 [package]
 name = "dictator-frontmatter"
-version = "0.24.0"
+version.workspace = true
 description = "Markdown frontmatter decree for Dictator structural linter"
 edition.workspace = true
 rust-version.workspace = true
@@ -13,7 +13,7 @@ workspace = true
 
 [dependencies]
 dictator-decree-abi.workspace = true
-dictator-core = { version = "0.24.0", path = "../dictator-core" }
+dictator-core.workspace = true
 serde.workspace = true
 serde_yaml.workspace = true
 

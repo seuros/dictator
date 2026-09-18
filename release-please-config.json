@@ -1,59 +1,18 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "release-type": "rust",
-  "plugins": [
-    {
-      "type": "cargo-workspace"
-    },
-    {
-      "type": "linked-versions",
-      "groupName": "dictator",
-      "components": [
-        "dictator",
-        "dictator-core",
-        "dictator-decree-abi",
-        "dictator-supreme",
-        "dictator-ruby",
-        "dictator-typescript",
-        "dictator-golang",
-        "dictator-rust",
-        "dictator-python",
-        "dictator-frontmatter"
-      ],
-      "merge": false
-    }
-  ],
+  "release-type": "simple",
   "packages": {
-    "crates/dictator": {
+    ".": {
       "component": "dictator",
-      "extra-files": ["/Cargo.toml"]
-    },
-    "crates/dictator-core": {
-      "component": "dictator-core"
-    },
-    "crates/dictator-decree-abi": {
-      "component": "dictator-decree-abi"
-    },
-    "crates/dictator-supreme": {
-      "component": "dictator-supreme"
-    },
-    "crates/dictator-ruby": {
-      "component": "dictator-ruby"
-    },
-    "crates/dictator-typescript": {
-      "component": "dictator-typescript"
-    },
-    "crates/dictator-golang": {
-      "component": "dictator-golang"
-    },
-    "crates/dictator-rust": {
-      "component": "dictator-rust"
-    },
-    "crates/dictator-python": {
-      "component": "dictator-python"
-    },
-    "crates/dictator-frontmatter": {
-      "component": "dictator-frontmatter"
+      "include-component-in-tag": true,
+      "extra-files": [
+        "Cargo.toml",
+        {
+          "type": "toml",
+          "path": "Cargo.lock",
+          "jsonpath": "$.package[?(!@.source && @.name.value.match(/^dictator/))].version"
+        }
+      ]
     }
   }
 }

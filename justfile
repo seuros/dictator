@@ -70,23 +70,33 @@ publish-crate crate:
 
 # === Version Management ===
 
-# Show current versions of all crates
+# Show the workspace version and flag any crate that stopped inheriting it
 versions:
     #!/usr/bin/env bash
-    for crate in {{CRATES}}; do
-        version=$(grep -m1 '^version' "crates/$crate/Cargo.toml" | cut -d'"' -f2)
-        echo "$crate: $version"
-    done
+    set -euo pipefail
+    echo "workspace: $(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)"
+    drift=$(grep -l '^version = "' crates/*/Cargo.toml | grep -v dictator-kjr || true)
+    if [ -n "$drift" ]; then
+        echo "drift - these pin their own version instead of inheriting:" >&2
+        echo "$drift" >&2
+        exit 1
+    fi
 
-# Bump version (patch/minor/major) - requires cargo-edit
-bump level:
+# Set the workspace version by hand. release-please normally owns this;
+# `cargo set-version` cannot write an inherited version (cargo-edit#752).
+set-version version:
     #!/usr/bin/env bash
     set -euo pipefail
-    for crate in {{CRATES}}; do
-        echo "Bumping $crate..."
-        cargo set-version -p "$crate" --bump {{level}}
-    done
-    echo "Versions bumped. Don't forget to update inter-crate dependencies!"
+    python3 - <<'PY'
+    import re, pathlib
+    p = pathlib.Path("Cargo.toml")
+    t = p.read_text()
+    t = re.sub(r'^version = "[^"]+"', 'version = "{{version}}"', t, count=1, flags=re.M)
+    t = re.sub(r'^(dictator-[a-z-]+ = \{ version = )"[^"]+"', r'\g<1>"{{version}}"', t, flags=re.M)
+    p.write_text(t)
+    PY
+    cargo check --workspace --quiet
+    echo "Workspace pinned at {{version}}. The Dictator decrees uniformity."
 
 # === Quality Assurance ===
 
