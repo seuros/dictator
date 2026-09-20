@@ -26,6 +26,32 @@ pub struct StalintParams {
     /// Lint only files staged for commit (default: all uncommitted changes)
     #[serde(default)]
     pub staged: bool,
+    /// Workspace root to scope linting to (default: client roots or CWD)
+    #[serde(default)]
+    pub workspace: Option<String>,
+}
+
+/// Arguments for the dictator (auto-fix) tool
+#[derive(Debug, Default, serde::Deserialize, schemars::JsonSchema)]
+pub struct DictatorParams {
+    /// Workspace root to scope auto-fix to (default: client roots or CWD)
+    #[serde(default)]
+    pub workspace: Option<String>,
+}
+
+/// Canonicalize and validate a caller-supplied workspace override.
+fn validate_workspace(workspace: Option<&str>) -> Result<Option<String>, ToolError> {
+    let Some(ws) = workspace else {
+        return Ok(None);
+    };
+    let canonical = std::fs::canonicalize(ws)
+        .map_err(|e| ToolError::Execution(format!("workspace '{ws}' is not accessible: {e}")))?;
+    if !canonical.is_dir() {
+        return Err(ToolError::Execution(format!(
+            "workspace '{ws}' is not a directory"
+        )));
+    }
+    Ok(Some(canonical.to_string_lossy().into_owned()))
 }
 
 /// Resolve the lint/fix scope from client roots or CWD, narrowed to uncommitted files
@@ -40,28 +66,54 @@ pub struct StalintParams {
 ///   preserving the old whole-tree behavior there.
 /// - Returns `Some(vec![])` when every resolved directory is a clean git repo — callers
 ///   must treat that as "nothing to do", not as "no scope, so scan everything".
-async fn resolve_paths(ctx: &Ctx<'_>, scope: GitScope) -> Option<Vec<String>> {
-    let dirs = if ctx.supports_roots() {
-        let requester = ctx.client_requester()?;
-        let roots = requester.request_roots(None).await.ok()?;
-        if roots.is_empty() {
-            return None;
-        }
-        roots
-            .iter()
-            .map(|r| {
-                // Strip file:// or file:/// prefix; leave other URIs as-is
-                if let Some(p) = r.uri.strip_prefix("file://") {
-                    p.to_string()
-                } else {
-                    r.uri.clone()
+async fn resolve_paths(
+    ctx: &Ctx<'_>,
+    scope: GitScope,
+    workspace: Option<&str>,
+) -> Option<Vec<String>> {
+    const ROOTS_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
+    fn cwd_fallback() -> Option<Vec<String>> {
+        std::env::current_dir()
+            .ok()
+            .map(|p| vec![p.to_string_lossy().to_string()])
+    }
+
+    let dirs = if let Some(ws) = workspace {
+        vec![ws.to_string()]
+    } else if ctx.supports_roots() {
+        let requester = ctx.client_requester();
+        let roots = match requester {
+            None => None,
+            Some(requester) => {
+                match tokio::time::timeout(ROOTS_TIMEOUT, requester.request_roots(None)).await {
+                    Ok(Ok(roots)) => Some(roots),
+                    // Request errored or timed out: client claims roots support but
+                    // didn't deliver, so don't hang or lint the whole workspace —
+                    // fall back to cwd instead of bailing to "scan everything".
+                    Ok(Err(_)) | Err(_) => None,
                 }
-            })
-            .collect()
+            }
+        };
+
+        match roots {
+            // Client answered with an explicit empty list: no scope, caller must bail.
+            Some(roots) if roots.is_empty() => return None,
+            Some(roots) => roots
+                .iter()
+                .map(|r| {
+                    // Strip file:// or file:/// prefix; leave other URIs as-is
+                    if let Some(p) = r.uri.strip_prefix("file://") {
+                        p.to_string()
+                    } else {
+                        r.uri.clone()
+                    }
+                })
+                .collect(),
+            None => cwd_fallback()?,
+        }
     } else {
-        // Fall back to current working directory
-        let cwd = std::env::current_dir().ok()?.to_string_lossy().to_string();
-        vec![cwd]
+        cwd_fallback()?
     };
 
     let mut scoped = Vec::new();
@@ -130,12 +182,13 @@ impl DictatorTools {
         idempotent = true
     )]
     async fn stalint(&self, ctx: Ctx<'_>, params: Parameters<StalintParams>) -> ToolResult {
+        let workspace = validate_workspace(params.0.workspace.as_deref())?;
         let scope = if params.0.staged {
             GitScope::Staged
         } else {
             GitScope::Uncommitted
         };
-        let paths = match resolve_paths(&ctx, scope).await {
+        let paths = match resolve_paths(&ctx, scope, workspace.as_deref()).await {
             Some(p) => p,
             None => {
                 // Client supports roots but returned empty — hide both tools
@@ -170,7 +223,7 @@ impl DictatorTools {
                 .record_classified_staged(espionage);
         }
 
-        let args = Some(serde_json::json!({ "paths": paths }));
+        let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
         let response = handle_stalint(Value::Null, args, Arc::clone(&self.state));
         let mut result = extract_tool_result(response, "stalint")?;
 
@@ -198,7 +251,7 @@ impl DictatorTools {
         visible = "config_exists()",
         destructive = true
     )]
-    async fn dictator(&self, ctx: Ctx<'_>, _params: Parameters<()>) -> ToolResult {
+    async fn dictator(&self, ctx: Ctx<'_>, params: Parameters<DictatorParams>) -> ToolResult {
         let can_write = self.state.lock().unwrap().can_write;
         if !can_write {
             return Err(ToolError::Execution(
@@ -206,7 +259,8 @@ impl DictatorTools {
             ));
         }
 
-        let paths = match resolve_paths(&ctx, GitScope::Uncommitted).await {
+        let workspace = validate_workspace(params.0.workspace.as_deref())?;
+        let paths = match resolve_paths(&ctx, GitScope::Uncommitted, workspace.as_deref()).await {
             Some(p) => p,
             None => {
                 // Client supports roots but returned empty — hide both tools
@@ -228,7 +282,7 @@ impl DictatorTools {
             && requester.supports_elicitation()
         {
             let lint_summary = {
-                let args = Some(serde_json::json!({ "paths": paths }));
+                let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
                 let response = handle_stalint(Value::Null, args, Arc::clone(&self.state));
                 response
                     .result
@@ -268,7 +322,7 @@ impl DictatorTools {
             }
         }
 
-        let args = Some(serde_json::json!({ "paths": paths }));
+        let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
         let response = handle_dictator(Value::Null, args, Arc::clone(&self.state));
         let result = extract_tool_result(response, "dictator")?;
         Ok(pretty_result_output(&result))

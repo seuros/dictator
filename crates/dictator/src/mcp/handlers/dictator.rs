@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use crate::mcp::fixers::handle_kimjongrails;
 use crate::mcp::linters::handle_supremecourt;
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::{allowed_paths_within_cwd, parse_arguments};
+use crate::mcp::utils::{allowed_paths_within_cwd, current_dir_or_default, parse_arguments};
 
 /// Handle dictator tool (auto-fix)
 pub fn handle_dictator(
@@ -20,6 +20,8 @@ pub fn handle_dictator(
     struct Args {
         paths: Vec<String>,
         mode: Option<String>,
+        #[serde(default)]
+        workspace: Option<String>,
     }
 
     let args: Args = match parse_arguments(&id, arguments) {
@@ -28,7 +30,12 @@ pub fn handle_dictator(
     };
 
     // Security: dictator only works within cwd (prevents LLM from fixing /home, /etc, etc.)
-    let allowed = match allowed_paths_within_cwd(&id, &args.paths, "dictator") {
+    let cwd = args
+        .workspace
+        .as_ref()
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(current_dir_or_default);
+    let allowed = match allowed_paths_within_cwd(&id, &args.paths, "dictator", &cwd) {
         Ok(allowed) => allowed,
         Err(response) => return *response,
     };

@@ -28,7 +28,12 @@ impl Tool for OccupyTool {
     fn input_schema(&self) -> Value {
         serde_json::json!({
             "type": "object",
-            "properties": {},
+            "properties": {
+                "workspace": {
+                    "type": "string",
+                    "description": "Workspace root to write .dictate.toml into (default: CWD)"
+                }
+            },
             "required": []
         })
     }
@@ -49,7 +54,8 @@ impl Tool for OccupyTool {
             }
 
             let string_tx = spawn_notification_forwarder(self.notification_tx.clone());
-            let response = handle_occupy(Value::Null, Arc::clone(&self.state), string_tx);
+            let args = Some(ctx.params.clone());
+            let response = handle_occupy(Value::Null, args, Arc::clone(&self.state), string_tx);
             let result = extract_tool_result(response, "occupy")?;
             Ok(pretty_result_output(&result))
         })

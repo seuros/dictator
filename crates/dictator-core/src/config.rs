@@ -371,7 +371,16 @@ impl DictateConfig {
     #[must_use]
     pub fn load_default() -> Option<Self> {
         let cwd = std::env::current_dir().ok()?;
-        let config_path = cwd.join(".dictate.toml");
+        Self::load_from_dir(&cwd)
+    }
+
+    /// Load `.dictate.toml` from a specific directory, bypassing the process cwd.
+    ///
+    /// Lets MCP handlers honor a caller-supplied `workspace` override instead of
+    /// always reading the server process's own working directory.
+    #[must_use]
+    pub fn load_from_dir(dir: &std::path::Path) -> Option<Self> {
+        let config_path = dir.join(".dictate.toml");
 
         if !config_path.exists() {
             return None;

@@ -26,6 +26,8 @@ pub fn handle_stalint(
         paths: Vec<String>,
         limit: Option<usize>,
         cursor: Option<String>,
+        #[serde(default)]
+        workspace: Option<String>,
     }
 
     let args: Args = arguments
@@ -71,7 +73,11 @@ pub fn handle_stalint(
         .unwrap_or(0);
 
     // Resolve paths to absolute (relative to server's cwd)
-    let cwd = current_dir_or_default();
+    let cwd = args
+        .workspace
+        .as_ref()
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(current_dir_or_default);
     let resolved_paths: Vec<std::path::PathBuf> = paths
         .iter()
         .map(|p| {
@@ -90,7 +96,7 @@ pub fn handle_stalint(
         resolved_paths
     ));
 
-    let regime = init_regime_from_config();
+    let regime = init_regime_from_config(Some(&cwd));
 
     let mut all_violations: Vec<serde_json::Value> = Vec::new();
 

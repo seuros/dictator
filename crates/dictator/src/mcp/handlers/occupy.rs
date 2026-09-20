@@ -1,35 +1,41 @@
 //! Occupy tool handler for initializing .dictate.toml.
 
 use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
+use serde::Deserialize;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 
 use crate::mcp::state::ServerState;
+use crate::mcp::utils::current_dir_or_default;
 
 const DEFAULT_CONFIG: &str = include_str!("../../../templates/default.dictate.toml");
 
+#[derive(Deserialize, Default)]
+struct Args {
+    #[serde(default)]
+    workspace: Option<String>,
+}
+
 /// Handle `occupy` tool - initialize .dictate.toml
+///
+/// `arguments.workspace` overrides the process cwd, so the config is written
+/// into the caller-supplied workspace instead of wherever the server happened
+/// to be launched from.
 pub fn handle_occupy(
     id: Value,
+    arguments: Option<Value>,
     watcher_state: Arc<Mutex<ServerState>>,
     notif_tx: mpsc::Sender<String>,
 ) -> JsonRpcResponse {
-    let cwd = match std::env::current_dir() {
-        Ok(p) => p,
-        Err(e) => {
-            return JsonRpcResponse {
-                jsonrpc: "2.0".into(),
-                id: Some(id),
-                result: None,
-                error: Some(JsonRpcError {
-                    code: -32603,
-                    message: format!("Failed to get current directory: {e}"),
-                    data: None,
-                }),
-            };
-        }
-    };
+    let args: Args = arguments
+        .and_then(|a| serde_json::from_value(a).ok())
+        .unwrap_or_default();
+
+    let cwd = args
+        .workspace
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(current_dir_or_default);
 
     let config_path = cwd.join(".dictate.toml");
 

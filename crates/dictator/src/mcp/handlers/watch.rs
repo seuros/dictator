@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::{allowed_paths_within_cwd, parse_arguments};
+use crate::mcp::utils::{allowed_paths_within_cwd, current_dir_or_default, parse_arguments};
 
 /// Handle `stalint_watch` tool
 pub fn handle_stalint_watch(
@@ -30,7 +30,12 @@ pub fn handle_stalint_watch(
     };
 
     // Security: stalint_watch only works within cwd
-    let allowed = match allowed_paths_within_cwd(&id, &args.paths, "stalint_watch") {
+    let allowed = match allowed_paths_within_cwd(
+        &id,
+        &args.paths,
+        "stalint_watch",
+        &current_dir_or_default(),
+    ) {
         Ok(allowed) => allowed,
         Err(response) => return *response,
     };

@@ -9,7 +9,7 @@ use super::utils::{collect_files, current_dir_or_default, make_snippet};
 
 /// Run stalint check and return violations
 pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
-    let regime = init_regime_from_config();
+    let regime = init_regime_from_config(None);
     let cwd = current_dir_or_default();
     let mut violations = Vec::new();
 
@@ -55,11 +55,17 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
     violations
 }
 
-/// Initialize regime with configured decrees
-pub fn init_regime_from_config() -> Regime {
+/// Initialize regime with configured decrees.
+///
+/// `workspace` overrides the process cwd when loading `.dictate.toml`, so a
+/// caller-supplied workspace scopes both path resolution and config lookup.
+pub fn init_regime_from_config(workspace: Option<&std::path::Path>) -> Regime {
     let mut regime = Regime::new();
 
-    let config = dictator_core::DictateConfig::load_default();
+    let config = match workspace {
+        Some(dir) => dictator_core::DictateConfig::load_from_dir(dir),
+        None => dictator_core::DictateConfig::load_default(),
+    };
     regime.set_rule_ignores_from_config(config.as_ref());
 
     // decree.supreme (with per-language overrides) runs as the default decree.

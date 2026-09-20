@@ -223,9 +223,9 @@ pub fn allowed_paths_within_cwd(
     id: &serde_json::Value,
     paths: &[String],
     tool: &str,
+    cwd: &std::path::Path,
 ) -> Result<Vec<String>, Box<JsonRpcResponse>> {
-    let cwd = current_dir_or_default();
-    let (allowed, rejected) = partition_paths_within_cwd(paths, &cwd);
+    let (allowed, rejected) = partition_paths_within_cwd(paths, cwd);
 
     if !rejected.is_empty() {
         return Err(Box::new(JsonRpcResponse {
