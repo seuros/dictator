@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0](https://github.com/seuros/dictator/compare/dictator-core-v0.24.0...dictator-core-v0.25.0) (2026-09-23)
+
+
+### Features
+
+* stalint, dictator, and occupy now take orders from a named workspace, not just the throne's cwd ([71ab3db](https://github.com/seuros/dictator/commit/71ab3db8aa44754fb377603571ecdbaa370c2e83))
+
 ## [0.24.0](https://github.com/seuros/dictator/compare/dictator-core-v0.23.0...dictator-core-v0.24.0) (2026-09-17)
 
 

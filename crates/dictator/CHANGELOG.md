@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.25.0](https://github.com/seuros/dictator/compare/dictator-v0.24.0...dictator-v0.25.0) (2026-09-23)
+
+
+### Features
+
+* stalint, dictator, and occupy now take orders from a named workspace, not just the throne's cwd ([71ab3db](https://github.com/seuros/dictator/commit/71ab3db8aa44754fb377603571ecdbaa370c2e83))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * dictator-core bumped from 0.24.0 to 0.25.0
+    * dictator-freebsd bumped from 0.1.2 to 0.1.3
+    * dictator-frontmatter bumped from 0.24.0 to 0.25.0
+    * dictator-golang bumped from 0.24.0 to 0.25.0
+    * dictator-python bumped from 0.24.0 to 0.25.0
+    * dictator-ruby bumped from 0.24.0 to 0.25.0
+    * dictator-rust bumped from 0.24.0 to 0.25.0
+    * dictator-typescript bumped from 0.24.0 to 0.25.0
+
 ## [0.24.0](https://github.com/seuros/dictator/compare/dictator-v0.23.0...dictator-v0.24.0) (2026-09-17)
 
 
