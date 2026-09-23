@@ -50,9 +50,9 @@ base64 = "0.23"
 tokio = { version = "1", features = ["full"] }
 
 # WASM + decree related (host side; decree crates may opt out)
-wasmtime = { version = "46", default-features = true, features = ["component-model"] }
-wit-component = "0.243"
-wasmtime-wasi = { version = "46", default-features = true }
+wasmtime = { version = "49", default-features = true, features = ["component-model"] }
+wit-component = "0.259"
+wasmtime-wasi = { version = "49", default-features = true }
 libloading = "0.9"
 
 # Logging
@@ -60,7 +60,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 notify = "8"
 notify-types = "2"
-state-machines = "0.20"
+state-machines = "0.21"
 ctrlc = "3"
 tempfile = "3"
 

@@ -28,8 +28,8 @@ dictator-ruby = { version = "0.24.0", path = "../dictator-ruby" }
 dictator-rust = { version = "0.24.0", path = "../dictator-rust" }
 dictator-supreme.workspace = true
 dictator-typescript = { version = "0.24.0", path = "../dictator-typescript" }
-mcp-host = { version = "0.5.1", features = ["macros"] }
-schemars = "1.0.0-alpha.20"
+mcp-host = { version = "0.5.2", features = ["macros"] }
+schemars = "1.2.2"
 walkdir = { workspace = true }
 ignore = { workspace = true }
 tracing = { workspace = true }

@@ -57,7 +57,7 @@ curl -fsSL https://raw.githubusercontent.com/seuros/dictator/master/scripts/inst
 
 ### Build from Source
 
-Requires Rust 1.91+:
+Requires Rust 1.98 or newer. The repository pins Rust 1.98.1 for local and release builds.
 
 ```bash
 cargo install --git https://github.com/seuros/dictator
