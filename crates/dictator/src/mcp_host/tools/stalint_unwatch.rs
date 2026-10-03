@@ -8,7 +8,7 @@ use crate::mcp::handlers::handle_stalint_unwatch;
 use crate::mcp::state::ServerState;
 use crate::mcp_host::config_exists;
 
-use super::{extract_tool_result, pretty_result_output, spawn_notification_forwarder};
+use super::{extract_tool_result, result_output, spawn_notification_forwarder};
 
 /// Unwatch files
 pub struct StalintUnwatchTool {
@@ -54,7 +54,7 @@ impl Tool for StalintUnwatchTool {
             ctx.logger
                 .info("Watch stopped. stalint_watch now available.");
 
-            Ok(pretty_result_output(&result))
+            Ok(result_output(&result))
         })
     }
 }

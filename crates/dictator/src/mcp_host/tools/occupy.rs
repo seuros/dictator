@@ -8,7 +8,7 @@ use crate::mcp::handlers::handle_occupy;
 use crate::mcp::state::ServerState;
 use crate::mcp_host::config_exists;
 
-use super::{extract_tool_result, pretty_result_output, spawn_notification_forwarder};
+use super::{extract_tool_result, result_output, spawn_notification_forwarder};
 
 /// Initialize .dictate.toml - needs notification_tx for list_changed
 pub struct OccupyTool {
@@ -57,7 +57,7 @@ impl Tool for OccupyTool {
             let args = Some(ctx.params.clone());
             let response = handle_occupy(Value::Null, args, Arc::clone(&self.state), string_tx);
             let result = extract_tool_result(response, "occupy")?;
-            Ok(pretty_result_output(&result))
+            Ok(result_output(&result))
         })
     }
 }

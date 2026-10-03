@@ -266,12 +266,6 @@ pub fn to_json_string<T: Serialize>(value: &T) -> String {
     serde_json::to_string(value).unwrap_or_default()
 }
 
-/// Serialize a value to pretty JSON, falling back to an empty string on failure.
-#[must_use]
-pub fn to_json_string_pretty<T: Serialize>(value: &T) -> String {
-    serde_json::to_string_pretty(value).unwrap_or_default()
-}
-
 /// Build a sanitized single-line snippet around the diagnostic span.
 pub fn make_snippet(source: &str, span: &dictator_decree_abi::Span, max_len: usize) -> String {
     if source.is_empty() {

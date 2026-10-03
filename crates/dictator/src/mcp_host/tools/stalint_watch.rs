@@ -9,7 +9,7 @@ use crate::mcp::state::ServerState;
 use crate::mcp_host::config_exists;
 
 use super::{
-    extract_tool_result, pretty_result_output, spawn_notification_forwarder,
+    extract_tool_result, result_output, spawn_notification_forwarder,
     stalint_unwatch::StalintUnwatchTool,
 };
 
@@ -65,7 +65,7 @@ impl Tool for StalintWatchTool {
             ctx.logger
                 .info("Watch started. stalint_unwatch now available.");
 
-            Ok(pretty_result_output(&result))
+            Ok(result_output(&result))
         })
     }
 }

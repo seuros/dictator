@@ -17,7 +17,7 @@ use tokio::sync::mpsc;
 
 use crate::mcp::handlers::{handle_dictator, handle_stalint};
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::{GitScope, git_changed_files, to_json_string_pretty};
+use crate::mcp::utils::{GitScope, git_changed_files, to_json_string};
 use crate::mcp_host::config_exists;
 
 /// Arguments for the stalint tool
@@ -162,8 +162,8 @@ pub(super) fn extract_tool_result(
         .ok_or_else(|| ToolError::Execution(format!("No result from {handler_name} handler")))
 }
 
-pub(super) fn pretty_result_output(result: &Value) -> ToolOutput {
-    ToolOutput::text(to_json_string_pretty(result))
+pub(super) fn result_output(result: &Value) -> ToolOutput {
+    ToolOutput::text(to_json_string(result))
 }
 
 /// Simple tools using macro-based registration
@@ -241,7 +241,7 @@ impl DictatorTools {
                 }
             }
         }
-        Ok(pretty_result_output(&result))
+        Ok(result_output(&result))
     }
 
     /// Auto-fix structural violations (requires write permissions)
@@ -325,6 +325,6 @@ impl DictatorTools {
         let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
         let response = handle_dictator(Value::Null, args, Arc::clone(&self.state));
         let result = extract_tool_result(response, "dictator")?;
-        Ok(pretty_result_output(&result))
+        Ok(result_output(&result))
     }
 }
