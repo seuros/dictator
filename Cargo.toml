@@ -22,7 +22,7 @@ resolver = "2"
 # The one version in the workspace. Members inherit via `version.workspace = true`.
 version = "0.24.0" # x-release-please-version
 edition = "2024"
-rust-version = "1.98"
+rust-version = "1.99"
 authors = ["Abdelkader Boudih <oss@seuros.com>"]
 license = "MIT"
 repository = "https://github.com/seuros/dictator"
@@ -63,7 +63,7 @@ tokio = { version = "1", features = ["full"] }
 
 # WASM + decree related (host side; decree crates may opt out)
 wasmtime = { version = "49", default-features = true, features = ["component-model"] }
-wit-component = "0.259"
+wit-component = "0.261"
 wasmtime-wasi = { version = "49", default-features = true }
 libloading = "0.9"
 
@@ -72,7 +72,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 notify = "8"
 notify-types = "2"
-state-machines = "0.21"
+state-machines = "0.30"
 ctrlc = "3"
 tempfile = "3"
 

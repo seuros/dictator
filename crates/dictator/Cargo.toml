@@ -28,7 +28,7 @@ dictator-ruby.workspace = true
 dictator-rust.workspace = true
 dictator-supreme.workspace = true
 dictator-typescript.workspace = true
-mcp-host = { version = "0.5.2", features = ["macros"] }
+mcp-host = { version = "0.7.1", features = ["macros"] }
 schemars = "1.2.2"
 walkdir = { workspace = true }
 ignore = { workspace = true }

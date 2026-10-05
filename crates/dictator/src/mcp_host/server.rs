@@ -11,6 +11,7 @@ use crate::mcp::state::{
 };
 use crate::mcp::utils::{GitScope, files_fingerprint, git_changed_files, log_to_file};
 
+use super::instructions;
 use super::prompts::DictatorPrompts;
 use super::resources::DictatorResources;
 use super::tools::{DictatorTools, OccupyTool, StalintWatchTool};
@@ -34,7 +35,9 @@ async fn run_async() -> Result<()> {
             .with_title("The Dictator")
             .with_description(env!("CARGO_PKG_DESCRIPTION"))
             .with_website_url(env!("CARGO_PKG_HOMEPAGE"))
-            .with_instructions("Run stalint before any commit. User expects disciplined agents.")
+            .with_instructions(instructions::BASE)
+            .with_instructions_provider(instructions::for_client)
+            .with_resource_errors_as_content(instructions::HIDES_RESOURCE_ERRORS)?
             .with_tools(true)
             .with_resources(true, true)
             .with_prompts(true)

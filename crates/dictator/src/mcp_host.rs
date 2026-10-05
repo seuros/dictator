@@ -1,5 +1,6 @@
 //! MCP host implementation - dictator as guest using mcp-host framework
 
+mod instructions;
 mod prompts;
 mod resources;
 mod server;

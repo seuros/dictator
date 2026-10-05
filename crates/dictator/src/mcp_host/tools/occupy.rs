@@ -55,7 +55,13 @@ impl Tool for OccupyTool {
 
             let string_tx = spawn_notification_forwarder(self.notification_tx.clone());
             let args = Some(ctx.params.clone());
-            let response = handle_occupy(Value::Null, args, Arc::clone(&self.state), string_tx);
+            let response = handle_occupy(
+                Value::Null,
+                args,
+                Arc::clone(&self.state),
+                string_tx,
+                ctx.client_name(),
+            );
             let result = extract_tool_result(response, "occupy")?;
             Ok(result_output(&result))
         })

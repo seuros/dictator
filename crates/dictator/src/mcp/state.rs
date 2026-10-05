@@ -1,7 +1,6 @@
 //! Server state and configuration management.
 
 use mcp_host::managers::progress::ProgressTracker;
-use mcp_host::protocol::types::ClientInfo;
 use notify::RecommendedWatcher;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -65,8 +64,6 @@ pub struct ServerState {
     pub is_watching: bool,
     #[allow(dead_code)]
     pub watcher: Option<RecommendedWatcher>,
-    // Client info
-    pub client: ClientInfo,
     // Sandbox detection
     pub can_write: bool,
     // Pagination state for stalint
@@ -159,7 +156,6 @@ impl ServerState {
             last_check: Instant::now(),
             is_watching: false,
             watcher: None,
-            client: ClientInfo::default(),
             // Default to writable; Codex and other clients can refine this
             // via sandbox state notifications once the MCP handshake is
             // complete. This keeps initialization lightweight.

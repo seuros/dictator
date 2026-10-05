@@ -1,5 +1,3 @@
-#![allow(unexpected_cfgs)] // state_machine! macro uses cfg(inspect) internally
-
 use dictator_decree_abi::{BoxDecree, Capability, Decree, DecreeMetadata, Diagnostics};
 use state_machines::state_machine;
 

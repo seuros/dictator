@@ -21,12 +21,13 @@ struct Args {
 ///
 /// `arguments.workspace` overrides the process cwd, so the config is written
 /// into the caller-supplied workspace instead of wherever the server happened
-/// to be launched from.
+/// to be launched from. `client_name` is the session's `clientInfo.name`.
 pub fn handle_occupy(
     id: Value,
     arguments: Option<Value>,
     watcher_state: Arc<Mutex<ServerState>>,
     notif_tx: mpsc::Sender<String>,
+    client_name: Option<&str>,
 ) -> JsonRpcResponse {
     let args: Args = arguments
         .and_then(|a| serde_json::from_value(a).ok())
@@ -86,17 +87,7 @@ pub fn handle_occupy(
     });
     let _ = notif_tx.try_send(resources_notification.to_string());
 
-    // Get client name to determine issue URL
-    let client_name = {
-        let state = watcher_state.lock().unwrap();
-        state.client.name.clone()
-    };
-
-    let issue_url = match client_name.as_str() {
-        "claude-code" => "https://github.com/anthropics/claude-code/issues",
-        "codex-mcp-client" => "https://github.com/openai/codex/issues",
-        _ => "https://github.com/seuros/dictator/issues",
-    };
+    let issue_url = issue_tracker(client_name);
 
     let message = format!(
         "Created .dictate.toml with default configuration.\n\n\
@@ -115,3 +106,15 @@ pub fn handle_occupy(
         error: None,
     }
 }
+
+/// Where to report a client that ignores `list_changed`.
+fn issue_tracker(client_name: Option<&str>) -> &'static str {
+    match client_name.unwrap_or_default() {
+        "claude-code" => "https://github.com/anthropics/claude-code/issues",
+        "codex-mcp-client" => "https://github.com/openai/codex/issues",
+        _ => "https://github.com/seuros/dictator/issues",
+    }
+}
+
+#[cfg(test)]
+mod tests;
