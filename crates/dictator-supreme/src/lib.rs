@@ -89,7 +89,7 @@ pub fn lint_source_with_owner(source: &str, config: &SupremeConfig, owner: &str)
             rule: format!("{owner}/mixed-line-endings"),
             message: format!(
                 "{} CRLF, {} LF",
-                line_ending_info.crlf_count, line_ending_info.lf_count
+                line_ending_info.crlf_count, line_ending_info.lf_only_count
             ),
             enforced: true,
             span: Span::new(0, bytes.len().min(100)),
@@ -162,7 +162,6 @@ pub fn lint_source_with_owner(source: &str, config: &SupremeConfig, owner: &str)
 struct LineEndingInfo {
     crlf_count: usize,
     lf_only_count: usize,
-    lf_count: usize,
     has_mixed: bool,
 }
 
@@ -178,13 +177,11 @@ fn detect_line_endings(bytes: &[u8]) -> LineEndingInfo {
         }
     }
 
-    let lf_count = crlf_count + lf_only_count;
     let has_mixed = crlf_count > 0 && lf_only_count > 0;
 
     LineEndingInfo {
         crlf_count,
         lf_only_count,
-        lf_count,
         has_mixed,
     }
 }

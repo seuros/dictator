@@ -15,6 +15,7 @@ fn violation(rule: &str, line: usize) -> FixableViolation {
         column: 1,
         rule: rule.to_string(),
         message: String::new(),
+        crlf: false,
     }
 }
 
@@ -73,4 +74,20 @@ fn applying_every_fix_keeps_every_fix() {
         fs::read_to_string(&path).unwrap(),
         "# one\nx = 1\n# two\ny = 2\n"
     );
+}
+
+#[test]
+fn line_ending_fix_follows_the_owner_config() {
+    let mut to_crlf = violation("supreme/wrong-line-ending", 1);
+    to_crlf.crlf = true;
+    assert_eq!(to_crlf.fix("a\nb\n").unwrap().0, "a\r\nb\r\n");
+
+    let to_lf = violation("supreme/mixed-line-endings", 1);
+    assert_eq!(to_lf.fix("a\r\nb\n").unwrap().0, "a\nb\n");
+}
+
+#[test]
+fn final_newline_follows_crlf_files() {
+    let newline = violation("supreme/missing-final-newline", 1);
+    assert_eq!(newline.fix("a\r\nb").unwrap().0, "a\r\nb\r\n");
 }

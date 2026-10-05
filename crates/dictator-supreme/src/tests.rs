@@ -121,7 +121,11 @@ fn skips_line_length_when_disabled() {
 fn detects_mixed_line_endings() {
     let src = "line1\r\nline2\nline3\r\n";
     let diags = lint_source(src);
-    assert!(diags.iter().any(|d| d.rule == "supreme/mixed-line-endings"));
+    let mixed = diags
+        .iter()
+        .find(|d| d.rule == "supreme/mixed-line-endings")
+        .expect("mixed-line-endings");
+    assert_eq!(mixed.message, "2 CRLF, 1 LF");
 }
 
 #[test]

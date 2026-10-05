@@ -45,7 +45,7 @@ fn fixes_ruby_comment_space() {
     let input = "#one\nsql = <<~SQL\n  #{table}\nSQL\n#two\n";
     let diag = comment_space_diag(input, 0);
     assert_eq!(
-        apply_single_fix(input, &diag).as_deref(),
+        apply_single_fix(input, &diag, None).as_deref(),
         Some("# one\nsql = <<~SQL\n  #{table}\nSQL\n# two\n")
     );
 }
@@ -55,7 +55,7 @@ fn scoped_ruby_comment_space_fix_touches_only_its_line() {
     let input = "#one\nx = 1\n#two\n";
     let diag = comment_space_diag(input, 1);
     assert_eq!(
-        apply_fix_at_span(input, &diag).as_deref(),
+        apply_fix_at_span(input, &diag, None).as_deref(),
         Some("#one\nx = 1\n# two\n")
     );
 }
@@ -73,19 +73,61 @@ fn diag(rule: &str) -> dictator_decree_abi::Diagnostic {
 fn whitespace_fixes_keep_crlf_and_a_missing_final_newline() {
     let input = "a  \r\n  \r\nb\t";
     assert_eq!(
-        apply_single_fix(input, &diag("supreme/trailing-whitespace")).as_deref(),
+        apply_single_fix(input, &diag("supreme/trailing-whitespace"), None).as_deref(),
         Some("a\r\n\r\nb")
     );
     assert_eq!(
-        apply_single_fix(input, &diag("supreme/blank-line-whitespace")).as_deref(),
+        apply_single_fix(input, &diag("supreme/blank-line-whitespace"), None).as_deref(),
         Some("a  \r\n\r\nb\t")
     );
 }
 
 #[test]
 fn final_newline_matches_the_file_line_endings() {
-    let fix = |input| apply_single_fix(input, &diag("supreme/missing-final-newline"));
+    let fix = |input| apply_single_fix(input, &diag("supreme/missing-final-newline"), None);
     assert_eq!(fix("a\r\nb").as_deref(), Some("a\r\nb\r\n"));
     assert_eq!(fix("a\nb").as_deref(), Some("a\nb\n"));
     assert_eq!(fix("a\n"), None);
+}
+
+fn config(toml: &str) -> DictateConfig {
+    toml::from_str(toml).expect("valid config")
+}
+
+#[test]
+fn wants_crlf_resolves_owner_then_supreme() {
+    let cfg = config(
+        "[decree.supreme]\nline_endings = \"crlf\"\n\n[decree.golang]\nline_endings = \"lf\"\n",
+    );
+    assert!(wants_crlf(Some(&cfg), "supreme/wrong-line-ending"));
+    assert!(
+        wants_crlf(Some(&cfg), "ruby/mixed-line-endings"),
+        "falls back to supreme"
+    );
+    assert!(
+        !wants_crlf(Some(&cfg), "golang/mixed-line-endings"),
+        "owner wins"
+    );
+    assert!(
+        !wants_crlf(None, "supreme/mixed-line-endings"),
+        "LF by default"
+    );
+}
+
+#[test]
+fn line_ending_fixes_convert_to_the_configured_ending() {
+    let cfg = config("[decree.supreme]\nline_endings = \"crlf\"\n");
+    let mixed = "a\r\nb\nc\n";
+    assert_eq!(
+        apply_single_fix(mixed, &diag("supreme/mixed-line-endings"), Some(&cfg)).as_deref(),
+        Some("a\r\nb\r\nc\r\n")
+    );
+    assert_eq!(
+        apply_single_fix("a\nb\n", &diag("supreme/wrong-line-ending"), Some(&cfg)).as_deref(),
+        Some("a\r\nb\r\n")
+    );
+    assert_eq!(
+        apply_single_fix(mixed, &diag("supreme/mixed-line-endings"), None).as_deref(),
+        Some("a\nb\nc\n")
+    );
 }

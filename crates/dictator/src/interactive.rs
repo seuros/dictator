@@ -15,6 +15,8 @@ pub struct FixableViolation {
     pub column: usize,
     pub rule: String,
     pub message: String,
+    /// Line ending the rule's owner enforces, for line-ending fixes.
+    pub crlf: bool,
 }
 
 impl FixableViolation {
@@ -42,9 +44,18 @@ impl FixableViolation {
                     "Add a space after #",
                 )
             }
-            rule if rule.contains("missing-final-newline") && !text.ends_with('\n') => {
-                (format!("{text}\n"), "Add final newline")
-            }
+            rule if rule.contains("missing-final-newline") => (
+                crate::dictate::add_final_newline(text)?,
+                "Add final newline",
+            ),
+            rule if rule.contains("mixed-line-endings") || rule.contains("wrong-line-ending") => (
+                crate::dictate::normalize_line_endings(text, self.crlf),
+                if self.crlf {
+                    "Convert line endings to CRLF"
+                } else {
+                    "Convert line endings to LF"
+                },
+            ),
             _ => return None,
         };
         (fixed != text).then_some((fixed, description))
@@ -137,6 +148,7 @@ impl InteractiveFixer {
                         path: path.clone(),
                         line,
                         column,
+                        crlf: crate::dictate::wants_crlf(config, &diag.rule),
                         rule: diag.rule,
                         message: diag.message,
                     };

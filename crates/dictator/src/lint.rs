@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::cli::{LintArgs, OutputFormat};
 use crate::config::{load_config, load_dictate_config};
-use crate::dictate::{apply_fix_at_span, apply_single_fix};
+use crate::dictate::fix_source;
 use crate::diff;
 use crate::files::{collect_all_files, detect_file_types, resolve_paths};
 use crate::output::{
@@ -105,8 +105,6 @@ pub fn run_once(
 
         if !diags.is_empty() {
             let mut seen = HashSet::new();
-            let mut fixed_text = text.clone();
-            let mut file_was_fixed = false;
             let mut unique_diags: Vec<_> = diags
                 .iter()
                 .filter(|diag| {
@@ -134,24 +132,7 @@ pub fn run_once(
                 print_persona_summary(path_ref.as_str(), &unique_diags, &personas);
             }
 
-            for diag in unique_diags {
-                // Apply fix if --fix is set and this is a fixable violation
-                // Whole-file rewrite only for file-scope rules; line rules get
-                // spliced so a scoped run leaves untouched lines alone.
-                if args.fix
-                    && diag.enforced
-                    && let Some(new_text) = match &scope {
-                        Some(s) if !s.is_file_scope(&diag.rule) => {
-                            apply_fix_at_span(&fixed_text, diag)
-                        }
-                        _ => apply_single_fix(&fixed_text, diag),
-                    }
-                    && new_text != fixed_text
-                {
-                    fixed_text = new_text;
-                    file_was_fixed = true;
-                }
-
+            for diag in &unique_diags {
                 match format {
                     OutputFormat::Human => {
                         let stdout = std::io::stdout();
@@ -180,10 +161,18 @@ pub fn run_once(
                 *exit_code.lock().unwrap() = 1;
             }
 
-            // Write fixed content if any fixes were applied
-            if file_was_fixed {
-                fs::write(path, &fixed_text)?;
-                *fixed_count.lock().unwrap() += 1;
+            if args.fix {
+                let (fixed_text, rules) = fix_source(
+                    path_ref,
+                    &text,
+                    unique_diags.iter().copied(),
+                    scope.as_ref(),
+                    decree_config.as_ref(),
+                );
+                if !rules.is_empty() {
+                    fs::write(path, &fixed_text)?;
+                    *fixed_count.lock().unwrap() += 1;
+                }
             }
         }
         Ok(())

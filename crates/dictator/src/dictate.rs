@@ -1,7 +1,9 @@
 //! Dictate command implementation - structural issue fixing
 
 use anyhow::Result;
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
+use dictator_core::DictateConfig;
+use dictator_decree_abi::Diagnostic;
 use std::fs;
 
 use crate::cli::DictateArgs;
@@ -105,33 +107,15 @@ fn run_batch_dictate(
         };
 
         let diags = regime.enforce(&[source])?;
-        let mut fixed_text = original.clone();
-        let mut file_was_fixed = false;
+        let (fixed_text, rules) = fix_source(
+            path.as_path(),
+            &original,
+            &diags,
+            scope.as_ref(),
+            decree_config.as_ref(),
+        );
 
-        // Apply all fixable violations
-        for diag in diags {
-            // Spans index the original text, so scope-check before any rewrite.
-            if scope
-                .as_ref()
-                .is_some_and(|s| !s.allows(path.as_path(), &original, &diag))
-            {
-                continue;
-            }
-            if diag.enforced
-                && let Some(new_text) = match &scope {
-                    Some(s) if !s.is_file_scope(&diag.rule) => {
-                        apply_fix_at_span(&fixed_text, &diag)
-                    }
-                    _ => apply_single_fix(&fixed_text, &diag),
-                }
-                && new_text != fixed_text
-            {
-                fixed_text = new_text;
-                file_was_fixed = true;
-            }
-        }
-
-        if file_was_fixed {
+        if !rules.is_empty() {
             fs::write(&path, &fixed_text)?;
             println!("Fixed: {path}");
             fixed_count += 1;
@@ -148,6 +132,45 @@ fn run_batch_dictate(
     Ok(())
 }
 
+/// Apply every enforced fix in `diags` to `original`, in order.
+///
+/// Returns the fixed text and the rule of each fix that changed it. With a
+/// `scope`, diagnostics outside it are skipped and line rules are confined to
+/// their own lines.
+pub(crate) fn fix_source<'a>(
+    path: &Utf8Path,
+    original: &str,
+    diags: impl IntoIterator<Item = &'a Diagnostic>,
+    scope: Option<&diff::Scope>,
+    config: Option<&DictateConfig>,
+) -> (String, Vec<String>) {
+    let mut fixed_text = original.to_string();
+    let mut rules = Vec::new();
+
+    for diag in diags {
+        // Spans index the original text, so scope-check before any rewrite.
+        if scope.is_some_and(|s| !s.allows(path, original, diag)) {
+            continue;
+        }
+        // Whole-file rewrite only for file-scope rules; line rules get
+        // spliced so a scoped run leaves untouched lines alone.
+        if diag.enforced
+            && let Some(new_text) = match scope {
+                Some(s) if !s.is_file_scope(&diag.rule) => {
+                    apply_fix_at_span(&fixed_text, diag, config)
+                }
+                _ => apply_single_fix(&fixed_text, diag, config),
+            }
+            && new_text != fixed_text
+        {
+            fixed_text = new_text;
+            rules.push(diag.rule.clone());
+        }
+    }
+
+    (fixed_text, rules)
+}
+
 /// Apply `diag`'s fix but confine the rewrite to the lines its span covers.
 ///
 /// The fixers below rewrite the whole file. Splicing the untouched lines back is
@@ -155,9 +178,10 @@ fn run_batch_dictate(
 /// Only valid for line-anchored rules; file-scope rules must fix whole-file.
 pub(crate) fn apply_fix_at_span(
     content: &str,
-    diag: &dictator_decree_abi::Diagnostic,
+    diag: &Diagnostic,
+    config: Option<&DictateConfig>,
 ) -> Option<String> {
-    let fixed = apply_single_fix(content, diag)?;
+    let fixed = apply_single_fix(content, diag, config)?;
 
     let (start, _) = crate::output::byte_to_line_col(content, diag.span.start);
     let (end, _) = crate::output::byte_to_line_col(content, diag.span.end.max(diag.span.start));
@@ -185,23 +209,18 @@ pub(crate) fn apply_fix_at_span(
 /// Apply a single fix based on a diagnostic
 pub(crate) fn apply_single_fix(
     content: &str,
-    diag: &dictator_decree_abi::Diagnostic,
+    diag: &Diagnostic,
+    config: Option<&DictateConfig>,
 ) -> Option<String> {
     match diag.rule.as_str() {
         rule if rule.contains("trailing-whitespace") => Some(map_lines(content, |line| {
             line.trim_end_matches([' ', '\t'])
         })),
         rule if rule.contains("tab-character") => Some(content.replace('\t', "  ")),
-        rule if rule.contains("missing-final-newline") => {
-            if content.ends_with('\n') {
-                None // Already has final newline
-            } else if content.contains("\r\n") {
-                Some(format!("{content}\r\n"))
-            } else {
-                Some(format!("{content}\n"))
-            }
+        rule if rule.contains("missing-final-newline") => add_final_newline(content),
+        rule if rule.contains("mixed-line-endings") || rule.contains("wrong-line-ending") => {
+            Some(normalize_line_endings(content, wants_crlf(config, rule)))
         }
-        rule if rule.contains("mixed-line-endings") => Some(content.replace("\r\n", "\n")),
         rule if rule.contains("blank-line-whitespace") => Some(map_lines(content, |line| {
             // Keep content unless it's a line with only whitespace
             if line.trim().is_empty() { "" } else { line }
@@ -209,6 +228,32 @@ pub(crate) fn apply_single_fix(
         "ruby/comment-space" => Some(dictator_ruby::fix_comment_spacing(content)),
         _ => None, // Not a fixable rule we handle
     }
+}
+
+/// Append a final newline in the file's own line ending; `None` if present.
+pub(crate) fn add_final_newline(content: &str) -> Option<String> {
+    if content.ends_with('\n') {
+        None
+    } else if content.contains("\r\n") {
+        Some(format!("{content}\r\n"))
+    } else {
+        Some(format!("{content}\n"))
+    }
+}
+
+/// Convert every line ending to CRLF or LF.
+pub(crate) fn normalize_line_endings(content: &str, crlf: bool) -> String {
+    let lf = content.replace("\r\n", "\n");
+    if crlf { lf.replace('\n', "\r\n") } else { lf }
+}
+
+/// Whether `rule`'s owner enforces CRLF: the owning decree's `line_endings`,
+/// else `decree.supreme`'s, LF when neither says. Mirrors how decrees merge
+/// supreme settings under a language override.
+pub(crate) fn wants_crlf(config: Option<&DictateConfig>, rule: &str) -> bool {
+    let setting = |decree: &str| config?.decree.get(decree)?.line_endings.as_deref();
+    let owner = rule.split_once('/').map_or("supreme", |(owner, _)| owner);
+    setting(owner).or_else(|| setting("supreme")) == Some("crlf")
 }
 
 /// Rewrite each line's content with `f`, keeping every line terminator as is.
