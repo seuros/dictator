@@ -188,45 +188,39 @@ pub(crate) fn apply_single_fix(
     diag: &dictator_decree_abi::Diagnostic,
 ) -> Option<String> {
     match diag.rule.as_str() {
-        rule if rule.contains("trailing-whitespace") => {
-            let mut result = String::with_capacity(content.len());
-            for line in content.lines() {
-                result.push_str(line.trim_end_matches([' ', '\t']));
-                result.push('\n');
-            }
-            // Remove final newline if original didn't have one
-            if !content.ends_with('\n') && result.ends_with('\n') {
-                result.pop();
-            }
-            Some(result)
-        }
+        rule if rule.contains("trailing-whitespace") => Some(map_lines(content, |line| {
+            line.trim_end_matches([' ', '\t'])
+        })),
         rule if rule.contains("tab-character") => Some(content.replace('\t', "  ")),
         rule if rule.contains("missing-final-newline") => {
             if content.ends_with('\n') {
                 None // Already has final newline
+            } else if content.contains("\r\n") {
+                Some(format!("{content}\r\n"))
             } else {
                 Some(format!("{content}\n"))
             }
         }
         rule if rule.contains("mixed-line-endings") => Some(content.replace("\r\n", "\n")),
-        rule if rule.contains("blank-line-whitespace") => {
-            let mut result = String::with_capacity(content.len());
-            for line in content.lines() {
-                // Keep content unless it's a line with only whitespace
-                if !line.trim().is_empty() || line.is_empty() {
-                    result.push_str(line);
-                }
-                result.push('\n');
-            }
-            // Handle final newline
-            if !content.ends_with('\n') && result.ends_with('\n') {
-                result.pop();
-            }
-            Some(result)
-        }
+        rule if rule.contains("blank-line-whitespace") => Some(map_lines(content, |line| {
+            // Keep content unless it's a line with only whitespace
+            if line.trim().is_empty() { "" } else { line }
+        })),
         "ruby/comment-space" => Some(dictator_ruby::fix_comment_spacing(content)),
         _ => None, // Not a fixable rule we handle
     }
+}
+
+/// Rewrite each line's content with `f`, keeping every line terminator as is.
+fn map_lines<'a>(content: &'a str, f: impl Fn(&'a str) -> &'a str) -> String {
+    content
+        .split_inclusive('\n')
+        .flat_map(|chunk| {
+            let body = chunk.strip_suffix('\n').unwrap_or(chunk);
+            let body = body.strip_suffix('\r').unwrap_or(body);
+            [f(body), &chunk[body.len()..]]
+        })
+        .collect()
 }
 
 /// Fix structural issues: trailing whitespace, line endings, final newline, blank line whitespace

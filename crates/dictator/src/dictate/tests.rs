@@ -59,3 +59,33 @@ fn scoped_ruby_comment_space_fix_touches_only_its_line() {
         Some("#one\nx = 1\n# two\n")
     );
 }
+
+fn diag(rule: &str) -> dictator_decree_abi::Diagnostic {
+    dictator_decree_abi::Diagnostic {
+        rule: rule.to_string(),
+        message: String::new(),
+        enforced: true,
+        span: dictator_decree_abi::Span::new(0, 0),
+    }
+}
+
+#[test]
+fn whitespace_fixes_keep_crlf_and_a_missing_final_newline() {
+    let input = "a  \r\n  \r\nb\t";
+    assert_eq!(
+        apply_single_fix(input, &diag("supreme/trailing-whitespace")).as_deref(),
+        Some("a\r\n\r\nb")
+    );
+    assert_eq!(
+        apply_single_fix(input, &diag("supreme/blank-line-whitespace")).as_deref(),
+        Some("a  \r\n\r\nb\t")
+    );
+}
+
+#[test]
+fn final_newline_matches_the_file_line_endings() {
+    let fix = |input| apply_single_fix(input, &diag("supreme/missing-final-newline"));
+    assert_eq!(fix("a\r\nb").as_deref(), Some("a\r\nb\r\n"));
+    assert_eq!(fix("a\nb").as_deref(), Some("a\nb\n"));
+    assert_eq!(fix("a\n"), None);
+}
