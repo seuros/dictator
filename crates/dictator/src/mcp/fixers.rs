@@ -1,16 +1,22 @@
 //! Auto-fix handlers for MCP tools.
 
+use camino::Utf8Path;
+use dictator_core::Source;
 use mcp_host::protocol::types::JsonRpcResponse;
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 
+use super::regime::{init_regime, load_config};
 use super::state::ServerState;
 use super::utils::{collect_files, parse_arguments};
+use crate::dictate::fix_source;
 
-/// Handle kimjongrails auto-fix (whitespace, newlines, line endings)
+/// Handle kimjongrails auto-fix: every enforced fix the workspace's decrees
+/// offer, the same fixes `dictator dictate` applies.
 pub fn handle_kimjongrails(
     id: Value,
     arguments: Option<Value>,
@@ -19,6 +25,8 @@ pub fn handle_kimjongrails(
     #[derive(Deserialize)]
     struct Args {
         paths: Vec<String>,
+        #[serde(default)]
+        workspace: Option<String>,
     }
 
     let args: Args = match parse_arguments(&id, arguments) {
@@ -26,15 +34,19 @@ pub fn handle_kimjongrails(
         Err(response) => return *response,
     };
 
+    // Same config, ignores and decrees stalint judged the files by.
+    let config = load_config(args.workspace.as_deref().map(Path::new));
+    let regime = init_regime(config.as_ref());
+
     let mut log_output = String::new();
     let mut fixed_count = 0;
-    let mut rule_counts: HashMap<&str, usize> = HashMap::new();
+    let mut rule_counts: HashMap<String, usize> = HashMap::new();
 
     // Collect all files first for progress tracking
     let all_files: Vec<std::path::PathBuf> = args
         .paths
         .iter()
-        .map(std::path::Path::new)
+        .map(Path::new)
         .filter(|p| p.exists())
         .flat_map(collect_files)
         .collect();
@@ -54,34 +66,37 @@ pub fn handle_kimjongrails(
             state.progress_tracker.progress(&progress_token, current);
         }
 
+        let Some(path) = Utf8Path::from_path(file) else {
+            let _ = writeln!(log_output, "! Skipping non-UTF-8 path {}", file.display());
+            continue;
+        };
         let text = match std::fs::read_to_string(file) {
             Ok(t) => t,
             Err(e) => {
-                let _ = writeln!(log_output, "! Cannot read {}: {}", file.display(), e);
+                let _ = writeln!(log_output, "! Cannot read {path}: {e}");
+                continue;
+            }
+        };
+        let diags = match regime.enforce(&[Source { path, text: &text }]) {
+            Ok(diags) => diags,
+            Err(e) => {
+                let _ = writeln!(log_output, "! Cannot lint {path}: {e}");
                 continue;
             }
         };
 
-        let (fixed, changes) = apply_fixes(&text);
-
-        if !changes.is_empty() && fixed != text {
-            if let Err(e) = std::fs::write(file, &fixed) {
-                let _ = writeln!(log_output, "! Cannot write {}: {}", file.display(), e);
-            } else {
-                fixed_count += 1;
-                let _ = writeln!(log_output, "* {} ({})", file.display(), changes.join(", "));
-
-                // Track counts by rule
-                for change in &changes {
-                    let rule = match change.as_str() {
-                        "trailing whitespace" => "supreme/trailing-whitespace",
-                        "final newline" => "supreme/missing-final-newline",
-                        "CRLF->LF" => "supreme/crlf",
-                        _ => "supreme/unknown",
-                    };
-                    *rule_counts.entry(rule).or_default() += 1;
-                }
-            }
+        let (fixed, rules) = fix_source(path, &text, &diags, None, config.as_ref());
+        if rules.is_empty() {
+            continue;
+        }
+        if let Err(e) = std::fs::write(file, &fixed) {
+            let _ = writeln!(log_output, "! Cannot write {path}: {e}");
+            continue;
+        }
+        fixed_count += 1;
+        let _ = writeln!(log_output, "* {path} ({})", rules.join(", "));
+        for rule in rules {
+            *rule_counts.entry(rule).or_default() += 1;
         }
     }
 
@@ -103,38 +118,10 @@ pub fn handle_kimjongrails(
     }
 }
 
-/// Apply whitespace fixes to text, returning fixed text and list of changes
-fn apply_fixes(text: &str) -> (String, Vec<String>) {
-    let mut fixed = text.to_string();
-    let mut changes = Vec::new();
-
-    // Fix trailing whitespace
-    let lines: Vec<&str> = fixed.lines().collect();
-    let trimmed: Vec<String> = lines.iter().map(|l| l.trim_end().to_string()).collect();
-    if lines.iter().zip(trimmed.iter()).any(|(a, b)| *a != b) {
-        fixed = trimmed.join("\n");
-        changes.push("trailing whitespace".to_string());
-    }
-
-    // Ensure final newline
-    if !fixed.ends_with('\n') {
-        fixed.push('\n');
-        changes.push("final newline".to_string());
-    }
-
-    // Normalize line endings to LF
-    if fixed.contains("\r\n") {
-        fixed = fixed.replace("\r\n", "\n");
-        changes.push("CRLF->LF".to_string());
-    }
-
-    (fixed, changes)
-}
-
 /// Build summary output for fixes
 fn build_summary(
     fixed_count: usize,
-    rule_counts: &HashMap<&str, usize>,
+    rule_counts: &HashMap<String, usize>,
     log_output: &str,
 ) -> String {
     if fixed_count == 0 {
@@ -162,3 +149,6 @@ fn build_summary(
     }
     summary
 }
+
+#[cfg(test)]
+mod tests;

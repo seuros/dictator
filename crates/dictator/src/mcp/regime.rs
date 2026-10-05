@@ -1,7 +1,7 @@
 //! Regime initialization and stalint checking.
 
 use camino::Utf8Path;
-use dictator_core::{Regime, Source};
+use dictator_core::{DictateConfig, Regime, Source};
 use serde_json::Value;
 use std::collections::HashMap;
 
@@ -60,19 +60,27 @@ pub fn run_stalint_check(paths: &[String]) -> Vec<Value> {
 /// `workspace` overrides the process cwd when loading `.dictate.toml`, so a
 /// caller-supplied workspace scopes both path resolution and config lookup.
 pub fn init_regime_from_config(workspace: Option<&std::path::Path>) -> Regime {
-    let mut regime = Regime::new();
+    init_regime(load_config(workspace).as_ref())
+}
 
-    let config = match workspace {
-        Some(dir) => dictator_core::DictateConfig::load_from_dir(dir),
-        None => dictator_core::DictateConfig::load_default(),
-    };
-    regime.set_rule_ignores_from_config(config.as_ref());
+/// Load `.dictate.toml` from `workspace`, or the process cwd.
+pub fn load_config(workspace: Option<&std::path::Path>) -> Option<DictateConfig> {
+    match workspace {
+        Some(dir) => DictateConfig::load_from_dir(dir),
+        None => DictateConfig::load_default(),
+    }
+}
+
+/// Initialize regime with the decrees `config` declares.
+pub fn init_regime(config: Option<&DictateConfig>) -> Regime {
+    let mut regime = Regime::new();
+    regime.set_rule_ignores_from_config(config);
 
     // decree.supreme (with per-language overrides) runs as the default decree.
-    crate::regime::add_supreme_decree(&mut regime, config.as_ref());
+    crate::regime::add_supreme_decree(&mut regime, config);
 
     // Load native language decrees declared in config, overriding supreme per type.
-    if let Some(config) = config.as_ref()
+    if let Some(config) = config
         && let Some(supreme_settings) = config.decree.get("supreme")
     {
         load_native_decrees(&mut regime, &config.decree, supreme_settings);

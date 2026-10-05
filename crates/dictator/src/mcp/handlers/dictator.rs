@@ -40,7 +40,7 @@ pub fn handle_dictator(
         Err(response) => return *response,
     };
 
-    let paths_json = serde_json::json!({"paths": allowed});
+    let paths_json = serde_json::json!({"paths": allowed, "workspace": cwd.to_string_lossy()});
     let mode = args.mode.unwrap_or_else(|| "kimjongrails".to_string());
 
     match mode.as_str() {
