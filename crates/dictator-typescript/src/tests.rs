@@ -227,3 +227,18 @@ fn still_detects_long_code_lines_with_ignore_comments() {
         "Should still detect long code lines even with ignore_comments enabled"
     );
 }
+
+#[test]
+fn max_lines_zero_disables_file_too_long() {
+    use std::fmt::Write;
+    let mut src = String::new();
+    for i in 0..1000 {
+        let _ = writeln!(src, "const x{i} = {i};");
+    }
+    let config = TypeScriptConfig {
+        max_lines: 0,
+        ..Default::default()
+    };
+    let diags = lint_source_with_config(&src, &config);
+    assert!(!diags.iter().any(|d| d.rule == "typescript/file-too-long"));
+}

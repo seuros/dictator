@@ -254,11 +254,12 @@ fn validate_max_line_length(value: &Option<usize>, _ctx: &()) -> garde::Result {
 )]
 fn validate_max_lines(value: &Option<usize>, _ctx: &()) -> garde::Result {
     if let Some(v) = value {
-        if *v >= 50 && *v <= 5000 {
+        if *v == 0 || (50..=5000).contains(v) {
             Ok(())
         } else {
             Err(garde::Error::new(format!(
-                "{v} is outside the range 50-5000 - common values are 300, 400, or 500"
+                "{v} is outside the range 50-5000 - common values are 300, 400, or 500 \
+                 (0 disables the check)"
             )))
         }
     } else {

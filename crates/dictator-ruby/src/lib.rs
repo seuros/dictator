@@ -128,6 +128,9 @@ fn check_file_line_count(
     heredoc: &[bool],
     diags: &mut Diagnostics,
 ) {
+    if max_lines == 0 {
+        return; // max_lines = 0 disables the check
+    }
     // A heredoc line starting with `#{` is string content, not a comment.
     let code_lines = source
         .split('\n')

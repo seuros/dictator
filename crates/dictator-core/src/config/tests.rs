@@ -210,3 +210,19 @@ max_line_length = 10
     assert!(err.to_string().contains("profile.ci.decree.supreme"));
     assert!(err.to_string().contains("40-500"));
 }
+
+#[test]
+fn max_lines_zero_disables_rather_than_fails_validation() {
+    let disabled = DecreeSettings {
+        max_lines: Some(0),
+        ..Default::default()
+    };
+    assert!(disabled.validate().is_ok());
+
+    let too_small = DecreeSettings {
+        max_lines: Some(10),
+        ..Default::default()
+    };
+    let err = too_small.validate().unwrap_err().to_string();
+    assert!(err.contains("50-5000") && err.contains("0 disables"));
+}

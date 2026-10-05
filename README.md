@@ -425,6 +425,8 @@ required = ["title", "slug"]
 
 **Language overrides.** Language decrees can override supreme settings. Go files use tabs even when supreme says spaces. The override applies per-file based on extension.
 
+**File length.** `max_lines` counts code lines (comments and blank lines excluded); `max_lines = 0` turns the check off.
+
 **Rule ignores.** Any decree can ignore specific rules for specific filenames/extensions via `[decree.<name>.ignore.<rule>]`. This is useful for cases like `Makefile` (tab-indented recipes) or documentation files that embed code blocks.
 
 **Decrees are WASM components.** Each decree enforces structural boundaries for its domain. `decree.supreme` applies universally. Language decrees handle specific conventions.

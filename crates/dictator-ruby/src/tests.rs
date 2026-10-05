@@ -165,3 +165,14 @@ fn config_from_decree_settings_honors_ignore_heredocs() {
         !config_from_decree_settings(&dictator_core::DecreeSettings::default()).ignore_heredocs
     );
 }
+
+#[test]
+fn max_lines_zero_disables_file_too_long() {
+    let src = "x = 1\n".repeat(1000);
+    let config = RubyConfig {
+        max_lines: 0,
+        ..Default::default()
+    };
+    let diags = lint_source_with_config(&src, &config);
+    assert!(!diags.iter().any(|d| d.rule == "ruby/file-too-long"));
+}

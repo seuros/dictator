@@ -6,6 +6,9 @@ use dictator_decree_abi::{Diagnostic, Diagnostics, Span};
 pub const DEFAULT_MAX_LINES: usize = 380;
 
 pub fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics) {
+    if max_lines == 0 {
+        return; // max_lines = 0 disables the check
+    }
     let code_lines = dictator_supreme::count_code_lines(source, |trimmed| trimmed.starts_with('#'));
 
     if code_lines > max_lines {

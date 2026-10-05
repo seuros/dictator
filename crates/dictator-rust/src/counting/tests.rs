@@ -66,3 +66,18 @@ fn handles_file_with_only_comments() {
         "File with only comments should not trigger line count"
     );
 }
+
+#[test]
+fn max_lines_zero_disables_file_too_long() {
+    use std::fmt::Write;
+    let mut src = String::new();
+    for i in 0..1000 {
+        let _ = writeln!(src, "let x{i} = {i};");
+    }
+    let config = crate::RustConfig {
+        max_lines: 0,
+        ..Default::default()
+    };
+    let diags = crate::lint_source_with_config(&src, &config);
+    assert!(!diags.iter().any(|d| d.rule == "rust/file-too-long"));
+}

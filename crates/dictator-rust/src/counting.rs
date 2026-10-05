@@ -4,6 +4,9 @@ use dictator_decree_abi::{Diagnostic, Diagnostics, Span};
 
 /// Rule 1: File line count (ignoring comments and blank lines)
 pub fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics) {
+    if max_lines == 0 {
+        return; // max_lines = 0 disables the check
+    }
     let code_lines = dictator_supreme::count_code_lines(source, is_comment_only_line);
 
     if code_lines > max_lines {
