@@ -40,7 +40,8 @@ pub(crate) fn check_config_macro(
             diags,
             "config-macro",
             format!(
-                "#{directive} CONFIG_* is wrong; use {suggestion} (disabled options are 0, not undefined)"
+                "#{directive} CONFIG_* is wrong; use {suggestion} \
+                 (disabled options are 0, not undefined)"
             ),
             offset,
             col,

@@ -51,7 +51,8 @@ fn mixed_line_endings_fixture() {
         rules("mixed_line_endings.rb")
             .iter()
             .any(|r| r == "ruby/mixed-line-endings"),
-        "mixed_line_endings.rb should trigger ruby/mixed-line-endings (CRLF bytes were normalized away?)"
+        "mixed_line_endings.rb should trigger ruby/mixed-line-endings \
+         (CRLF bytes were normalized away?)"
     );
 }
 

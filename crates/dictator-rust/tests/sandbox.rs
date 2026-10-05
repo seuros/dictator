@@ -36,7 +36,8 @@ fn old_edition_cargo_toml_fixture() {
     let diags = lint_cargo_toml(&sandbox("old_edition_cargo.toml"), &config);
     assert!(
         diags.iter().any(|d| d.rule == "rust/fossil-edition"),
-        "old_edition_cargo.toml declares edition 2021 and should trigger rust/fossil-edition, got: {:?}",
+        "old_edition_cargo.toml declares edition 2021 and should trigger rust/fossil-edition, \
+         got: {:?}",
         diags.iter().map(|d| &d.rule).collect::<Vec<_>>()
     );
 }
