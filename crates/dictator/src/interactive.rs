@@ -6,7 +6,8 @@ use dictator_core::DictateConfig;
 use std::fs;
 use std::io::{self, Write};
 
-/// Represents a fixable violation with context
+/// A fixable violation. The fix is computed against the file as it is when
+/// shown or applied, so fixes accepted earlier in the session survive.
 #[derive(Debug, Clone)]
 pub struct FixableViolation {
     pub path: Utf8PathBuf,
@@ -14,9 +15,58 @@ pub struct FixableViolation {
     pub column: usize,
     pub rule: String,
     pub message: String,
-    pub original_text: String,
-    pub fixed_text: String,
-    pub description: String,
+}
+
+impl FixableViolation {
+    /// `text` with this fix applied plus a description, or `None` when the
+    /// rule has no fixer here or the fix changes nothing.
+    fn fix(&self, text: &str) -> Option<(String, &'static str)> {
+        let (fixed, description) = match self.rule.as_str() {
+            rule if rule.contains("trailing-whitespace") => (
+                map_line(text, self.line, |l| {
+                    l.trim_end_matches([' ', '\t']).to_string()
+                })?,
+                "Remove trailing whitespace",
+            ),
+            rule if rule.contains("tab-character") => (
+                map_line(text, self.line, |l| l.replace('\t', "  "))?,
+                "Replace tabs with spaces",
+            ),
+            "ruby/comment-space" => {
+                // Whole-file pass: heredoc detection needs the context.
+                let all = dictator_ruby::fix_comment_spacing(text);
+                let fixed_line = all.split('\n').nth(self.line - 1)?;
+                let fixed_line = fixed_line.strip_suffix('\r').unwrap_or(fixed_line);
+                (
+                    map_line(text, self.line, |_| fixed_line.to_string())?,
+                    "Add a space after #",
+                )
+            }
+            rule if rule.contains("missing-final-newline") && !text.ends_with('\n') => {
+                (format!("{text}\n"), "Add final newline")
+            }
+            _ => return None,
+        };
+        (fixed != text).then_some((fixed, description))
+    }
+}
+
+/// Rewrite 1-based `line` with `f`, keeping every line terminator intact.
+fn map_line(text: &str, line: usize, f: impl FnOnce(&str) -> String) -> Option<String> {
+    let start: usize = text
+        .split_inclusive('\n')
+        .take(line.checked_sub(1)?)
+        .map(str::len)
+        .sum();
+    let chunk = text[start..].split_inclusive('\n').next()?;
+    let body = chunk.strip_suffix('\n').unwrap_or(chunk);
+    let body = body.strip_suffix('\r').unwrap_or(body);
+    Some(format!(
+        "{}{}{}",
+        &text[..start],
+        f(body),
+        &text[start + body.len()..]
+    ))
 }
 
 /// Interactive fix mode controller
@@ -24,18 +74,6 @@ pub struct InteractiveFixer {
     violations: Vec<FixableViolation>,
     current_index: usize,
     auto_apply_all: bool,
-}
-
-impl InteractiveFixer {
-    /// Get the number of violations found
-    pub const fn violation_count(&self) -> usize {
-        self.violations.len()
-    }
-
-    /// Check if there are any violations
-    pub const fn has_violations(&self) -> bool {
-        !self.violations.is_empty()
-    }
 }
 
 impl InteractiveFixer {
@@ -94,90 +132,22 @@ impl InteractiveFixer {
                     continue;
                 }
                 if diag.enforced {
-                    // This is a fixable violation
-                    if let Some(fix) = Self::create_fix(&path, &text, &diag) {
-                        self.violations.push(fix);
+                    let (line, column) = crate::output::byte_to_line_col(&text, diag.span.start);
+                    let violation = FixableViolation {
+                        path: path.clone(),
+                        line,
+                        column,
+                        rule: diag.rule,
+                        message: diag.message,
+                    };
+                    if violation.fix(&text).is_some() {
+                        self.violations.push(violation);
                     }
                 }
             }
         }
 
         Ok(())
-    }
-
-    /// Create a fix for a specific violation
-    fn create_fix(
-        path: &Utf8PathBuf,
-        text: &str,
-        diag: &dictator_decree_abi::Diagnostic,
-    ) -> Option<FixableViolation> {
-        let (line, column) = crate::output::byte_to_line_col(text, diag.span.start);
-
-        // Get the line containing the violation
-        let lines: Vec<&str> = text.lines().collect();
-        if line > lines.len() {
-            return None;
-        }
-
-        let original_line = lines[line - 1];
-
-        // Apply the fix based on the rule
-        let (fixed_line, description): (String, &str) = match diag.rule.as_str() {
-            rule if rule.contains("trailing-whitespace") => (
-                original_line.trim_end().to_string(),
-                "Remove trailing whitespace",
-            ),
-            rule if rule.contains("tab-character") => (
-                original_line.replace('\t', "  "),
-                "Replace tabs with spaces",
-            ),
-            "ruby/comment-space" => (
-                dictator_ruby::fix_comment_spacing(text)
-                    .lines()
-                    .nth(line - 1)
-                    .unwrap_or(original_line)
-                    .to_string(),
-                "Add a space after #",
-            ),
-            rule if rule.contains("missing-final-newline") => {
-                // This is a file-level fix, not line-level
-                return Some(FixableViolation {
-                    path: path.clone(),
-                    line,
-                    column,
-                    rule: diag.rule.clone(),
-                    message: diag.message.clone(),
-                    original_text: text.to_string(),
-                    fixed_text: if text.ends_with('\n') {
-                        text.to_string()
-                    } else {
-                        format!("{text}\n")
-                    },
-                    description: "Add final newline".to_string(),
-                });
-            }
-            _ => return None, // Not a fixable rule we handle
-        };
-
-        if fixed_line == original_line {
-            return None; // No change needed
-        }
-
-        // Reconstruct the full text with the fix
-        let mut lines_fixed = lines.clone();
-        lines_fixed[line - 1] = &fixed_line;
-        let fixed_text = lines_fixed.join("\n");
-
-        Some(FixableViolation {
-            path: path.clone(),
-            line,
-            column,
-            rule: diag.rule.clone(),
-            message: diag.message.clone(),
-            original_text: text.to_string(),
-            fixed_text,
-            description: description.to_string(),
-        })
     }
 
     /// Run interactive fix mode
@@ -198,18 +168,26 @@ impl InteractiveFixer {
         while self.current_index < self.violations.len() {
             let violation = &self.violations[self.current_index];
 
+            // Re-read: fixes accepted earlier may have rewritten this file.
+            let text = fs::read_to_string(&violation.path)?;
+            let Some((fixed, description)) = violation.fix(&text) else {
+                // An earlier fix on the same line already settled it.
+                self.current_index += 1;
+                continue;
+            };
+
             if self.auto_apply_all {
-                Self::apply_fix(violation)?;
+                Self::apply_fix(violation, &fixed)?;
                 applied_count += 1;
                 self.current_index += 1;
                 continue;
             }
 
-            Self::show_violation(violation);
+            Self::show_violation(violation, &text, &fixed, description);
 
             match Self::get_user_choice()? {
                 UserChoice::Fix => {
-                    Self::apply_fix(violation)?;
+                    Self::apply_fix(violation, &fixed)?;
                     applied_count += 1;
                     self.current_index += 1;
                 }
@@ -226,7 +204,7 @@ impl InteractiveFixer {
                     break;
                 }
                 UserChoice::Details => {
-                    Self::show_details(violation);
+                    Self::show_details(violation, &text, description);
                 }
                 UserChoice::Help => {
                     Self::show_help();
@@ -243,26 +221,18 @@ impl InteractiveFixer {
     }
 
     /// Show current violation to user
-    fn show_violation(violation: &FixableViolation) {
+    fn show_violation(violation: &FixableViolation, text: &str, fixed: &str, description: &str) {
         println!(
             "📍 {}:{}:{}",
             violation.path, violation.line, violation.column
         );
         println!("   Rule: {}", violation.rule);
         println!("   Issue: {}", violation.message);
-        println!("   Fix: {}", violation.description);
+        println!("   Fix: {description}");
 
         // Show a diff of the change
-        let original_line = violation
-            .original_text
-            .lines()
-            .nth(violation.line - 1)
-            .unwrap_or("");
-        let fixed_line = violation
-            .fixed_text
-            .lines()
-            .nth(violation.line - 1)
-            .unwrap_or("");
+        let original_line = text.lines().nth(violation.line - 1).unwrap_or("");
+        let fixed_line = fixed.lines().nth(violation.line - 1).unwrap_or("");
 
         if original_line != fixed_line {
             println!("   --- {} ---", violation.path);
@@ -294,17 +264,17 @@ impl InteractiveFixer {
     }
 
     /// Show detailed information about the violation
-    fn show_details(violation: &FixableViolation) {
+    fn show_details(violation: &FixableViolation, text: &str, description: &str) {
         println!("\n   📋 Detailed Information:");
         println!("      File: {}", violation.path);
         println!("      Position: {}:{}", violation.line, violation.column);
         println!("      Rule: {}", violation.rule);
         println!("      Message: {}", violation.message);
-        println!("      Description: {}", violation.description);
+        println!("      Description: {description}");
 
         // Show more context around the violation
         let context_lines = 3;
-        let lines: Vec<&str> = violation.original_text.lines().collect();
+        let lines: Vec<&str> = text.lines().collect();
         let start_line = violation.line.saturating_sub(context_lines);
         let end_line = (violation.line + context_lines).min(lines.len());
 
@@ -334,8 +304,8 @@ impl InteractiveFixer {
     }
 
     /// Apply a fix to the file
-    fn apply_fix(violation: &FixableViolation) -> Result<()> {
-        fs::write(&violation.path, &violation.fixed_text)?;
+    fn apply_fix(violation: &FixableViolation, fixed: &str) -> Result<()> {
+        fs::write(&violation.path, fixed)?;
         println!("   ✅ Applied fix to {}", violation.path);
         Ok(())
     }

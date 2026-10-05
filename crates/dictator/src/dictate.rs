@@ -46,14 +46,6 @@ fn run_interactive_dictate(
 
     println!("🔍 Collecting fixable violations...");
     fixer.collect_violations(paths, changed.as_ref(), decree_config.as_ref())?;
-
-    if !fixer.has_violations() {
-        println!("✨ No fixable violations found!");
-        return Ok(());
-    }
-
-    println!("🔧 Found {} fixable violations\n", fixer.violation_count());
-
     fixer.run_interactive(false)?;
 
     Ok(())
