@@ -131,6 +131,14 @@ impl InteractiveFixer {
                 original_line.replace('\t', "  "),
                 "Replace tabs with spaces",
             ),
+            "ruby/comment-space" => (
+                dictator_ruby::fix_comment_spacing(text)
+                    .lines()
+                    .nth(line - 1)
+                    .unwrap_or(original_line)
+                    .to_string(),
+                "Add a space after #",
+            ),
             rule if rule.contains("missing-final-newline") => {
                 // This is a file-level fix, not line-level
                 return Some(FixableViolation {

@@ -176,3 +176,36 @@ fn max_lines_zero_disables_file_too_long() {
     let diags = lint_source_with_config(&src, &config);
     assert!(!diags.iter().any(|d| d.rule == "ruby/file-too-long"));
 }
+
+#[test]
+fn fix_comment_spacing_inserts_the_missing_space() {
+    let src = "#bad\n  #also bad\n# good\n#\nx = 1 #trailing\n";
+    assert_eq!(
+        fix_comment_spacing(src),
+        "# bad\n  # also bad\n# good\n#\nx = 1 #trailing\n"
+    );
+}
+
+#[test]
+fn fix_comment_spacing_leaves_non_comments_alone() {
+    let src = "#!/usr/bin/env ruby\n#frozen_string_literal: true\n#--\n#++\n\
+               sql = <<~SQL\n#raw\nSQL\ns = \"a\n#{b}\"\r\n";
+    assert_eq!(fix_comment_spacing(src), src);
+    assert!(
+        !lint_source(src)
+            .iter()
+            .any(|d| d.rule == "ruby/comment-space")
+    );
+}
+
+#[test]
+fn fix_comment_spacing_preserves_crlf_and_clears_the_lint() {
+    let src = "#bad\r\nx = 1\r\n";
+    let fixed = fix_comment_spacing(src);
+    assert_eq!(fixed, "# bad\r\nx = 1\r\n");
+    assert!(
+        !lint_source(&fixed)
+            .iter()
+            .any(|d| d.rule == "ruby/comment-space")
+    );
+}

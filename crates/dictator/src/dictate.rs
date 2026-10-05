@@ -232,6 +232,7 @@ pub(crate) fn apply_single_fix(
             }
             Some(result)
         }
+        "ruby/comment-space" => Some(dictator_ruby::fix_comment_spacing(content)),
         _ => None, // Not a fixable rule we handle
     }
 }
