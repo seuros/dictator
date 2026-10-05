@@ -4,11 +4,15 @@ use dictator_decree_abi::{BoxDecree, Decree, Diagnostic, Diagnostics, Span};
 use dictator_supreme::SupremeConfig;
 use memchr::memchr_iter;
 
+mod heredoc;
+
 /// Configuration for ruby decree
 #[derive(Debug, Clone)]
 pub struct RubyConfig {
     pub max_lines: usize,
     pub ignore_comments: bool,
+    /// Exempt heredoc bodies from `line-too-long` (RuboCop's `AllowHeredoc`).
+    pub ignore_heredocs: bool,
     pub comment_spacing: bool,
 }
 
@@ -17,6 +21,7 @@ impl Default for RubyConfig {
         Self {
             max_lines: 300,
             ignore_comments: false,
+            ignore_heredocs: false,
             comment_spacing: true,
         }
     }
@@ -40,7 +45,11 @@ pub fn lint_source_with_config(source: &str, config: &RubyConfig) -> Diagnostics
     ));
 
     // Ruby-specific rules
-    diags.extend(lint_ruby_specific(source, config));
+    diags.extend(lint_ruby_specific(
+        source,
+        config,
+        &heredoc::heredoc_lines(source),
+    ));
 
     diags
 }
@@ -52,31 +61,33 @@ pub fn lint_source_with_configs(
     supreme_config: &SupremeConfig,
 ) -> Diagnostics {
     let mut diags = Diagnostics::new();
+    let heredoc = heredoc::heredoc_lines(source);
 
     let supreme_diags = dictator_supreme::lint_source_with_owner(source, supreme_config, "ruby");
-
-    if ruby_config.ignore_comments {
-        diags.extend(dictator_supreme::retain_long_line_diags(
-            source,
-            supreme_diags,
-            "ruby/line-too-long",
-            "#",
-        ));
-    } else {
-        diags.extend(supreme_diags);
-    }
+    let lines: Vec<&str> = source.split('\n').collect();
+    diags.extend(supreme_diags.into_iter().filter(|d| {
+        if d.rule != "ruby/line-too-long" {
+            return true;
+        }
+        let line_idx = source[..d.span.start].matches('\n').count();
+        if heredoc[line_idx] {
+            !ruby_config.ignore_heredocs
+        } else {
+            !(ruby_config.ignore_comments && lines[line_idx].trim_start().starts_with('#'))
+        }
+    }));
 
     // Ruby-specific rules
-    diags.extend(lint_ruby_specific(source, ruby_config));
+    diags.extend(lint_ruby_specific(source, ruby_config, &heredoc));
 
     diags
 }
 
-fn lint_ruby_specific(source: &str, config: &RubyConfig) -> Diagnostics {
+fn lint_ruby_specific(source: &str, config: &RubyConfig, heredoc: &[bool]) -> Diagnostics {
     let mut diags = Diagnostics::new();
 
     // Check file line count
-    check_file_line_count(source, config.max_lines, &mut diags);
+    check_file_line_count(source, config.max_lines, heredoc, &mut diags);
 
     let bytes = source.as_bytes();
     let mut line_start: usize = 0;
@@ -88,7 +99,7 @@ fn lint_ruby_specific(source: &str, config: &RubyConfig) -> Diagnostics {
             line_start,
             nl,
             line_idx,
-            config.comment_spacing,
+            config.comment_spacing && !heredoc[line_idx],
             &mut diags,
         );
         line_start = nl + 1;
@@ -102,7 +113,7 @@ fn lint_ruby_specific(source: &str, config: &RubyConfig) -> Diagnostics {
             line_start,
             bytes.len(),
             line_idx,
-            config.comment_spacing,
+            config.comment_spacing && !heredoc[line_idx],
             &mut diags,
         );
     }
@@ -111,8 +122,21 @@ fn lint_ruby_specific(source: &str, config: &RubyConfig) -> Diagnostics {
 }
 
 /// Check file line count (excluding comments and blank lines)
-fn check_file_line_count(source: &str, max_lines: usize, diags: &mut Diagnostics) {
-    let code_lines = dictator_supreme::count_code_lines(source, |trimmed| trimmed.starts_with('#'));
+fn check_file_line_count(
+    source: &str,
+    max_lines: usize,
+    heredoc: &[bool],
+    diags: &mut Diagnostics,
+) {
+    // A heredoc line starting with `#{` is string content, not a comment.
+    let code_lines = source
+        .split('\n')
+        .zip(heredoc)
+        .filter(|(line, in_heredoc)| {
+            let trimmed = line.trim();
+            !trimmed.is_empty() && (**in_heredoc || !trimmed.starts_with('#'))
+        })
+        .count();
 
     if code_lines > max_lines {
         diags.push(Diagnostic {
@@ -202,6 +226,7 @@ pub fn config_from_decree_settings(settings: &dictator_core::DecreeSettings) -> 
     RubyConfig {
         max_lines: settings.max_lines.unwrap_or(300),
         ignore_comments: settings.ignore_comments.unwrap_or(false),
+        ignore_heredocs: settings.ignore_heredocs.unwrap_or(false),
         comment_spacing: settings.comment_spacing.unwrap_or(true),
     }
 }

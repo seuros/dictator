@@ -28,6 +28,7 @@ extensions = ["md", "mdx"]
 # max_lines = 300
 # ignore_comments = true
 # ignore_blank_lines = true
+# ignore_heredocs = true
 # method_visibility_order = ["public", "protected", "private"]
 # comment_spacing = true
 #

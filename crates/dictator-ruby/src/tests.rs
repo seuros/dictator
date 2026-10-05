@@ -95,3 +95,73 @@ fn detects_whitespace_only_blank_line() {
     let diags = lint_source(src);
     assert!(diags.iter().any(|d| d.rule == "ruby/blank-line-whitespace"));
 }
+
+fn long_sql_heredoc() -> String {
+    format!(
+        "def sql\n  <<~SQL\n    #{{table}} (\n    #{{cols}} {}\n  SQL\nend\n",
+        "x".repeat(150)
+    )
+}
+
+fn with_max_line_length(src: &str, config: &RubyConfig) -> Diagnostics {
+    let supreme = SupremeConfig {
+        max_line_length: Some(120),
+        ..Default::default()
+    };
+    lint_source_with_configs(src, config, &supreme)
+}
+
+#[test]
+fn heredoc_interpolation_is_not_a_comment() {
+    let diags = lint_source(&long_sql_heredoc());
+    assert!(!diags.iter().any(|d| d.rule == "ruby/comment-space"));
+}
+
+#[test]
+fn flags_long_heredoc_lines_by_default() {
+    let config = RubyConfig {
+        ignore_comments: true,
+        ..Default::default()
+    };
+    let diags = with_max_line_length(&long_sql_heredoc(), &config);
+    assert!(diags.iter().any(|d| d.rule == "ruby/line-too-long"));
+}
+
+#[test]
+fn ignore_heredocs_exempts_long_heredoc_lines() {
+    let config = RubyConfig {
+        ignore_heredocs: true,
+        ..Default::default()
+    };
+    let src = format!("{}  x = \"{}\"\n", long_sql_heredoc(), "a".repeat(150));
+    let diags = with_max_line_length(&src, &config);
+    let long: Vec<_> = diags
+        .iter()
+        .filter(|d| d.rule == "ruby/line-too-long")
+        .collect();
+    assert_eq!(long.len(), 1, "only the code line outside the heredoc");
+}
+
+#[test]
+fn heredoc_interpolation_lines_count_as_code() {
+    let body = "    #{col},\n".repeat(60);
+    let src = format!("x = <<~SQL\n{body}SQL\n");
+    let config = RubyConfig {
+        max_lines: 50,
+        ..Default::default()
+    };
+    let diags = lint_source_with_configs(&src, &config, &SupremeConfig::default());
+    assert!(diags.iter().any(|d| d.rule == "ruby/file-too-long"));
+}
+
+#[test]
+fn config_from_decree_settings_honors_ignore_heredocs() {
+    let settings = dictator_core::DecreeSettings {
+        ignore_heredocs: Some(true),
+        ..Default::default()
+    };
+    assert!(config_from_decree_settings(&settings).ignore_heredocs);
+    assert!(
+        !config_from_decree_settings(&dictator_core::DecreeSettings::default()).ignore_heredocs
+    );
+}

@@ -440,7 +440,8 @@ required = ["title", "slug"]
 
 **`decree.ruby`**:
 - File line count limits (ignoring comments/blank lines)
-- Comment spacing (`#foo` → `# foo`)
+- Comment spacing (`#foo` → `# foo`); heredoc bodies are string content, so `#{...}` there is never a comment
+- `ignore_heredocs = true` exempts heredoc bodies from `max_line_length` (RuboCop's `AllowHeredoc`)
 - Tab detection (Ruby uses spaces)
 - Blank line whitespace cleanup
 

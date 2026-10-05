@@ -83,6 +83,8 @@ pub struct DecreeSettings {
     #[garde(skip)]
     pub ignore_blank_lines: Option<bool>,
     #[garde(skip)]
+    pub ignore_heredocs: Option<bool>,
+    #[garde(skip)]
     pub method_visibility_order: Option<Vec<String>>,
     #[garde(skip)]
     pub comment_spacing: Option<bool>,
@@ -532,6 +534,9 @@ fn merge_decree_settings(base: &mut DecreeSettings, profile: &DecreeSettings) {
     }
     if profile.ignore_blank_lines.is_some() {
         base.ignore_blank_lines = profile.ignore_blank_lines;
+    }
+    if profile.ignore_heredocs.is_some() {
+        base.ignore_heredocs = profile.ignore_heredocs;
     }
     if profile.method_visibility_order.is_some() {
         base.method_visibility_order
