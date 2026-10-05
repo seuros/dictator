@@ -98,7 +98,6 @@ fn lint_ruby_specific(source: &str, config: &RubyConfig, heredoc: &[bool]) -> Di
             source,
             line_start,
             nl,
-            line_idx,
             config.comment_spacing && !heredoc[line_idx],
             &mut diags,
         );
@@ -112,7 +111,6 @@ fn lint_ruby_specific(source: &str, config: &RubyConfig, heredoc: &[bool]) -> Di
             source,
             line_start,
             bytes.len(),
-            line_idx,
             config.comment_spacing && !heredoc[line_idx],
             &mut diags,
         );
@@ -128,7 +126,7 @@ pub fn fix_comment_spacing(source: &str) -> String {
     source
         .split('\n')
         .enumerate()
-        .map(|(idx, line)| match unspaced_comment_hash(line, idx) {
+        .map(|(idx, line)| match unspaced_comment_hash(line) {
             Some(hash) if !heredoc[idx] => format!("{}# {}", &line[..hash], &line[hash + 1..]),
             _ => line.to_string(),
         })
@@ -253,7 +251,6 @@ fn process_line(
     source: &str,
     start: usize,
     end: usize,
-    line_idx: usize,
     comment_spacing: bool,
     diags: &mut Diagnostics,
 ) {
@@ -262,7 +259,7 @@ fn process_line(
     }
 
     // Comment hygiene: ensure space after '#', except for known directives.
-    if let Some(hash) = unspaced_comment_hash(&source[start..end], line_idx) {
+    if let Some(hash) = unspaced_comment_hash(&source[start..end]) {
         // Span of the leading '#'
         let hash_offset = start + hash;
         diags.push(Diagnostic {
@@ -275,7 +272,7 @@ fn process_line(
 }
 
 /// Byte offset of the `#` opening a comment that lacks the following space.
-fn unspaced_comment_hash(line: &str, line_idx: usize) -> Option<usize> {
+fn unspaced_comment_hash(line: &str) -> Option<usize> {
     let line = line.strip_suffix('\r').unwrap_or(line);
     let trimmed = line.trim_start_matches(' ');
     let rest = trimmed.strip_prefix('#')?;
@@ -283,11 +280,11 @@ fn unspaced_comment_hash(line: &str, line_idx: usize) -> Option<usize> {
         && !rest.starts_with(' ')
         // `#{...}` opening a line of a multi-line string, not a comment
         && !rest.starts_with('{')
-        && !is_comment_directive(rest, line_idx);
+        && !is_comment_directive(rest);
     unspaced.then_some(line.len() - trimmed.len())
 }
 
-fn is_comment_directive(rest: &str, line_idx: usize) -> bool {
+fn is_comment_directive(rest: &str) -> bool {
     let rest = rest.trim_start();
 
     rest.starts_with('!') // shebang
@@ -297,7 +294,6 @@ fn is_comment_directive(rest: &str, line_idx: usize) -> bool {
         || rest.starts_with("frozen_string_literal")
         || rest.starts_with("rubocop")
         || rest.starts_with("typed")
-        || (line_idx == 0 && rest.starts_with(" language"))
 }
 
 #[cfg(test)]
