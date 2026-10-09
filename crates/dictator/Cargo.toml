@@ -16,7 +16,7 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-usage = { workspace = true }
+usage-rs = { workspace = true }
 camino = { workspace = true }
 dictator-core.workspace = true
 dictator-freebsd.workspace = true

@@ -29,7 +29,7 @@ impl std::str::FromStr for OutputFormat {
 }
 
 /// Multi-regime linter
-#[derive(Debug, usage::Cli)]
+#[derive(Debug, usage_rs::Cli)]
 #[usage(
     bin = "dictator",
     version,
@@ -49,7 +49,7 @@ pub struct Args {
     pub command: Command,
 }
 
-#[derive(Debug, usage::Subcommands)]
+#[derive(Debug, usage_rs::Subcommands)]
 pub enum Command {
     /// Lint files/directories once and exit
     #[usage(visible_alias = "stalint")]
@@ -68,14 +68,14 @@ pub enum Command {
     Mcp,
 }
 
-#[derive(Debug, usage::Args)]
+#[derive(Debug, usage_rs::Args)]
 pub struct CensusArgs {
     /// Show decree configuration values from .dictate.toml
     #[usage(long)]
     pub details: bool,
 }
 
-#[derive(Debug, usage::Args)]
+#[derive(Debug, usage_rs::Args)]
 pub struct OccupyArgs {
     /// Target directory for .dictate.toml (defaults to current directory)
     #[usage(default = ".")]
@@ -86,7 +86,7 @@ pub struct OccupyArgs {
     pub force: bool,
 }
 
-#[derive(Debug, usage::Args)]
+#[derive(Debug, usage_rs::Args)]
 pub struct LintArgs {
     /// Files or directories to lint. Defaults to "." with --diff/--staged.
     pub paths: Vec<Utf8PathBuf>,
@@ -117,7 +117,7 @@ pub struct LintArgs {
     pub plugin: Vec<Utf8PathBuf>,
 }
 
-#[derive(Debug, usage::Args)]
+#[derive(Debug, usage_rs::Args)]
 pub struct DictateArgs {
     /// Files or directories to fix. Defaults to "." with --diff/--staged.
     pub paths: Vec<Utf8PathBuf>,
@@ -139,7 +139,7 @@ pub struct DictateArgs {
     pub diff_context: usize,
 }
 
-#[derive(Debug, usage::Args)]
+#[derive(Debug, usage_rs::Args)]
 pub struct WatchArgs {
     /// Paths to watch (files or directories). Defaults to current dir if omitted.
     #[usage(value_name = "PATH", default = ".")]
