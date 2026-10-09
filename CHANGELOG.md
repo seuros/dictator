@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.1](https://github.com/seuros/dictator/compare/dictator-v0.25.0...dictator-v0.25.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **mcp:** the Dictator's orders name stalint as a tool, not a fugitive binary ([d33d6c4](https://github.com/seuros/dictator/commit/d33d6c42e176e1c53196e1020473c74433583c37))
+
 ## [0.25.0](https://github.com/seuros/dictator/compare/dictator-v0.24.0...dictator-v0.25.0) (2026-10-05)
 
 
