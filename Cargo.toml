@@ -20,7 +20,7 @@ resolver = "2"
 
 [workspace.package]
 # The one version in the workspace. Members inherit via `version.workspace = true`.
-version = "0.25.0" # x-release-please-version
+version = "0.25.1" # x-release-please-version
 edition = "2024"
 rust-version = "1.99"
 authors = ["Abdelkader Boudih <oss@seuros.com>"]
@@ -32,16 +32,16 @@ homepage = "https://github.com/seuros/dictator"
 # Every inter-crate dep lives here so there is one place to bump. release-please
 # rewrites the block via extra-files; it cannot edit the workspace table itself.
 # x-release-please-start-version
-dictator-decree-abi = { version = "0.25.0", path = "crates/dictator-decree-abi" }
-dictator-core = { version = "0.25.0", path = "crates/dictator-core" }
-dictator-supreme = { version = "0.25.0", path = "crates/dictator-supreme" }
-dictator-frontmatter = { version = "0.25.0", path = "crates/dictator-frontmatter" }
-dictator-ruby = { version = "0.25.0", path = "crates/dictator-ruby" }
-dictator-typescript = { version = "0.25.0", path = "crates/dictator-typescript" }
-dictator-golang = { version = "0.25.0", path = "crates/dictator-golang" }
-dictator-rust = { version = "0.25.0", path = "crates/dictator-rust" }
-dictator-python = { version = "0.25.0", path = "crates/dictator-python" }
-dictator-freebsd = { version = "0.25.0", path = "crates/dictator-freebsd" }
+dictator-decree-abi = { version = "0.25.1", path = "crates/dictator-decree-abi" }
+dictator-core = { version = "0.25.1", path = "crates/dictator-core" }
+dictator-supreme = { version = "0.25.1", path = "crates/dictator-supreme" }
+dictator-frontmatter = { version = "0.25.1", path = "crates/dictator-frontmatter" }
+dictator-ruby = { version = "0.25.1", path = "crates/dictator-ruby" }
+dictator-typescript = { version = "0.25.1", path = "crates/dictator-typescript" }
+dictator-golang = { version = "0.25.1", path = "crates/dictator-golang" }
+dictator-rust = { version = "0.25.1", path = "crates/dictator-rust" }
+dictator-python = { version = "0.25.1", path = "crates/dictator-python" }
+dictator-freebsd = { version = "0.25.1", path = "crates/dictator-freebsd" }
 # x-release-please-end
 anyhow = "1"
 thiserror = "2"
