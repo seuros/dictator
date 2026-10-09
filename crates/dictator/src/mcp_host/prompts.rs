@@ -61,8 +61,9 @@ impl DictatorPrompts {
         prompt_with_description(
             format!("Pre-commit check for {} files", files.len()),
             vec![user_message(format!(
-                "Before committing, run `stalint` on these staged files:\n\n{}\n\n\
-                If violations found, run `dictator` to auto-fix or address manually.",
+                "Before committing, call the `stalint` MCP tool with `staged: true` to lint \
+                these staged files:\n\n{}\n\n\
+                If violations found, call the `dictator` MCP tool to auto-fix or address manually.",
                 files.join("\n")
             ))],
         )

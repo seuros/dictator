@@ -6,7 +6,9 @@ use mcp_host::prelude::*;
 
 use super::config_exists;
 
-pub const BASE: &str = "Run stalint before any commit. User expects disciplined agents.";
+pub const BASE: &str = "Before any commit, call this server's `stalint` tool (an MCP tool, not a \
+     shell command) to lint uncommitted changes. If it reports violations, call the `dictator` \
+     tool to auto-fix them or fix them by hand. User expects disciplined agents.";
 
 /// The territory has no `.dictate.toml`: lint tools stay hidden until `occupy` runs.
 const UNOCCUPIED: &str = "No .dictate.toml in this workspace. Run the `occupy` tool to create \

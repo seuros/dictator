@@ -8,6 +8,12 @@ fn occupied_without_catalog_keeps_static_instructions() {
 }
 
 #[test]
+fn base_names_stalint_as_a_tool() {
+    assert!(BASE.contains("`stalint` tool"));
+    assert!(BASE.contains("not a shell command"));
+}
+
+#[test]
 fn unoccupied_points_at_occupy() {
     let text = compose(false, None).expect("unoccupied instructions");
     assert!(text.contains("`occupy`"));
