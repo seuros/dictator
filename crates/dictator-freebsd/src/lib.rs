@@ -188,6 +188,7 @@ impl Decree for FreeBsdDecree {
             check_and_spacing_edge(self, &clean, offset, &mut diags);
             check_basic_operator_spacing(self, path, &clean, line, offset, &mut diags);
             check_pointer_cast_star_spacing(self, &clean, offset, &mut diags);
+            check_pointer_null_compare(self, &clean, offset, &mut diags);
             check_pointer_binding_spacing(self, &clean, offset, &mut diags);
             check_double_semicolon(self, &clean, line, offset, &mut diags);
             check_malformed_include(self, line, offset, &mut diags);
@@ -224,6 +225,8 @@ impl Decree for FreeBsdDecree {
         check_else_follow_close_brace(self, path, source, &mut diags);
         check_macro_statement_wrapping(self, path, source, &mut diags);
         check_c99_knr_definition(self, source, &mut diags);
+        check_c99_decl_in_for(self, source, &mut diags);
+        check_lexicon(self, source, &mut diags);
 
         diags
     }

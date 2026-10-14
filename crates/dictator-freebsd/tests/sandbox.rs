@@ -63,6 +63,39 @@ fn bad_man_page_fixture() {
     );
 }
 
+/// The rules added for the `acpi_apple(4)` C review nits.
+const REVIEW_C_RULES: &[&str] = &[
+    "freebsd/pointer-null-compare",
+    "freebsd/c99-decl-in-for",
+    "freebsd/lexicon",
+];
+
+#[test]
+fn review_c_nits_fixture() {
+    let diags = lint_source(&sandbox("review_c_nits.c"));
+    let rules: Vec<&String> = diags.iter().map(|d| &d.rule).collect();
+
+    for rule in REVIEW_C_RULES {
+        assert!(
+            rules.iter().any(|r| *r == rule),
+            "review_c_nits.c should trigger {rule}; got {rules:?}"
+        );
+    }
+}
+
+#[test]
+fn clean_review_c_is_quiet() {
+    let diags = lint_source(&sandbox("clean_review_c.c"));
+
+    for rule in REVIEW_C_RULES {
+        assert!(
+            !diags.iter().any(|d| d.rule == *rule),
+            "clean_review_c.c must not trigger {rule}; got {:?}",
+            diags.iter().map(|d| &d.rule).collect::<Vec<_>>()
+        );
+    }
+}
+
 fn man_rules(src: &str) -> Vec<String> {
     use dictator_decree_abi::Decree;
 

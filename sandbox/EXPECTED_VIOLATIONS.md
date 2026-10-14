@@ -111,6 +111,19 @@ Ruby wraps supreme rules under the `ruby/` prefix, plus:
 - `freebsd/c99_violations.c` - `register`, K&R definitions, `__inline`,
   `u_int32_t`, named variadic macro parameters
 
+### Review nits (`acpi_apple(4)`)
+- `freebsd/review_c_nits.c` - pointer cast to `uintptr_t` and compared against
+  0 instead of `NULL`, a loop counter declared at the top of the function, and
+  lowercase "retina" in comment prose
+- `freebsd/clean_review_c.c` - the same code fixed, plus the two cases that
+  must stay quiet: a counter still live after its loop, and an integer
+  unpacked from a `void *` rather than compared
+
+`freebsd/c99-decl-in-for` fires on a tree that is still mostly the other way
+(6539 top-of-function `int i;` against 1808 `for (int i = 0`), so expect it to
+be loud on old code. That is the point: the decree has no options, and a rule
+that only speaks where it is already obeyed enforces nothing.
+
 ### mdoc(7) / style.mdoc(5)
 - `freebsd/bad_man_page.8` - Missing prologue macros, quoted `.Nd`, legacy
   divider, verbose license
