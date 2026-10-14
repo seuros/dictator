@@ -1,0 +1,40 @@
+.\" Copyright (c) 2026 The FreeBSD Project
+.\"
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
+.Dd August 16, 2026
+.Dt PROBE 4
+.Os
+.Sh NAME
+.Nm probe
+.Nd sample driver with every man nit this decree knows
+.Sh SYNOPSIS
+To compile this driver into the kernel,
+place the following lines in your
+kernel configuration file:
+.Bd -ragged -offset indent
+.Cd device probe
+.Ed
+.Sh DESCRIPTION
+The
+.Nm
+driver attaches to sample devices found on Mac computers.
+.Pp
+It arms wake on shutdown
+.Pq e.g. Va dev.probe.N.wake=1 .
+.Sh HARDWARE
+The
+.Nm
+driver supports:
+.Bl -tag -width "WIDGET9876" -compact
+.It WIDGET9876
+Sample widget, present on later machines
+.Pq 2018 and later.
+.El
+.Sh SEE ALSO
+.Xr acpi 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Fx 16.0 .

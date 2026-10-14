@@ -102,6 +102,26 @@ Ruby wraps supreme rules under the `ruby/` prefix, plus:
 ### Import Ordering (PEP 8)
 - `python/wrong_import_order.py` - Third-party before stdlib
 
+## decree.freebsd
+
+**Applies to:** `.c`, `.h`, and `.1`-`.9` man pages.
+
+### style(9) / C99
+- `freebsd/style9_violations.c` - Spacing, braces, indentation, comment blocks
+- `freebsd/c99_violations.c` - `register`, K&R definitions, `__inline`,
+  `u_int32_t`, named variadic macro parameters
+
+### mdoc(7) / style.mdoc(5)
+- `freebsd/bad_man_page.8` - Missing prologue macros, quoted `.Nd`, legacy
+  divider, verbose license
+- `freebsd/driver_page_nits.4` - The man(4) nits from the `acpi_apple(4)`
+  review: missing leading `.\"`, non-`.Cd` SYNOPSIS prose, `-tag` in
+  HARDWARE, period attached to the preceding word on a macro line, and
+  "Mac computers" where the manual says "Macs"
+- `freebsd/clean_driver_page.4` - The same page with every nit fixed; asserted
+  to produce **zero** diagnostics, so a new rule that over-fires breaks the
+  suite
+
 ## decree.frontmatter
 
 **Applies to:** `.md`, `.mdx` files only (YAML frontmatter)

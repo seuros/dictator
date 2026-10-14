@@ -1,3 +1,4 @@
+use super::shared::for_each_header_comment;
 use crate::FreeBsdDecree;
 use crate::decrees::support::*;
 use dictator_decree_abi::Diagnostics;
@@ -12,33 +13,18 @@ pub(crate) fn check_man_legacy_divider(
 ) {
     const DIVIDER_CHARS: [char; 6] = ['-', '=', '<', '>', '_', '~'];
 
-    let mut offset = 0usize;
-
-    for raw in source.split_inclusive('\n') {
-        let line = raw.strip_suffix('\n').unwrap_or(raw);
-        let trimmed = line.trim();
-
-        if trimmed == ".Dd" || trimmed.starts_with(".Dd ") {
-            break;
+    for_each_header_comment(source, |offset, line, body| {
+        if body.len() >= 3 && body.chars().all(|c| DIVIDER_CHARS.contains(&c)) {
+            push_diag(
+                decree,
+                diags,
+                "man-legacy-divider",
+                "old-style ASCII divider comment in header; use a plain comment block".to_string(),
+                offset,
+                0,
+                line.len().max(1),
+                true,
+            );
         }
-
-        if let Some(rest) = trimmed.strip_prefix(".\\\"") {
-            let rest = rest.trim();
-            if rest.len() >= 3 && rest.chars().all(|c| DIVIDER_CHARS.contains(&c)) {
-                push_diag(
-                    decree,
-                    diags,
-                    "man-legacy-divider",
-                    "old-style ASCII divider comment in header; use a plain comment block"
-                        .to_string(),
-                    offset,
-                    0,
-                    line.len().max(1),
-                    true,
-                );
-            }
-        }
-
-        offset += raw.len();
-    }
+    });
 }

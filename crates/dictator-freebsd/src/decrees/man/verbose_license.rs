@@ -1,3 +1,4 @@
+use super::shared::for_each_header_comment;
 use crate::FreeBsdDecree;
 use crate::decrees::support::*;
 use dictator_decree_abi::Diagnostics;
@@ -10,21 +11,8 @@ pub(crate) fn check_man_verbose_license(
     source: &str,
     diags: &mut Diagnostics,
 ) {
-    let mut offset = 0usize;
-
-    for raw in source.split_inclusive('\n') {
-        let line = raw.strip_suffix('\n').unwrap_or(raw);
-        let trimmed = line.trim();
-
-        if trimmed == ".Dd" || trimmed.starts_with(".Dd ") {
-            break;
-        }
-
-        if let Some(rest) = trimmed.strip_prefix(".\\\"")
-            && rest
-                .trim()
-                .starts_with("Redistribution and use in source and binary forms")
-        {
+    for_each_header_comment(source, |offset, line, body| {
+        if body.starts_with("Redistribution and use in source and binary forms") {
             push_diag(
                 decree,
                 diags,
@@ -38,7 +26,5 @@ pub(crate) fn check_man_verbose_license(
                 true,
             );
         }
-
-        offset += raw.len();
-    }
+    });
 }

@@ -110,6 +110,11 @@ fn lint_man_page(decree: &FreeBsdDecree, path: &str, source: &str, diags: &mut D
     check_man_date_format(decree, source, diags);
     check_banned_gpl_license(decree, source, diags);
     check_man_spdx_order(decree, source, diags);
+    check_man_leading_blank_comment(decree, source, diags);
+    check_man_synopsis_cd_only(decree, source, diags);
+    check_man_hardware_list_bullet(decree, source, diags);
+    check_man_macro_attached_period(decree, source, diags);
+    check_man_lexicon(decree, source, diags);
 }
 
 pub struct FreeBsdDecree;

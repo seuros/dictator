@@ -1,0 +1,36 @@
+.\"
+.\" Copyright (c) 2026 The FreeBSD Project
+.\"
+.\" SPDX-License-Identifier: BSD-2-Clause
+.\"
+.Dd August 16, 2026
+.Dt PROBE 4
+.Os
+.Sh NAME
+.Nm probe
+.Nd sample driver that offends no decree
+.Sh SYNOPSIS
+.Cd device probe
+.Sh DESCRIPTION
+The
+.Nm
+driver attaches to sample devices found on Macs.
+.Pp
+It arms wake on shutdown
+.Pq e.g. Va dev.probe.N.wake=1 .
+.Sh HARDWARE
+The
+.Nm
+driver supports:
+.Bl -bullet -compact
+.It
+Sample widget, present on later machines
+.Pq 2018 and later .
+.El
+.Sh SEE ALSO
+.Xr acpi 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Fx 16.0 .
