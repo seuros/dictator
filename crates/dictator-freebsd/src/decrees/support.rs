@@ -63,6 +63,32 @@ pub(crate) fn sanitize_code_line(line: &str, in_block_comment: &mut bool) -> Str
     String::from_utf8(out).unwrap_or_else(|_| line.to_string())
 }
 
+/// Byte offset where each line of `source.lines()` starts, assuming the `\n`
+/// that `lines()` stripped. Diagnostic spans are absolute, so every line-based
+/// decree needs this alongside the line vector.
+pub(crate) fn line_offsets(lines: &[&str]) -> Vec<usize> {
+    let mut offsets = Vec::with_capacity(lines.len());
+    let mut offset = 0usize;
+
+    for line in lines {
+        offsets.push(offset);
+        offset += line.len() + 1;
+    }
+
+    offsets
+}
+
+/// `sanitize_code_line` over the whole file, carrying block-comment state from
+/// one line to the next so a `/* */` spanning lines stays blanked.
+pub(crate) fn sanitized_lines(lines: &[&str]) -> Vec<String> {
+    let mut in_block_comment = false;
+
+    lines
+        .iter()
+        .map(|line| sanitize_code_line(line, &mut in_block_comment))
+        .collect()
+}
+
 pub(crate) fn expanded_len(line: &str) -> usize {
     let mut width = 0usize;
     for ch in line.chars() {
@@ -201,6 +227,15 @@ pub(crate) fn find_sizeof_address(line: &str) -> Option<usize> {
 
 pub(crate) fn is_ident_byte(b: u8) -> bool {
     b.is_ascii_alphanumeric() || b == b'_'
+}
+
+/// Index just past the identifier starting at `idx` (`idx` itself if there is
+/// no identifier byte there).
+pub(crate) fn skip_ident(bytes: &[u8], mut idx: usize) -> usize {
+    while idx < bytes.len() && is_ident_byte(bytes[idx]) {
+        idx += 1;
+    }
+    idx
 }
 
 /// `word` as a whole identifier: no match inside `pci_register`/`register_t`.

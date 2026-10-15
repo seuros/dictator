@@ -19,9 +19,7 @@ pub(crate) fn check_function_name_space(
         }
 
         let start = i;
-        while i < bytes.len() && is_ident_byte(bytes[i]) {
-            i += 1;
-        }
+        i = skip_ident(bytes, i);
         let end = i;
         if i >= bytes.len() || !bytes[i].is_ascii_whitespace() {
             continue;

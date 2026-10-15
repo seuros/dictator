@@ -32,18 +32,9 @@ pub(crate) fn check_c99_decl_in_for(decree: &FreeBsdDecree, source: &str, diags:
     let lines: Vec<&str> = source.lines().collect();
     let code_mask = code_line_mask(source);
 
-    let mut offset = 0usize;
-    let mut offsets = Vec::with_capacity(lines.len());
-    for line in &lines {
-        offsets.push(offset);
-        offset += line.len() + 1;
-    }
+    let offsets = line_offsets(&lines);
 
-    let mut in_block_comment = false;
-    let clean: Vec<String> = lines
-        .iter()
-        .map(|line| sanitize_code_line(line, &mut in_block_comment))
-        .collect();
+    let clean = sanitized_lines(&lines);
 
     for (body_start, body_end) in function_bodies(&clean, &code_mask) {
         for decl in body_start..body_end {

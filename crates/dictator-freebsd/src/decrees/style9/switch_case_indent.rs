@@ -12,18 +12,9 @@ pub(crate) fn check_switch_case_indent(
     diags: &mut Diagnostics,
 ) {
     let lines: Vec<&str> = source.lines().collect();
-    let mut offsets = Vec::with_capacity(lines.len());
-    let mut off = 0usize;
-    for line in &lines {
-        offsets.push(off);
-        off += line.len() + 1;
-    }
+    let offsets = line_offsets(&lines);
 
-    let mut in_block_comment = false;
-    let mut clean_lines = Vec::with_capacity(lines.len());
-    for line in &lines {
-        clean_lines.push(sanitize_code_line(line, &mut in_block_comment));
-    }
+    let clean_lines = sanitized_lines(&lines);
 
     for i in 0..lines.len() {
         let clean = &clean_lines[i];

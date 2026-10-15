@@ -12,12 +12,7 @@ pub(crate) fn check_c99_knr_definition(
     let lines: Vec<&str> = source.lines().collect();
     let code_mask = code_line_mask(source);
 
-    let mut offset = 0usize;
-    let mut offsets = Vec::with_capacity(lines.len());
-    for line in &lines {
-        offsets.push(offset);
-        offset += line.len() + 1;
-    }
+    let offsets = line_offsets(&lines);
 
     for i in 0..lines.len() {
         if !code_mask[i] {

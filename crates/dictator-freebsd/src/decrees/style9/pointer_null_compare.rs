@@ -49,9 +49,7 @@ fn compares_against_zero(line: &str, from: usize) -> bool {
 
     let operand_start = i;
     loop {
-        while i < bytes.len() && is_ident_byte(bytes[i]) {
-            i += 1;
-        }
+        i = skip_ident(bytes, i);
         if i < bytes.len() && bytes[i] == b'.' {
             i += 1;
             continue;

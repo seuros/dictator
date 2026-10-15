@@ -13,18 +13,9 @@ pub(crate) fn check_else_follow_close_brace(
         return;
     }
 
-    let mut offsets = Vec::with_capacity(lines.len());
-    let mut off = 0usize;
-    for line in &lines {
-        offsets.push(off);
-        off += line.len() + 1;
-    }
+    let offsets = line_offsets(&lines);
 
-    let mut in_block_comment = false;
-    let clean_lines: Vec<String> = lines
-        .iter()
-        .map(|line| sanitize_code_line(line, &mut in_block_comment))
-        .collect();
+    let clean_lines = sanitized_lines(&lines);
 
     for i in 1..lines.len() {
         let prev = clean_lines[i - 1].trim_end();
