@@ -8,12 +8,12 @@ use crate::mcp::handlers::handle_occupy;
 use crate::mcp::state::ServerState;
 use crate::mcp_host::config_exists;
 
-use super::{extract_tool_result, result_output, spawn_notification_forwarder};
+use super::{extract_tool_result, result_output};
 
-/// Initialize .dictate.toml - needs notification_tx for list_changed
+/// Initialize .dictate.toml and announce catalog changes through gated APIs.
 pub struct OccupyTool {
     pub state: Arc<Mutex<ServerState>>,
-    pub notification_tx: NotificationSender,
+    pub broadcaster: Broadcaster,
 }
 
 impl Tool for OccupyTool {
@@ -44,6 +44,7 @@ impl Tool for OccupyTool {
 
     fn execute<'a>(&'a self, ctx: ExecutionContext<'a>) -> ToolFuture<'a> {
         Box::pin(async move {
+            let mut ctx = ctx;
             ctx.logger.info("Initializing .dictate.toml...");
 
             let can_write = self.state.lock().unwrap().can_write;
@@ -53,16 +54,16 @@ impl Tool for OccupyTool {
                 ));
             }
 
-            let string_tx = spawn_notification_forwarder(self.notification_tx.clone());
-            let args = Some(ctx.params.clone());
+            let args = Some(ctx.params.take());
             let response = handle_occupy(
                 Value::Null,
                 args,
                 Arc::clone(&self.state),
-                string_tx,
                 ctx.client_name(),
             );
             let result = extract_tool_result(response, "occupy")?;
+            self.broadcaster.broadcast(ListChanged::Tools);
+            self.broadcaster.broadcast(ListChanged::Resources);
             Ok(result_output(&result))
         })
     }

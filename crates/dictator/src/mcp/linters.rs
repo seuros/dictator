@@ -1,5 +1,6 @@
 //! External linter execution for MCP tools.
 
+use mcp_host::managers::progress::Progress;
 use mcp_host::protocol::types::JsonRpcResponse;
 use serde::Deserialize;
 use serde_json::Value;
@@ -34,6 +35,7 @@ pub fn handle_supremecourt(
     id: Value,
     arguments: Option<Value>,
     watcher_state: Arc<Mutex<ServerState>>,
+    progress: Option<&Progress>,
 ) -> JsonRpcResponse {
     #[derive(Deserialize)]
     struct Args {
@@ -53,7 +55,7 @@ pub fn handle_supremecourt(
 
     if config.is_none() {
         return JsonRpcResponse {
-            jsonrpc: "2.0".into(),
+            jsonrpc: Default::default(),
             id: Some(id),
             result: Some(serde_json::json!({
                 "content": [{
@@ -72,19 +74,17 @@ pub fn handle_supremecourt(
     let paths_str: Vec<&str> = args.paths.iter().map(String::as_str).collect();
 
     // Start progress tracking
-    let progress_token = {
-        let state = watcher_state.lock().unwrap();
-        let total = u32::try_from(decrees_with_files.len()).unwrap_or(u32::MAX);
-        state.progress_tracker.start("supremecourt", total)
-    };
+    let total = f64::from(u32::try_from(decrees_with_files.len()).unwrap_or(u32::MAX));
+    if let Some(progress) = progress {
+        progress.report(0.0, Some(total), Some("supremecourt".into()));
+    }
 
     // Run configured linters for each detected decree
     for (decree_idx, decree_name) in decrees_with_files.iter().enumerate() {
         // Update progress
-        {
-            let state = watcher_state.lock().unwrap();
-            let current = u32::try_from(decree_idx + 1).unwrap_or(u32::MAX);
-            state.progress_tracker.progress(&progress_token, current);
+        if let Some(progress) = progress {
+            let current = f64::from(u32::try_from(decree_idx + 1).unwrap_or(u32::MAX));
+            progress.report(current, Some(total), None);
         }
 
         if let Some(decree) = config.decree.get(decree_name)
@@ -94,18 +94,12 @@ pub fn handle_supremecourt(
         }
     }
 
-    // Finish progress tracking
-    {
-        let state = watcher_state.lock().unwrap();
-        state.progress_tracker.finish(&progress_token);
-    }
-
     if output.is_empty() {
         output = "No configured linters for detected file types".to_string();
     }
 
     JsonRpcResponse {
-        jsonrpc: "2.0".into(),
+        jsonrpc: Default::default(),
         id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": output }]

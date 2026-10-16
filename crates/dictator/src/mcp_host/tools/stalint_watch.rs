@@ -8,15 +8,11 @@ use crate::mcp::handlers::handle_stalint_watch;
 use crate::mcp::state::ServerState;
 use crate::mcp_host::config_exists;
 
-use super::{
-    extract_tool_result, result_output, spawn_notification_forwarder,
-    stalint_unwatch::StalintUnwatchTool,
-};
+use super::{extract_tool_result, result_output, stalint_unwatch::StalintUnwatchTool};
 
 /// Watch files for structural changes
 pub struct StalintWatchTool {
     pub state: Arc<Mutex<ServerState>>,
-    pub notification_tx: NotificationSender,
 }
 
 impl Tool for StalintWatchTool {
@@ -31,8 +27,10 @@ impl Tool for StalintWatchTool {
     fn input_schema(&self) -> Value {
         serde_json::json!({
             "type": "object",
-            "properties": {},
-            "required": []
+            "properties": {
+                "paths": {"type": "array", "items": {"type": "string"}}
+            },
+            "required": ["paths"]
         })
     }
 
@@ -42,25 +40,26 @@ impl Tool for StalintWatchTool {
 
     fn execute<'a>(&'a self, ctx: ExecutionContext<'a>) -> ToolFuture<'a> {
         Box::pin(async move {
+            let mut ctx = ctx;
             ctx.logger.info("Starting path watch...");
 
-            let string_tx = spawn_notification_forwarder(self.notification_tx.clone());
             let response = handle_stalint_watch(
                 Value::Null,
-                Some(ctx.params),
+                Some(ctx.params.take()),
                 Arc::clone(&self.state),
-                string_tx,
             );
             let result = extract_tool_result(response, "stalint_watch")?;
 
             // Swap tools: hide watch, show unwatch
-            ctx.session.batch(|batch| {
-                batch.hide_tool("stalint_watch");
-                batch.add_tool(Arc::new(StalintUnwatchTool {
-                    state: Arc::clone(&self.state),
-                    notification_tx: self.notification_tx.clone(),
-                }));
-            });
+            ctx.session
+                .batch(|batch| {
+                    batch.add_tool(Arc::new(StalintUnwatchTool {
+                        state: Arc::clone(&self.state),
+                    }))?;
+                    batch.hide_tool("stalint_watch");
+                    Ok::<_, ToolRegistrationError>(())
+                })
+                .map_err(|error| ToolError::Internal(error.to_string()))?;
 
             ctx.logger
                 .info("Watch started. stalint_unwatch now available.");

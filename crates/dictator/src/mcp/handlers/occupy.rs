@@ -4,7 +4,6 @@ use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use serde::Deserialize;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc;
 
 use crate::mcp::state::ServerState;
 use crate::mcp::utils::current_dir_or_default;
@@ -26,7 +25,6 @@ pub fn handle_occupy(
     id: Value,
     arguments: Option<Value>,
     watcher_state: Arc<Mutex<ServerState>>,
-    notif_tx: mpsc::Sender<String>,
     client_name: Option<&str>,
 ) -> JsonRpcResponse {
     let args: Args = arguments
@@ -43,7 +41,7 @@ pub fn handle_occupy(
     // Check if config already exists
     if config_path.exists() {
         return JsonRpcResponse {
-            jsonrpc: "2.0".into(),
+            jsonrpc: Default::default(),
             id: Some(id),
             result: Some(serde_json::json!({
                 "content": [{ "type": "text", "text": ".dictate.toml already exists." }]
@@ -55,7 +53,7 @@ pub fn handle_occupy(
     // Write default config
     if let Err(e) = std::fs::write(&config_path, DEFAULT_CONFIG) {
         return JsonRpcResponse {
-            jsonrpc: "2.0".into(),
+            jsonrpc: Default::default(),
             id: Some(id),
             result: None,
             error: Some(JsonRpcError {
@@ -72,21 +70,6 @@ pub fn handle_occupy(
         state.config = None; // Force reload on next access
     }
 
-    // Notify client that tool list and resources changed
-    let tools_notification = serde_json::json!({
-        "jsonrpc": "2.0",
-        "method": "notifications/tools/list_changed",
-        "params": {}
-    });
-    let _ = notif_tx.try_send(tools_notification.to_string());
-
-    let resources_notification = serde_json::json!({
-        "jsonrpc": "2.0",
-        "method": "notifications/resources/list_changed",
-        "params": {}
-    });
-    let _ = notif_tx.try_send(resources_notification.to_string());
-
     let issue_url = issue_tracker(client_name);
 
     let message = format!(
@@ -98,7 +81,7 @@ pub fn handle_occupy(
     );
 
     JsonRpcResponse {
-        jsonrpc: "2.0".into(),
+        jsonrpc: Default::default(),
         id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": message }]

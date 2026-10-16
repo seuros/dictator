@@ -13,7 +13,6 @@ use mcp_host::protocol::types::ElicitationAction;
 use mcp_host::protocol::types::JsonRpcResponse;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc;
 
 use crate::mcp::handlers::{handle_dictator, handle_stalint};
 use crate::mcp::state::ServerState;
@@ -131,24 +130,6 @@ async fn resolve_paths(
     Some(if any_git { scoped } else { dirs })
 }
 
-pub(super) fn spawn_notification_forwarder(
-    notification_tx: NotificationSender,
-) -> mpsc::Sender<String> {
-    let (string_tx, mut string_rx) = mpsc::channel::<String>(100);
-
-    tokio::spawn(async move {
-        while let Some(notif_str) = string_rx.recv().await {
-            if let Ok(notif) = serde_json::from_str::<JsonRpcNotification>(&notif_str)
-                && notification_tx.send(notif).is_err()
-            {
-                break;
-            }
-        }
-    });
-
-    string_tx
-}
-
 pub(super) fn extract_tool_result(
     response: JsonRpcResponse,
     handler_name: &str,
@@ -224,7 +205,7 @@ impl DictatorTools {
         }
 
         let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
-        let response = handle_stalint(Value::Null, args, Arc::clone(&self.state));
+        let response = handle_stalint(Value::Null, args, Arc::clone(&self.state), ctx.progress());
         let mut result = extract_tool_result(response, "stalint")?;
 
         // Staged classified files are a commit-in-progress leak: escalate
@@ -283,7 +264,7 @@ impl DictatorTools {
         {
             let lint_summary = {
                 let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
-                let response = handle_stalint(Value::Null, args, Arc::clone(&self.state));
+                let response = handle_stalint(Value::Null, args, Arc::clone(&self.state), None);
                 response
                     .result
                     .and_then(|r| serde_json::to_string_pretty(&r).ok())
@@ -296,14 +277,11 @@ impl DictatorTools {
 
             let schema = ElicitationSchema::builder()
                 .optional_bool("confirm", false)
-                .build_unchecked();
+                .build()
+                .map_err(|error| ToolError::Internal(error.into()))?;
 
             let result = requester
-                .request_elicitation(
-                    message,
-                    serde_json::to_value(&schema).unwrap_or_default(),
-                    None,
-                )
+                .request_elicitation_form(message, &schema, None)
                 .await
                 .map_err(|e| ToolError::Execution(e.to_string()))?;
 
@@ -323,7 +301,7 @@ impl DictatorTools {
         }
 
         let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
-        let response = handle_dictator(Value::Null, args, Arc::clone(&self.state));
+        let response = handle_dictator(Value::Null, args, Arc::clone(&self.state), ctx.progress());
         let result = extract_tool_result(response, "dictator")?;
         Ok(result_output(&result))
     }

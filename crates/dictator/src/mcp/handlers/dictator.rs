@@ -1,5 +1,6 @@
 //! Dictator tool handler for auto-fixing structural issues.
 
+use mcp_host::managers::progress::Progress;
 use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use serde::Deserialize;
 use serde_json::Value;
@@ -15,6 +16,7 @@ pub fn handle_dictator(
     id: Value,
     arguments: Option<Value>,
     watcher_state: Arc<Mutex<ServerState>>,
+    progress: Option<&Progress>,
 ) -> JsonRpcResponse {
     #[derive(Deserialize)]
     struct Args {
@@ -44,19 +46,26 @@ pub fn handle_dictator(
     let mode = args.mode.unwrap_or_else(|| "kimjongrails".to_string());
 
     match mode.as_str() {
-        "kimjongrails" => handle_kimjongrails(id, Some(paths_json), Arc::clone(&watcher_state)),
+        "kimjongrails" => handle_kimjongrails(id, Some(paths_json), progress),
         "supremecourt" => {
             // Run kimjongrails first, then supremecourt
-            let kim_result = handle_kimjongrails(
-                serde_json::json!(0),
-                Some(paths_json.clone()),
-                Arc::clone(&watcher_state),
-            );
+            if let Some(progress) = progress {
+                progress.report(0.0, Some(2.0), Some("Structural fixes".into()));
+            }
+            let kim_result =
+                handle_kimjongrails(serde_json::json!(0), Some(paths_json.clone()), None);
+            if let Some(progress) = progress {
+                progress.report(1.0, Some(2.0), Some("External linters".into()));
+            }
             let supreme_result = handle_supremecourt(
                 serde_json::json!(0),
                 Some(paths_json),
                 Arc::clone(&watcher_state),
+                None,
             );
+            if let Some(progress) = progress {
+                progress.report(2.0, Some(2.0), None);
+            }
 
             // Combine outputs
             let kim_text = kim_result
@@ -78,7 +87,7 @@ pub fn handle_dictator(
 
             let combined = format!("{kim_text}\n\n{supreme_text}");
             JsonRpcResponse {
-                jsonrpc: "2.0".into(),
+                jsonrpc: Default::default(),
                 id: Some(id),
                 result: Some(serde_json::json!({
                     "content": [{ "type": "text", "text": combined }]
@@ -87,7 +96,7 @@ pub fn handle_dictator(
             }
         }
         _ => JsonRpcResponse {
-            jsonrpc: "2.0".into(),
+            jsonrpc: Default::default(),
             id: Some(id),
             result: None,
             error: Some(JsonRpcError {

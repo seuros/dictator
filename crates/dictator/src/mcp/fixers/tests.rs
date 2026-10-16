@@ -2,12 +2,11 @@ use super::*;
 use std::path::Path;
 
 fn fix_workspace(dir: &Path) -> String {
-    let state = Arc::new(Mutex::new(ServerState::default()));
     let args = serde_json::json!({
         "paths": [dir.to_string_lossy()],
         "workspace": dir.to_string_lossy(),
     });
-    let response = handle_kimjongrails(serde_json::json!(1), Some(args), state);
+    let response = handle_kimjongrails(serde_json::json!(1), Some(args), None);
     response.result.expect("result")["content"][0]["text"]
         .as_str()
         .expect("text")

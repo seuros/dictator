@@ -6,7 +6,7 @@ fn stalint_handler_covers_defaults_paths_and_pagination() {
     let state = || Arc::new(Mutex::new(ServerState::default()));
 
     // No arguments defaults to cwd and succeeds.
-    let response = handle_stalint(serde_json::json!(1), None, state());
+    let response = handle_stalint(serde_json::json!(1), None, state(), None);
     assert!(response.error.is_none());
     assert!(response.result.unwrap()["structuredContent"]["total"].is_number());
 
@@ -15,7 +15,7 @@ fn stalint_handler_covers_defaults_paths_and_pagination() {
         "paths": ["/nonexistent/path/that/does/not/exist"],
         "limit": 5
     }));
-    let response = handle_stalint(serde_json::json!(1), args, state());
+    let response = handle_stalint(serde_json::json!(1), args, state(), None);
     assert!(response.error.is_none());
     let result = response.result.unwrap();
     assert_eq!(result["structuredContent"]["total"], 0);
@@ -24,15 +24,15 @@ fn stalint_handler_covers_defaults_paths_and_pagination() {
     // Paths from a first call are stored and reused by a cursor-only follow-up.
     let shared = state();
     let args = Some(serde_json::json!({"paths": ["/nonexistent"]}));
-    let response = handle_stalint(serde_json::json!(1), args, Arc::clone(&shared));
+    let response = handle_stalint(serde_json::json!(1), args, Arc::clone(&shared), None);
     assert!(response.error.is_none());
     let args = Some(serde_json::json!({"cursor": base64_encode(b"0")}));
-    let response = handle_stalint(serde_json::json!(2), args, shared);
+    let response = handle_stalint(serde_json::json!(2), args, shared, None);
     assert!(response.error.is_none());
 
     // A cursor without stored paths is an invalid-params error.
     let args = Some(serde_json::json!({"cursor": base64_encode(b"10")}));
-    let response = handle_stalint(serde_json::json!(1), args, state());
+    let response = handle_stalint(serde_json::json!(1), args, state(), None);
     let error = response.error.unwrap();
     assert_eq!(error.code, -32602);
     assert!(error.message.contains("no paths stored"));

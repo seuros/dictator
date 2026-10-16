@@ -34,55 +34,47 @@ async fn run_async() -> Result<()> {
         Server::builder("dictator", env!("CARGO_PKG_VERSION"))
             .with_title("The Dictator")
             .with_description(env!("CARGO_PKG_DESCRIPTION"))
-            .with_website_url(env!("CARGO_PKG_HOMEPAGE"))
+            .with_website_url(env!("CARGO_PKG_HOMEPAGE").parse()?)
             .with_instructions(instructions::BASE)
             .with_instructions_provider(instructions::for_client)
             .with_resource_errors_as_content(instructions::HIDES_RESOURCE_ERRORS)?
             .with_tools(true)
             .with_resources(true, true)
             .with_prompts(true)
+            .with_logging()
             .build(),
     );
 
-    // Get notification sender for background tasks
-    let notification_tx = server.notification_sender();
-
-    // Create shared state with proper notification channel
-    let watcher_state = Arc::new(Mutex::new(ServerState::new(notification_tx.clone())));
+    let watcher_state = Arc::new(Mutex::new(ServerState::new()));
 
     // Register macro-based tools (stalint, dictator) via unified router
     let tools = Arc::new(DictatorTools {
         state: Arc::clone(&watcher_state),
     });
-    server.register_router(DictatorTools::router(), tools);
+    server.register_router(DictatorTools::router()?, tools)?;
 
-    // Register stateful tools (manual impl - need notification_tx)
+    // Stateful tools use session batches and gated list-change broadcasts.
     server.tool_registry().register(StalintWatchTool {
         state: Arc::clone(&watcher_state),
-        notification_tx: notification_tx.clone(),
-    });
+    })?;
     server.tool_registry().register(OccupyTool {
         state: Arc::clone(&watcher_state),
-        notification_tx: notification_tx.clone(),
-    });
+        broadcaster: server.broadcaster(),
+    })?;
 
     // Register macro-based resources via unified router
     let resources = Arc::new(DictatorResources {
         state: Arc::clone(&watcher_state),
     });
-    server.register_router(DictatorResources::router(), resources);
+    server.register_router(DictatorResources::router()?, resources)?;
 
     // Register macro-based prompts via unified router
     let prompts = Arc::new(DictatorPrompts);
-    server.register_router(DictatorPrompts::router(), prompts);
+    server.register_router(DictatorPrompts::router()?, prompts)?;
 
     // Start background tasks
-    start_config_watcher(Arc::clone(&watcher_state), notification_tx.clone());
-    start_watcher_check_loop(
-        Arc::clone(&watcher_state),
-        notification_tx,
-        Arc::clone(&server),
-    );
+    start_config_watcher(Arc::clone(&watcher_state), server.broadcaster());
+    start_watcher_check_loop(Arc::clone(&watcher_state), Arc::clone(&server));
 
     // Run server with stdio transport
     let transport = StdioTransport::new();
@@ -95,7 +87,7 @@ async fn run_async() -> Result<()> {
 }
 
 /// Background loop that watches .dictate.toml for changes
-fn start_config_watcher(state: Arc<Mutex<ServerState>>, notif_tx: NotificationSender) {
+fn start_config_watcher(state: Arc<Mutex<ServerState>>, broadcaster: Broadcaster) {
     tokio::spawn(async move {
         use notify::{RecursiveMode, Watcher};
 
@@ -153,18 +145,9 @@ fn start_config_watcher(state: Arc<Mutex<ServerState>>, notif_tx: NotificationSe
                 }
 
                 // Send list_changed notifications
-                let _ = notif_tx.send(JsonRpcNotification::new(
-                    "notifications/tools/list_changed",
-                    None,
-                ));
-                let _ = notif_tx.send(JsonRpcNotification::new(
-                    "notifications/resources/list_changed",
-                    None,
-                ));
-                let _ = notif_tx.send(JsonRpcNotification::new(
-                    "notifications/prompts/list_changed",
-                    None,
-                ));
+                broadcaster.broadcast(ListChanged::Tools);
+                broadcaster.broadcast(ListChanged::Resources);
+                broadcaster.broadcast(ListChanged::Prompts);
 
                 log_to_file("Config changed: sent list_changed for tools/resources/prompts");
             }
@@ -173,11 +156,7 @@ fn start_config_watcher(state: Arc<Mutex<ServerState>>, notif_tx: NotificationSe
 }
 
 /// Background loop that checks watched paths
-fn start_watcher_check_loop(
-    state: Arc<Mutex<ServerState>>,
-    notif_tx: NotificationSender,
-    server: Arc<Server>,
-) {
+fn start_watcher_check_loop(state: Arc<Mutex<ServerState>>, server: Arc<Server>) {
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(WATCHER_CHECK_INTERVAL_SECS)).await;
@@ -250,22 +229,22 @@ fn start_watcher_check_loop(
                 }
 
                 if !violations.is_empty() {
-                    let _ = notif_tx.send(JsonRpcNotification::new(
-                        "notifications/message",
-                        Some(serde_json::json!({
-                            "level": "warning",
-                            "logger": "stalint_watch",
-                            "data": {
-                                "message": format!(
-                                    "Found {} structural violation(s)",
-                                    violations.len()
-                                ),
-                                "violations": violations
-                            }
-                        })),
-                    ));
+                    let message = format!(
+                        "Found {} structural violation(s): {}",
+                        violations.len(),
+                        serde_json::json!(violations)
+                    );
+                    for session in server.active_sessions() {
+                        server
+                            .logger_for_session(session.id())
+                            .child("stalint_watch")
+                            .warning(message.clone());
+                    }
                 }
             }
         }
     });
 }
+
+#[cfg(test)]
+mod tests;

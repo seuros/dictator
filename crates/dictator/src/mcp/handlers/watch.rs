@@ -7,7 +7,6 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use tokio::sync::mpsc;
 
 use crate::mcp::state::ServerState;
 use crate::mcp::utils::{allowed_paths_within_cwd, current_dir_or_default, parse_arguments};
@@ -17,7 +16,6 @@ pub fn handle_stalint_watch(
     id: Value,
     arguments: Option<Value>,
     watcher_state: Arc<Mutex<ServerState>>,
-    notif_tx: mpsc::Sender<String>,
 ) -> JsonRpcResponse {
     #[derive(Deserialize)]
     struct Args {
@@ -55,7 +53,7 @@ pub fn handle_stalint_watch(
         Ok(w) => w,
         Err(e) => {
             return JsonRpcResponse {
-                jsonrpc: "2.0".into(),
+                jsonrpc: Default::default(),
                 id: Some(id),
                 result: None,
                 error: Some(JsonRpcError {
@@ -90,14 +88,6 @@ pub fn handle_stalint_watch(
         state.is_watching = true;
     }
 
-    // Notify client that tool list changed (stalint_watch -> stalint_unwatch)
-    let notification = serde_json::json!({
-        "jsonrpc": "2.0",
-        "method": "notifications/tools/list_changed",
-        "params": {}
-    });
-    let _ = notif_tx.try_send(notification.to_string());
-
     let output = format!(
         "Watching {} path(s). Notifying every 60s on violations.\nPaths: {}",
         watched.len(),
@@ -105,7 +95,7 @@ pub fn handle_stalint_watch(
     );
 
     JsonRpcResponse {
-        jsonrpc: "2.0".into(),
+        jsonrpc: Default::default(),
         id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": output }]
@@ -118,7 +108,6 @@ pub fn handle_stalint_watch(
 pub fn handle_stalint_unwatch(
     id: Value,
     watcher_state: Arc<Mutex<ServerState>>,
-    notif_tx: mpsc::Sender<String>,
 ) -> JsonRpcResponse {
     // Clear watcher state
     {
@@ -129,16 +118,8 @@ pub fn handle_stalint_unwatch(
         state.dirty = false;
     }
 
-    // Notify client that tool list changed (stalint_unwatch -> stalint_watch)
-    let notification = serde_json::json!({
-        "jsonrpc": "2.0",
-        "method": "notifications/tools/list_changed",
-        "params": {}
-    });
-    let _ = notif_tx.try_send(notification.to_string());
-
     JsonRpcResponse {
-        jsonrpc: "2.0".into(),
+        jsonrpc: Default::default(),
         id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": "Stopped watching for file changes." }]

@@ -2,16 +2,15 @@
 
 use camino::Utf8Path;
 use dictator_core::Source;
+use mcp_host::managers::progress::Progress;
 use mcp_host::protocol::types::JsonRpcResponse;
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::Write;
 use std::path::Path;
-use std::sync::{Arc, Mutex};
 
 use super::regime::{init_regime, load_config};
-use super::state::ServerState;
 use super::utils::{collect_files, parse_arguments};
 use crate::dictate::fix_source;
 
@@ -20,7 +19,7 @@ use crate::dictate::fix_source;
 pub fn handle_kimjongrails(
     id: Value,
     arguments: Option<Value>,
-    watcher_state: Arc<Mutex<ServerState>>,
+    progress: Option<&Progress>,
 ) -> JsonRpcResponse {
     #[derive(Deserialize)]
     struct Args {
@@ -52,18 +51,16 @@ pub fn handle_kimjongrails(
         .collect();
 
     // Start progress tracking
-    let progress_token = {
-        let state = watcher_state.lock().unwrap();
-        let total = u32::try_from(all_files.len()).unwrap_or(u32::MAX);
-        state.progress_tracker.start("dictator", total)
-    };
+    let total = f64::from(u32::try_from(all_files.len()).unwrap_or(u32::MAX));
+    if let Some(progress) = progress {
+        progress.report(0.0, Some(total), Some("dictator".into()));
+    }
 
     for (file_idx, file) in all_files.iter().enumerate() {
         // Update progress
-        {
-            let state = watcher_state.lock().unwrap();
-            let current = u32::try_from(file_idx + 1).unwrap_or(u32::MAX);
-            state.progress_tracker.progress(&progress_token, current);
+        if let Some(progress) = progress {
+            let current = f64::from(u32::try_from(file_idx + 1).unwrap_or(u32::MAX));
+            progress.report(current, Some(total), None);
         }
 
         let Some(path) = Utf8Path::from_path(file) else {
@@ -100,16 +97,10 @@ pub fn handle_kimjongrails(
         }
     }
 
-    // Finish progress tracking
-    {
-        let state = watcher_state.lock().unwrap();
-        state.progress_tracker.finish(&progress_token);
-    }
-
     let output = build_summary(fixed_count, &rule_counts, &log_output);
 
     JsonRpcResponse {
-        jsonrpc: "2.0".into(),
+        jsonrpc: Default::default(),
         id: Some(id),
         result: Some(serde_json::json!({
             "content": [{ "type": "text", "text": output }]

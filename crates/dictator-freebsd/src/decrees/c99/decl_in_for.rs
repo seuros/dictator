@@ -106,10 +106,10 @@ fn function_bodies(clean: &[String], code_mask: &[bool]) -> Vec<(usize, usize)> 
         }
 
         depth += brace_delta(line);
-        if depth == 0 {
-            if let Some(start) = open.take() {
-                bodies.push((start, i));
-            }
+        if depth == 0
+            && let Some(start) = open.take()
+        {
+            bodies.push((start, i));
         }
     }
 
@@ -169,8 +169,8 @@ fn loop_end(clean: &[String], for_line: usize, body_end: usize) -> Option<usize>
 
     if line[close + 1..].trim_start().starts_with('{') {
         let mut depth = 0i32;
-        for i in for_line..body_end {
-            depth += brace_delta(&clean[i]);
+        for (i, line) in clean.iter().enumerate().take(body_end).skip(for_line) {
+            depth += brace_delta(line);
             if depth == 0 {
                 return Some(i);
             }

@@ -1,10 +1,8 @@
 //! Server state and configuration management.
 
-use mcp_host::managers::progress::ProgressTracker;
 use notify::RecommendedWatcher;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 use std::time::Instant;
 
 use super::utils::log_to_file;
@@ -72,8 +70,6 @@ pub struct ServerState {
     pub config: Option<DictateConfig>,
     // Config file change detection
     pub config_dirty: bool,
-    // Progress tracking for long-running operations
-    pub progress_tracker: Arc<ProgressTracker>,
     // Violations seen by the most recent lint (tool call or watch check)
     pub last_violation_total: usize,
     // Set when the mood tier changed; drained by the watcher loop to
@@ -140,16 +136,13 @@ impl Mood {
 
 impl Default for ServerState {
     fn default() -> Self {
-        // Create a dummy notification channel for default initialization
-        // This is only used in tests; actual server uses ::new()
-        let (tx, _rx) = mcp_host::NotificationSender::bounded(1);
-        Self::new(tx)
+        Self::new()
     }
 }
 
 impl ServerState {
-    /// Create new `ServerState` with notification channel
-    pub fn new(notif_tx: mcp_host::NotificationSender) -> Self {
+    /// Create state; progress belongs to individual MCP requests, not the server.
+    pub fn new() -> Self {
         Self {
             paths: HashSet::new(),
             dirty: false,
@@ -163,7 +156,6 @@ impl ServerState {
             stalint_paths: Vec::new(),
             config: None,
             config_dirty: false,
-            progress_tracker: Arc::new(ProgressTracker::new(notif_tx)),
             last_violation_total: 0,
             mood_dirty: false,
             uncommitted_check: None,

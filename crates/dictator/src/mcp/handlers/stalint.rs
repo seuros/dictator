@@ -2,6 +2,7 @@
 
 use camino::Utf8Path;
 use dictator_core::Source;
+use mcp_host::managers::progress::Progress;
 use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use serde::Deserialize;
 use serde_json::Value;
@@ -19,6 +20,7 @@ pub fn handle_stalint(
     id: Value,
     arguments: Option<Value>,
     watcher_state: Arc<Mutex<ServerState>>,
+    progress: Option<&Progress>,
 ) -> JsonRpcResponse {
     #[derive(Deserialize, Default)]
     struct Args {
@@ -47,7 +49,7 @@ pub fn handle_stalint(
         let state = watcher_state.lock().unwrap();
         if state.stalint_paths.is_empty() {
             return JsonRpcResponse {
-                jsonrpc: "2.0".into(),
+                jsonrpc: Default::default(),
                 id: Some(id),
                 result: None,
                 error: Some(JsonRpcError {
@@ -111,18 +113,16 @@ pub fn handle_stalint(
         .collect();
 
     // Start progress tracking
-    let progress_token = {
-        let state = watcher_state.lock().unwrap();
-        let total = u32::try_from(all_files.len()).unwrap_or(u32::MAX);
-        state.progress_tracker.start("stalint", total)
-    };
+    let total = f64::from(u32::try_from(all_files.len()).unwrap_or(u32::MAX));
+    if let Some(progress) = progress {
+        progress.report(0.0, Some(total), Some("stalint".into()));
+    }
 
     for (file_idx, file) in all_files.iter().enumerate() {
         // Update progress
-        {
-            let state = watcher_state.lock().unwrap();
-            let current = u32::try_from(file_idx + 1).unwrap_or(u32::MAX);
-            state.progress_tracker.progress(&progress_token, current);
+        if let Some(progress) = progress {
+            let current = f64::from(u32::try_from(file_idx + 1).unwrap_or(u32::MAX));
+            progress.report(current, Some(total), None);
         }
 
         let Ok(text) = std::fs::read_to_string(file) else {
@@ -169,12 +169,6 @@ pub fn handle_stalint(
         }
     }
 
-    // Finish progress tracking
-    {
-        let state = watcher_state.lock().unwrap();
-        state.progress_tracker.finish(&progress_token);
-    }
-
     let total = all_violations.len();
     {
         let mut state = watcher_state.lock().unwrap();
@@ -207,7 +201,7 @@ pub fn handle_stalint(
     }
 
     JsonRpcResponse {
-        jsonrpc: "2.0".into(),
+        jsonrpc: Default::default(),
         id: Some(id),
         result: Some(result),
         error: None,

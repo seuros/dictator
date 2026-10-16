@@ -66,7 +66,7 @@ pub fn current_dir_or_default() -> std::path::PathBuf {
 #[must_use]
 pub fn invalid_arguments_response(id: serde_json::Value) -> JsonRpcResponse {
     JsonRpcResponse {
-        jsonrpc: "2.0".into(),
+        jsonrpc: Default::default(),
         id: Some(id),
         result: None,
         error: Some(JsonRpcError {
@@ -229,7 +229,7 @@ pub fn allowed_paths_within_cwd(
 
     if !rejected.is_empty() {
         return Err(Box::new(JsonRpcResponse {
-            jsonrpc: "2.0".into(),
+            jsonrpc: Default::default(),
             id: Some(id.clone()),
             result: None,
             error: Some(JsonRpcError {
@@ -246,7 +246,7 @@ pub fn allowed_paths_within_cwd(
 
     if allowed.is_empty() {
         return Err(Box::new(JsonRpcResponse {
-            jsonrpc: "2.0".into(),
+            jsonrpc: Default::default(),
             id: Some(id.clone()),
             result: None,
             error: Some(JsonRpcError {

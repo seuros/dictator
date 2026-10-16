@@ -58,7 +58,11 @@ impl DictatorResources {
     )]
     async fn config(&self, _ctx: Ctx<'_>) -> ResourceResult {
         let text = read_text_resource(CONFIG_URI, "config", &self.state)?;
-        Ok(vec![text_resource(CONFIG_URI, text)])
+        Ok(vec![text_resource_with_mime(
+            CONFIG_URI,
+            text,
+            "application/json",
+        )])
     }
 
     /// List of all available decrees and their status
@@ -70,7 +74,11 @@ impl DictatorResources {
     )]
     async fn census(&self, _ctx: Ctx<'_>) -> ResourceResult {
         let text = read_text_resource(CENSUS_URI, "census", &self.state)?;
-        Ok(vec![text_resource(CENSUS_URI, text)])
+        Ok(vec![text_resource_with_mime(
+            CENSUS_URI,
+            text,
+            "application/json",
+        )])
     }
 
     /// The Dictator's current disposition toward the codebase. Subscribe to be
@@ -95,7 +103,11 @@ impl DictatorResources {
             "proclamation": mood.proclamation(),
         })
         .to_string();
-        Ok(vec![text_resource(MOOD_URI, text)])
+        Ok(vec![text_resource_with_mime(
+            MOOD_URI,
+            text,
+            "application/json",
+        )])
     }
 
     /// Violation status of uncommitted files. Subscribe to be notified when
@@ -138,6 +150,10 @@ impl DictatorResources {
                 .to_string()
             }
         };
-        Ok(vec![text_resource(UNCOMMITTED_URI, text)])
+        Ok(vec![text_resource_with_mime(
+            UNCOMMITTED_URI,
+            text,
+            "application/json",
+        )])
     }
 }

@@ -8,12 +8,11 @@ use crate::mcp::handlers::handle_stalint_unwatch;
 use crate::mcp::state::ServerState;
 use crate::mcp_host::config_exists;
 
-use super::{extract_tool_result, result_output, spawn_notification_forwarder};
+use super::{extract_tool_result, result_output};
 
 /// Unwatch files
 pub struct StalintUnwatchTool {
     pub state: Arc<Mutex<ServerState>>,
-    pub notification_tx: NotificationSender,
 }
 
 impl Tool for StalintUnwatchTool {
@@ -41,8 +40,7 @@ impl Tool for StalintUnwatchTool {
         Box::pin(async move {
             ctx.logger.info("Stopping path watch...");
 
-            let string_tx = spawn_notification_forwarder(self.notification_tx.clone());
-            let response = handle_stalint_unwatch(Value::Null, Arc::clone(&self.state), string_tx);
+            let response = handle_stalint_unwatch(Value::Null, Arc::clone(&self.state));
             let result = extract_tool_result(response, "stalint_unwatch")?;
 
             // Swap tools: hide unwatch, show watch
