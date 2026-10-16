@@ -1540,9 +1540,9 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-host"
-version = "0.12.0"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa0f8ff7ac55ad59df244a4da76e9a5aaf06242af48d66ed832ea2753b251287"
+checksum = "78177f241a1f10c6cb5600addb1ec368f5f8613a48988ec7aeb75d0e354cb4f2"
 dependencies = [
  "arc-swap",
  "base64 0.23.1",
@@ -1571,9 +1571,9 @@ dependencies = [
 
 [[package]]
 name = "mcp-host-macros"
-version = "0.12.0"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "348e75b99e498a61068e0ccacab27ea236e013126d884d81ff1e491518b5a532"
+checksum = "433b8f5a718e8d24b4f4fba54552e077b818f2b909b4543c3c963dc1000c05ac"
 dependencies = [
  "darling",
  "proc-macro-crate",
