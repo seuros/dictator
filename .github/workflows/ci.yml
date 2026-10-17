@@ -30,6 +30,12 @@ jobs:
       - name: Run tests
         run: cargo test --workspace
 
+      # Isolate core so other workspace members cannot enable its defaults.
+      - name: Core without WASM loader
+        run: |
+          cargo check -p dictator-core --all-targets --no-default-features --locked
+          cargo test -p dictator-core --no-default-features --locked
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

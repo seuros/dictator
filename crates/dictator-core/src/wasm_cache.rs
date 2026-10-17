@@ -1,18 +1,22 @@
 //! WASM module caching for improved performance
 
-use anyhow::{Context, Result};
-use dashmap::DashMap;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use wasmtime::component::Component;
-use wasmtime::{Config, Engine};
+#[cfg(feature = "wasm-loader")]
+use {
+    anyhow::{Context, Result},
+    dashmap::DashMap,
+    std::path::{Path, PathBuf},
+    std::sync::Arc,
+    wasmtime::{Config, Engine, component::Component},
+};
 
 /// Cache for compiled WASM components
+#[cfg(feature = "wasm-loader")]
 pub struct WasmCache {
     engine: Engine,
     components: DashMap<PathBuf, Arc<Component>>,
 }
 
+#[cfg(feature = "wasm-loader")]
 impl WasmCache {
     /// Create a new WASM cache with component model enabled
     pub fn new() -> Result<Self> {
@@ -63,6 +67,7 @@ impl WasmCache {
     }
 }
 
+#[cfg(feature = "wasm-loader")]
 impl Default for WasmCache {
     fn default() -> Self {
         Self::new().expect("Failed to create WASM cache")
@@ -75,5 +80,5 @@ pub struct WasmCacheStats {
     pub entries: usize,
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "wasm-loader"))]
 mod tests;

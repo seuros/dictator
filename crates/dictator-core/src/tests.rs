@@ -2,6 +2,26 @@ use super::*;
 use dictator_decree_abi::{Capability, Decree, DecreeMetadata, Diagnostics};
 use dictator_decree_abi::{Diagnostic, Span};
 
+#[cfg(not(feature = "wasm-loader"))]
+#[test]
+fn cache_stats_remain_available_without_wasm_loader() {
+    let stats: crate::WasmCacheStats = crate::wasm_cache::WasmCacheStats { entries: 0 };
+    assert_eq!(stats.clone().entries, 0);
+    assert!(Regime::new().wasm_cache_stats().is_none());
+}
+
+#[cfg(not(feature = "wasm-loader"))]
+#[test]
+fn adding_wasm_decree_without_loader_returns_feature_error() {
+    let mut regime = Regime::new();
+    let error = regime.add_wasm_decree("missing.wasm").unwrap_err();
+    assert_eq!(
+        error.to_string(),
+        "WASM loader disabled; enable the `wasm-loader` feature to load decrees"
+    );
+    assert!(regime.decrees.is_empty());
+}
+
 struct MockDecree {
     name: &'static str,
     exts: Vec<String>,
