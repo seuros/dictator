@@ -6,6 +6,7 @@ mod decree_matching;
 pub mod error;
 pub mod linter_output;
 mod rule_ignoring;
+pub mod tracing;
 pub mod wasm_cache;
 
 use anyhow::Result;
@@ -202,6 +203,7 @@ impl Regime {
 
 #[cfg(feature = "wasm-loader")]
 pub(crate) mod loader {
+    use crate::tracing;
     use crate::wasm_cache::WasmCache;
     use anyhow::{Context, Result};
     use dictator_decree_abi::{BoxDecree, Diagnostics, Span};

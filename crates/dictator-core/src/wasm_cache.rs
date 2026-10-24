@@ -1,6 +1,9 @@
 //! WASM module caching for improved performance
 
 #[cfg(feature = "wasm-loader")]
+use crate::tracing;
+
+#[cfg(feature = "wasm-loader")]
 use {
     anyhow::{Context, Result},
     dashmap::DashMap,

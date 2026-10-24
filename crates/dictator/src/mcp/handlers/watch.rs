@@ -1,5 +1,7 @@
 //! Watch/unwatch tool handlers for file monitoring.
 
+use dictator_core::tracing;
+
 use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
 use notify::{RecursiveMode, Watcher};
 use notify_types::event::Event;

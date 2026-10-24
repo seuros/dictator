@@ -68,8 +68,7 @@ wasmtime-wasi = { version = "49", default-features = true }
 libloading = "0.9"
 
 # Logging
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+rama = { version = "0.4.0", default-features = false, features = ["std"] }
 notify = "8"
 notify-types = "2"
 state-machines = "0.30"

@@ -22,6 +22,7 @@ mod regime;
 mod watch;
 
 use anyhow::Result;
+use dictator_core::tracing::subscriber as tracing_subscriber;
 
 use census::run_census;
 use cli::{Args, Command};
