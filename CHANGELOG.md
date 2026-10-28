@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.26.0](https://github.com/seuros/dictator/compare/dictator-v0.25.1...dictator-v0.26.0) (2026-10-28)
+
+
+### Features
+
+* **freebsd:** the Dictator conscripts five mdoc decrees and liquidates their redundant bodies ([032c660](https://github.com/seuros/dictator/commit/032c6601edcf379dc3dace6ab3f4280b4fe1dac0))
+* **freebsd:** the Dictator indicts three C nits and spares their honest twins ([688571d](https://github.com/seuros/dictator/commit/688571d98f43b80413e68b347e8ae478b78b055c))
+
+
+### Bug Fixes
+
+* **core:** honor disabled wasm-loader feature ([a11e7d3](https://github.com/seuros/dictator/commit/a11e7d303e0987ef89fe0e96f26babee780f8775))
+* **deps:** release mcp-host 0.15.0 upgrade ([048e94f](https://github.com/seuros/dictator/commit/048e94fe33fdbe4279838dce7d60970bdb36f15e))
+* **mcp:** replace legacy plumbing with mcp-host 0.12 APIs ([165cbef](https://github.com/seuros/dictator/commit/165cbef24e0d776e4d6a8a5fea566f6f9b71a1b0))
+
 ## [0.25.1](https://github.com/seuros/dictator/compare/dictator-v0.25.0...dictator-v0.25.1) (2026-10-09)
 
 
