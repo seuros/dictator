@@ -18,6 +18,10 @@ build-release:
 build-cli:
     cargo build -p dictator --release
 
+# Install the Dictator CLI into ~/.cargo/bin.
+install:
+    cargo install --path crates/dictator --locked
+
 # === Test Commands ===
 
 # Run all tests
