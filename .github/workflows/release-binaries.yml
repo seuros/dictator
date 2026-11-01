@@ -50,11 +50,8 @@ jobs:
         with:
           ref: ${{ inputs.tag }}
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.99.0"
-          targets: ${{ matrix.target }}
+      - name: Install Rust target
+        run: rustup target add ${{ matrix.target }}
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
