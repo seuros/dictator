@@ -653,3 +653,5 @@ MIT
 ---
 
 **Dictator**: Snitches on your structure. Takes all the credit.
+
+mcp-name: io.github.seuros/dictator

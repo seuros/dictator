@@ -11,6 +11,16 @@
           "type": "toml",
           "path": "Cargo.lock",
           "jsonpath": "$.package[?(!@.source && @.name.value.match(/^dictator/))].version"
+        },
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "server.json",
+          "jsonpath": "$.packages[0].version"
         }
       ]
     }

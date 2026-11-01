@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.seuros/dictator",
+  "title": "Dictator",
+  "description": "Structural linter that enforces file layout, naming and hygiene before the real linters run",
+  "repository": {
+    "url": "https://github.com/seuros/dictator",
+    "source": "github",
+    "id": "1109319027"
+  },
+  "websiteUrl": "https://github.com/seuros/dictator",
+  "version": "0.26.0",
+  "packages": [
+    {
+      "registryType": "cargo",
+      "registryBaseUrl": "https://crates.io",
+      "identifier": "dictator",
+      "version": "0.26.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ]
+    }
+  ]
+}
