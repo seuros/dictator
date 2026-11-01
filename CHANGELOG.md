@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.0](https://github.com/seuros/dictator/compare/dictator-v0.26.0...dictator-v0.27.0) (2026-11-01)
+
+
+### Features
+
+* list in the MCP registry ([fe36bdc](https://github.com/seuros/dictator/commit/fe36bdccb6068fd767ef700738ada5c35bf584b7))
+
 ## [0.26.0](https://github.com/seuros/dictator/compare/dictator-v0.25.1...dictator-v0.26.0) (2026-10-28)
 
 
