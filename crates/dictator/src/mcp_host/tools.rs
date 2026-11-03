@@ -16,7 +16,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::mcp::handlers::{handle_dictator, handle_stalint};
 use crate::mcp::state::ServerState;
-use crate::mcp::utils::{GitScope, git_changed_files, to_json_string};
+use crate::mcp::utils::{GitScope, git_changed_files};
 use crate::mcp_host::config_exists;
 
 /// Arguments for the stalint tool
@@ -143,8 +143,30 @@ pub(super) fn extract_tool_result(
         .ok_or_else(|| ToolError::Execution(format!("No result from {handler_name} handler")))
 }
 
-pub(super) fn result_output(result: &Value) -> ToolOutput {
-    ToolOutput::text(to_json_string(result))
+pub(super) fn result_output(result: Value) -> ToolResult {
+    ToolOutput::structured(result)
+        .map_err(|error| ToolError::Internal(format!("structured output failed: {error}")))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn result_output_keeps_json_as_structured_payload() {
+        let output = result_output(serde_json::json!({ "status": "ok", "count": 2 }))
+            .expect("object result should be structured");
+        let ToolOutput::Structured(payload) = output else {
+            panic!("result was downgraded to text content");
+        };
+        assert_eq!(payload["status"], "ok");
+        assert_eq!(payload["count"], 2);
+    }
+
+    #[test]
+    fn result_output_rejects_non_object_payloads() {
+        assert!(result_output(serde_json::json!([1, 2, 3])).is_err());
+    }
 }
 
 /// Simple tools using macro-based registration
@@ -177,9 +199,10 @@ impl DictatorTools {
                     batch.hide_tool("stalint");
                     batch.hide_tool("dictator");
                 });
-                return Ok(ToolOutput::text(
-                    "No workspace roots configured. Tools hidden until roots are available.",
-                ));
+                return result_output(serde_json::json!({
+                    "status": "unavailable",
+                    "message": "No workspace roots configured. Tools hidden until roots are available."
+                }));
             }
         };
 
@@ -189,9 +212,11 @@ impl DictatorTools {
             } else {
                 "uncommitted"
             };
-            return Ok(ToolOutput::text(format!(
-                "Working tree is clean — no {scope_word} files to lint."
-            )));
+            return result_output(serde_json::json!({
+                "status": "clean",
+                "scope": scope_word,
+                "violations": []
+            }));
         }
 
         if params.0.staged {
@@ -222,7 +247,7 @@ impl DictatorTools {
                 }
             }
         }
-        Ok(result_output(&result))
+        result_output(result)
     }
 
     /// Auto-fix structural violations (requires write permissions)
@@ -249,14 +274,18 @@ impl DictatorTools {
                     batch.hide_tool("stalint");
                     batch.hide_tool("dictator");
                 });
-                return Ok(ToolOutput::text(
-                    "No workspace roots configured. Tools hidden until roots are available.",
-                ));
+                return result_output(serde_json::json!({
+                    "status": "unavailable",
+                    "message": "No workspace roots configured. Tools hidden until roots are available."
+                }));
             }
         };
 
         if paths.is_empty() {
-            return Ok(ToolOutput::text("Working tree is clean — nothing to fix."));
+            return result_output(serde_json::json!({
+                "status": "clean",
+                "fixed": []
+            }));
         }
 
         if let Some(requester) = ctx.client_requester()
@@ -303,6 +332,6 @@ impl DictatorTools {
         let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
         let response = handle_dictator(Value::Null, args, Arc::clone(&self.state), ctx.progress());
         let result = extract_tool_result(response, "dictator")?;
-        Ok(result_output(&result))
+        result_output(result)
     }
 }

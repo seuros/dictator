@@ -64,7 +64,7 @@ impl Tool for OccupyTool {
             let result = extract_tool_result(response, "occupy")?;
             self.broadcaster.broadcast(ListChanged::Tools);
             self.broadcaster.broadcast(ListChanged::Resources);
-            Ok(result_output(&result))
+            result_output(result)
         })
     }
 }

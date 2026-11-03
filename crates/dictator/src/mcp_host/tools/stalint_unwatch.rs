@@ -52,7 +52,7 @@ impl Tool for StalintUnwatchTool {
             ctx.logger
                 .info("Watch stopped. stalint_watch now available.");
 
-            Ok(result_output(&result))
+            result_output(result)
         })
     }
 }
