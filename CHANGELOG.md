@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.0](https://github.com/seuros/dictator/compare/dictator-v0.27.0...dictator-v0.28.0) (2026-11-03)
+
+
+### Features
+
+* return structured MCP tool results ([1f1dd96](https://github.com/seuros/dictator/commit/1f1dd9686232134edf3ae5b2835e91be122b9727))
+
 ## [0.27.0](https://github.com/seuros/dictator/compare/dictator-v0.26.0...dictator-v0.27.0) (2026-11-01)
 
 
