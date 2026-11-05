@@ -215,7 +215,7 @@ dependencies = [
  "maybe-owned",
  "rustix",
  "rustix-linux-procfs",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
  "winx",
 ]
 
@@ -656,9 +656,9 @@ dependencies = [
 
 [[package]]
 name = "deadline-machines"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88d306f3482f64bc5a0f1383fd14878a75ff9e0868c199483cdc15c679dc5477"
+checksum = "8139b53f0b8f52bc61f95c0018524d31449dd5471c406d6d97a0afea17eef63f"
 
 [[package]]
 name = "debugid"
@@ -965,7 +965,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1797,9 +1797,9 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-host"
-version = "0.19.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c0e3c8a3d615cd5b8f1834358c480248285ed19721df1ff058108dcba37ea75"
+checksum = "ed44d42416c644ecff7a2059bb82d9bf874a1f917e46eb43a3ae1ea80bc16054"
 dependencies = [
  "arc-swap",
  "base64 0.23.1",
@@ -1954,7 +1954,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2466,7 +2466,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2726,7 +2726,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -2894,7 +2894,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2957,9 +2957,9 @@ dependencies = [
 
 [[package]]
 name = "throttle-machines"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c50e07b444af786a95ac5585d03e3dc1b0e6919aa8bc7ee7564fe18529c7fdc7"
+checksum = "e262493966d34b2b0ff84078a8efb3a22ee0a40284ee12ca89540f119f1558f0"
 
 [[package]]
 name = "time"
@@ -3837,7 +3837,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
