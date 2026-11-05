@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.1](https://github.com/seuros/dictator/compare/dictator-v0.28.0...dictator-v0.28.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* update MCP host dependency to 0.20 ([90ff896](https://github.com/seuros/dictator/commit/90ff896d9aef27e94bc297670b7d38b68963166c))
+
 ## [0.28.0](https://github.com/seuros/dictator/compare/dictator-v0.27.0...dictator-v0.28.0) (2026-11-03)
 
 
