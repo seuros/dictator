@@ -157,9 +157,9 @@ dependencies = [
 
 [[package]]
 name = "breaker-machines"
-version = "0.22.0"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bd70bc4a47f5cd89a1fd71365c78cc35fa2e7e71137819bc119b12f39c010fd"
+checksum = "bbf51708eca75faa21a79dbba811a5bc76632d3a6c2b82ed5b0a3ea0e39eb032"
 dependencies = [
  "chrono-machines",
  "hashbrown 0.17.1",
@@ -215,7 +215,7 @@ dependencies = [
  "maybe-owned",
  "rustix",
  "rustix-linux-procfs",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
  "winx",
 ]
 
@@ -265,9 +265,9 @@ dependencies = [
 
 [[package]]
 name = "chrono-machines"
-version = "0.10.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d996487faa81efb79ce6f1e83220d1f2abb07ec2aeb2c6ff0f0608ad75c9746"
+checksum = "85e44f9d0b5d1ae1387e0561b1f92824dcb2e139955756cf6b0c99cb3d36b734"
 dependencies = [
  "rand",
 ]
@@ -656,9 +656,9 @@ dependencies = [
 
 [[package]]
 name = "deadline-machines"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8139b53f0b8f52bc61f95c0018524d31449dd5471c406d6d97a0afea17eef63f"
+checksum = "805cba0e8981fd367f11a17886e0ad53b84365601f5d39d8b66819f9bd0ba463"
 
 [[package]]
 name = "debugid"
@@ -965,7 +965,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "fair-machines"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5794e6fed7497f711457d1b23003f54731593a092d692c6359444f0237fcc9aa"
+dependencies = [
+ "flow-machines",
+ "priority-machines",
 ]
 
 [[package]]
@@ -985,6 +995,12 @@ name = "fixedbitset"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
+
+[[package]]
+name = "flow-machines"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e4551eb1d0ea18d585036a0756f84d5dda9f594ee0900ca0f36bb2565cb90af"
 
 [[package]]
 name = "fluent-uri"
@@ -1797,9 +1813,9 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-host"
-version = "0.20.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed44d42416c644ecff7a2059bb82d9bf874a1f917e46eb43a3ae1ea80bc16054"
+checksum = "bb3745337a0497149685911c4d243f551b519a836a454ed90857fbfc17721d62"
 dependencies = [
  "arc-swap",
  "base64 0.23.1",
@@ -1807,6 +1823,7 @@ dependencies = [
  "breaker-machines",
  "dashmap",
  "deadline-machines",
+ "fair-machines",
  "fluent-uri",
  "ignore",
  "jiff",
@@ -1954,7 +1971,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2094,6 +2111,12 @@ name = "powerfmt"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a6394b9e965e73d0a289ee54f589087e2c676aedf60885baf52c76b771e4958"
+
+[[package]]
+name = "priority-machines"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26a43afb6f314d5dee6c73d62da6fc2fb5c5b1fd700311aac5cd4dfcf87fe93f"
 
 [[package]]
 name = "proc-macro-crate"
@@ -2466,7 +2489,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2726,7 +2749,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3d1e2c7f27f8d4cb10542a02c49005dbd6e93095799d6f3be745fae9f8fedd4"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2894,7 +2917,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3837,7 +3860,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
