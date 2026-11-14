@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.28.2](https://github.com/seuros/dictator/compare/dictator-v0.28.1...dictator-v0.28.2) (2026-11-14)
+
+
+### Bug Fixes
+
+* stop flagging macro constant multiplication as a pointer declaration ([8e9220e](https://github.com/seuros/dictator/commit/8e9220e6729b937c3ce853def7ee8fdd7791cfd0))
+* update MCP host dependency to 0.23 ([1c35ec0](https://github.com/seuros/dictator/commit/1c35ec0705cd67470d3f85279cf11241a014c871))
+
 ## [0.28.1](https://github.com/seuros/dictator/compare/dictator-v0.28.0...dictator-v0.28.1) (2026-11-05)
 
 
