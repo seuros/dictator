@@ -51,6 +51,28 @@ static inline uint32_t\nmask_of(uint32_t v)\n{\n\n\treturn (v);\n}\n";
     );
 }
 
+fn pointer_binding_hits(src: &str) -> usize {
+    lint_source(src)
+        .iter()
+        .filter(|d| d.rule == "freebsd/pointer-binding")
+        .count()
+}
+
+#[test]
+fn macro_constant_multiplication_is_not_a_declaration() {
+    for src in [
+        "\ttaskqueue_enqueue_timeout(tq,\n\t    &sc->task, POLL_PERIOD * hz);\n",
+        "\tcallout_reset(c, sc->base + TICK_MS * hz, fn, sc);\n",
+    ] {
+        assert_eq!(pointer_binding_hits(src), 0, "flagged: {src:?}");
+    }
+}
+
+#[test]
+fn uppercase_typedef_declaration_is_flagged() {
+    assert_eq!(pointer_binding_hits("\tFILE * fp;\n"), 1);
+}
+
 #[test]
 fn bad_man_page_fixture() {
     use dictator_decree_abi::Decree;

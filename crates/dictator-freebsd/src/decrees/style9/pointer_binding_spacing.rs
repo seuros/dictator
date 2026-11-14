@@ -29,7 +29,7 @@ pub(crate) fn check_pointer_binding_spacing(
                     .chars()
                     .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
                 && last.chars().any(|c| c.is_ascii_uppercase());
-            if !upper_typedef {
+            if !upper_typedef || in_expression(&prefix[..prefix.len() - last.len()]) {
                 continue;
             }
         }
@@ -75,4 +75,13 @@ pub(crate) fn check_pointer_binding_spacing(
         );
         return;
     }
+}
+
+/// An all-caps token is usually a macro constant, not a typedef, when the code
+/// before it is an expression: `f(&sc->task, POLL_PERIOD * hz)`, `a + MAX * n`.
+fn in_expression(before: &str) -> bool {
+    let before = before.trim_end();
+    before.contains("->")
+        || before.contains('&')
+        || before.ends_with(['+', '-', '/', '%', '<', '>', '!', '?', ':', '|', '^'])
 }
