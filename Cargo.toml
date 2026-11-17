@@ -71,7 +71,7 @@ libloading = "0.9"
 rama = { version = "0.4.0", default-features = false, features = ["std"] }
 notify = "8"
 notify-types = "2"
-state-machines = "0.30"
+state-machines = "0.34"
 ctrlc = "3"
 tempfile = "3"
 
