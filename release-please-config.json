@@ -7,10 +7,16 @@
       "include-component-in-tag": true,
       "extra-files": [
         "Cargo.toml",
+        "crates/dictator-kjr/Cargo.toml",
         {
           "type": "toml",
           "path": "Cargo.lock",
           "jsonpath": "$.package[?(!@.source && @.name.value.match(/^dictator/))].version"
+        },
+        {
+          "type": "toml",
+          "path": "crates/dictator-kjr/Cargo.lock",
+          "jsonpath": "$.package[?(@.name.value == 'dictator-decree-abi')].version"
         },
         {
           "type": "json",
