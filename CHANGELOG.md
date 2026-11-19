@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.28.3](https://github.com/seuros/dictator/compare/dictator-v0.28.2...dictator-v0.28.3) (2026-11-19)
+
+
+### Bug Fixes
+
+* **deps:** state-machines 0.35, mcp-host 0.28.1 ([59bab29](https://github.com/seuros/dictator/commit/59bab29be3ec64e07eb1f506f014b4fb89328e74))
+* **kjr:** build standalone again, on wit-bindgen 0.62 ([289d83c](https://github.com/seuros/dictator/commit/289d83c7a1adf538fd20ad71516068bcba3d682a))
+* **kjr:** keep the decree ABI pin in step with releases ([0dc736c](https://github.com/seuros/dictator/commit/0dc736c83a79aff4682b29f7838af785e17c9c70))
+
 ## [0.28.2](https://github.com/seuros/dictator/compare/dictator-v0.28.1...dictator-v0.28.2) (2026-11-17)
 
 
