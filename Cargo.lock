@@ -651,9 +651,9 @@ dependencies = [
 
 [[package]]
 name = "deadline-machines"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da2c41f4fe7e16b2ea82f392e628fa0f1a03de6b7cdb6b80f540e13f4eaaeabc"
+checksum = "ef0dade0f43e6d4da638f67256515519eaad07374a4fb7cea2ea31d17e6859be"
 
 [[package]]
 name = "debugid"
@@ -1806,9 +1806,9 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 
 [[package]]
 name = "mcp-host"
-version = "0.27.0"
+version = "0.28.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f26382da2a568bcb8bd7fc30773753ff69649c425e57bdc52b2433910c1009b0"
+checksum = "b27b175b24cbf6b706c0ab67a84638a0cc5a666dc1bf19868ee631c11d89acf7"
 dependencies = [
  "arc-swap",
  "base64 0.23.1",
@@ -2778,9 +2778,9 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "state-machines"
-version = "0.34.2"
+version = "0.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45c631fdc2cefc7f9d691e6da1d8be69b17523e5d819045a83163800e59dd378"
+checksum = "f2fb3f0428a4a79e7929cacf1186fea42291446987807a5136daae4161c13fcf"
 dependencies = [
  "state-machines-core",
  "state-machines-macro",
@@ -2788,15 +2788,15 @@ dependencies = [
 
 [[package]]
 name = "state-machines-core"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4c4c5f387ceb2d1562a5dc93c28c1bad75305af92f84eee53325dde2b983b14"
+checksum = "1d027fb20a763004675f678951c6c9537d9dbc2b26056c37d41cefb014e55daf"
 
 [[package]]
 name = "state-machines-macro"
-version = "0.34.2"
+version = "0.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3de00708d997638f2c4b08fc6581e6133c32ea245c2005466424652c6ae59f61"
+checksum = "c16c56f4525fd7923580b96d7066341d3b10e772aa2e679e0c65b04881ba9439"
 dependencies = [
  "harel-machines",
  "proc-macro2",
