@@ -1,5 +1,5 @@
 use super::*;
-use crate::mcp::utils::base64_encode;
+use mcp_host::utils::encode_cursor;
 
 #[test]
 fn stalint_handler_covers_defaults_paths_and_pagination() {
@@ -26,12 +26,12 @@ fn stalint_handler_covers_defaults_paths_and_pagination() {
     let args = Some(serde_json::json!({"paths": ["/nonexistent"]}));
     let response = handle_stalint(serde_json::json!(1), args, Arc::clone(&shared), None);
     assert!(response.error.is_none());
-    let args = Some(serde_json::json!({"cursor": base64_encode(b"0")}));
+    let args = Some(serde_json::json!({"cursor": encode_cursor(0)}));
     let response = handle_stalint(serde_json::json!(2), args, shared, None);
     assert!(response.error.is_none());
 
     // A cursor without stored paths is an invalid-params error.
-    let args = Some(serde_json::json!({"cursor": base64_encode(b"10")}));
+    let args = Some(serde_json::json!({"cursor": encode_cursor(10)}));
     let response = handle_stalint(serde_json::json!(1), args, state(), None);
     let error = response.error.unwrap();
     assert_eq!(error.code, -32602);

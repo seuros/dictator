@@ -19,6 +19,9 @@ use crate::mcp::state::ServerState;
 use crate::mcp::utils::{GitScope, git_changed_files};
 use crate::mcp_host::config_exists;
 
+const NO_ROOTS_MESSAGE: &str =
+    "No workspace roots configured. Tools hidden until roots are available.";
+
 /// Arguments for the stalint tool
 #[derive(Debug, Default, serde::Deserialize, schemars::JsonSchema)]
 pub struct StalintParams {
@@ -28,6 +31,8 @@ pub struct StalintParams {
     /// Workspace root to scope linting to (default: client roots or CWD)
     #[serde(default)]
     pub workspace: Option<String>,
+    /// Pass the previous page's nextCursor with the same workspace and staged settings.
+    pub cursor: Option<String>,
 }
 
 /// Arguments for the dictator (auto-fix) tool
@@ -201,12 +206,17 @@ impl DictatorTools {
                 });
                 return result_output(serde_json::json!({
                     "status": "unavailable",
-                    "message": "No workspace roots configured. Tools hidden until roots are available."
+                    "message": NO_ROOTS_MESSAGE
                 }));
             }
         };
 
         if paths.is_empty() {
+            if params.0.cursor.is_some() {
+                return Err(ToolError::InvalidArguments(
+                    "No files remain in scope; restart stalint without a cursor".into(),
+                ));
+            }
             let scope_word = if params.0.staged {
                 "staged"
             } else {
@@ -229,7 +239,9 @@ impl DictatorTools {
                 .record_classified_staged(espionage);
         }
 
-        let args = Some(serde_json::json!({ "paths": paths, "workspace": workspace }));
+        let args = Some(serde_json::json!({
+            "paths": paths, "workspace": workspace, "cursor": params.0.cursor,
+        }));
         let response = handle_stalint(Value::Null, args, Arc::clone(&self.state), ctx.progress());
         let mut result = extract_tool_result(response, "stalint")?;
 
@@ -276,7 +288,7 @@ impl DictatorTools {
                 });
                 return result_output(serde_json::json!({
                     "status": "unavailable",
-                    "message": "No workspace roots configured. Tools hidden until roots are available."
+                    "message": NO_ROOTS_MESSAGE
                 }));
             }
         };

@@ -104,7 +104,7 @@ pub fn command_available(cmd: &str) -> bool {
 }
 
 // Re-export mcp-host utilities
-pub use mcp_host::utils::{base64_decode, base64_encode, byte_to_line_col, collect_files};
+pub use mcp_host::utils::{byte_to_line_col, collect_files};
 
 /// Which pending changes to include when scoping to a git repo
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

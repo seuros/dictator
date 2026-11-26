@@ -533,6 +533,9 @@ Check sandbox/ for structural violations
 ```
 
 The assistant will call `stalint` and report violations with file, line, column, rule, and message.
+`stalint` returns up to 10 violations per page. If a page includes `nextCursor`, pass it
+as `cursor` with the same `workspace` and `staged` settings. Stop when `nextCursor` is absent.
+Each page scans the current files; restart without a cursor if the files change.
 
 To auto-fix:
 ```

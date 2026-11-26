@@ -4,6 +4,7 @@ use camino::Utf8Path;
 use dictator_core::Source;
 use mcp_host::managers::progress::Progress;
 use mcp_host::protocol::types::{JsonRpcError, JsonRpcResponse};
+use mcp_host::utils::paginate;
 use serde::Deserialize;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
@@ -11,8 +12,7 @@ use std::sync::{Arc, Mutex};
 use crate::mcp::regime::init_regime_from_config;
 use crate::mcp::state::{DEFAULT_STALINT_LIMIT, ServerState};
 use crate::mcp::utils::{
-    base64_decode, base64_encode, byte_to_line_col, collect_files, current_dir_or_default,
-    log_to_file, make_snippet,
+    byte_to_line_col, collect_files, current_dir_or_default, log_to_file, make_snippet,
 };
 
 /// Handle stalint tool
@@ -68,11 +68,6 @@ pub fn handle_stalint(
     };
 
     let limit = args.limit.unwrap_or(DEFAULT_STALINT_LIMIT);
-    let offset: usize = args
-        .cursor
-        .and_then(|c| String::from_utf8(base64_decode(&c)).ok())
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0);
 
     // Resolve paths to absolute (relative to server's cwd)
     let cwd = args
@@ -106,11 +101,13 @@ pub fn handle_stalint(
     let single_file = resolved_paths.len() == 1 && resolved_paths[0].is_file();
 
     // Collect all files first for progress tracking
-    let all_files: Vec<std::path::PathBuf> = resolved_paths
+    let mut all_files: Vec<std::path::PathBuf> = resolved_paths
         .iter()
         .filter(|p| p.exists())
         .flat_map(|p| collect_files(p))
         .collect();
+    // Each page is a fresh scan; neither directory walks nor decrees promise ordering.
+    all_files.sort_unstable();
 
     // Start progress tracking
     let total = f64::from(u32::try_from(all_files.len()).unwrap_or(u32::MAX));
@@ -137,7 +134,16 @@ pub fn handle_stalint(
             text: &text,
         };
 
-        if let Ok(diags) = regime.enforce(&[source]) {
+        if let Ok(mut diags) = regime.enforce(&[source]) {
+            diags.sort_unstable_by(|a, b| {
+                (a.span.start, a.span.end, &a.rule, &a.message, a.enforced).cmp(&(
+                    b.span.start,
+                    b.span.end,
+                    &b.rule,
+                    &b.message,
+                    b.enforced,
+                ))
+            });
             for diag in &diags {
                 let (line, col) = byte_to_line_col(&text, diag.span.start);
                 let snippet = if diag.rule == dictator_core::classified::CLASSIFIED_RULE {
@@ -174,29 +180,32 @@ pub fn handle_stalint(
         let mut state = watcher_state.lock().unwrap();
         state.record_violations(total);
     }
-    let page: Vec<_> = all_violations
-        .into_iter()
-        .skip(offset)
-        .take(limit)
-        .collect();
-    let next_offset = offset + page.len();
-
-    let next_cursor = if next_offset < total {
-        Some(base64_encode(next_offset.to_string().as_bytes()))
-    } else {
-        None
+    let page = match paginate(&all_violations, args.cursor.as_deref(), limit) {
+        Ok(page) => page,
+        Err(error) => {
+            return JsonRpcResponse {
+                jsonrpc: Default::default(),
+                id: Some(id),
+                result: None,
+                error: Some(JsonRpcError {
+                    code: -32602,
+                    message: error.to_string(),
+                    data: None,
+                }),
+            };
+        }
     };
 
     let mut result = serde_json::json!({
         "content": [],
         "structuredContent": {
             "total": total,
-            "returned": page.len(),
-            "violations": page
+            "returned": page.items.len(),
+            "violations": page.items
         }
     });
 
-    if let Some(cursor) = next_cursor {
+    if let Some(cursor) = page.next_cursor {
         result["structuredContent"]["nextCursor"] = serde_json::json!(cursor);
     }
 
