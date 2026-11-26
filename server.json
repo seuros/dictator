@@ -9,13 +9,13 @@
     "id": "1109319027"
   },
   "websiteUrl": "https://github.com/seuros/dictator",
-  "version": "0.28.3",
+  "version": "0.28.4",
   "packages": [
     {
       "registryType": "cargo",
       "registryBaseUrl": "https://crates.io",
       "identifier": "dictator",
-      "version": "0.28.3",
+      "version": "0.28.4",
       "transport": {
         "type": "stdio"
       },

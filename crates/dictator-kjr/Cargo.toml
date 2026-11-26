@@ -16,7 +16,7 @@ all = "warn"
 
 [dependencies]
 # Only the public ABI - this is how third-party decrees should be built
-dictator-decree-abi = { path = "../dictator-decree-abi", version = "0.28.3" } # x-release-please-version
+dictator-decree-abi = { path = "../dictator-decree-abi", version = "0.28.4" } # x-release-please-version
 regex = "1"
 wit-bindgen = "0.62"
 
