@@ -1,80 +1,17 @@
 name: CI
-
 on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
+  workflow_dispatch:
 
-env:
-  CARGO_TERM_COLOR: always
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.99.0"
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-
-      - name: Build
-        run: cargo build --workspace
-
-      - name: Run tests
-        run: cargo test --workspace
-
-      # Isolate core so other workspace members cannot enable its defaults.
-      - name: Core without WASM loader
-        run: |
-          cargo check -p dictator-core --all-targets --no-default-features --locked
-          cargo test -p dictator-core --no-default-features --locked
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    needs: dictator
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.99.0"
-          components: clippy, rustfmt
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Clippy
-        run: cargo clippy --workspace -- -D warnings
-
-  # The Dictator enforces structural discipline
-  dictator:
-    name: Structural Enforcement
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: "1.99.0"
-
-      - name: Cache cargo
-        uses: Swatinem/rust-cache@v2
-
-      - name: Build Dictator
-        run: cargo build --release -p dictator
-
-      - name: Run stalint
-        run: ./target/release/dictator -c .dictate.ci.toml lint crates/dictator/src crates/dictator-core/src crates/dictator-supreme/src crates/dictator-ruby/src crates/dictator-typescript/src crates/dictator-golang/src crates/dictator-rust/src crates/dictator-python/src crates/dictator-frontmatter/src
+  driver:
+    uses: seuros/chaos/.github/workflows/driver-ci.yml@e1eef224b566e7a32555231974165d75355e32aa
