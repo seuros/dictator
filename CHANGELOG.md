@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.4](https://github.com/seuros/dictator/compare/dictator-v0.28.3...dictator-v0.28.4) (2026-11-26)
+
+
+### Bug Fixes
+
+* **mcp:** let stalint clients page through all findings ([a240588](https://github.com/seuros/dictator/commit/a2405884de7e4f87afea5dbe78584f8681c97477))
+
 ## [0.28.3](https://github.com/seuros/dictator/compare/dictator-v0.28.2...dictator-v0.28.3) (2026-11-19)
 
 
