@@ -8,9 +8,8 @@ pub use occupy::OccupyTool;
 pub use stalint_watch::StalintWatchTool;
 
 use mcp_host::prelude::*;
-use mcp_host::protocol::elicitation::ElicitationSchema;
-use mcp_host::protocol::types::ElicitationAction;
 use mcp_host::protocol::types::JsonRpcResponse;
+use mcp_host::server::multiplexer::Confirmation;
 use serde_json::Value;
 use std::sync::{Arc, Mutex};
 
@@ -316,28 +315,21 @@ impl DictatorTools {
                  violations:\n\n{lint_summary}\n\nConfirm?"
             );
 
-            let schema = ElicitationSchema::builder()
-                .optional_bool("confirm", false)
-                .build()
-                .map_err(|error| ToolError::Internal(error.into()))?;
-
-            let result = requester
-                .request_elicitation_form(message, &schema, None)
+            match requester
+                .request_confirmation(message, None)
                 .await
-                .map_err(|e| ToolError::Execution(e.to_string()))?;
-
-            let confirmed = matches!(result.action, ElicitationAction::Accept)
-                && result
-                    .content
-                    .as_ref()
-                    .and_then(|c| c.get("confirm"))
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(false);
-
-            if !confirmed {
-                return Err(ToolError::Execution(
-                    "Operation cancelled by user".to_string(),
-                ));
+                .map_err(|e| ToolError::Execution(e.to_string()))?
+            {
+                Confirmation::Approved => {}
+                Confirmation::Unavailable => {
+                    return Err(ToolError::Execution("confirmation unavailable".into()));
+                }
+                Confirmation::Declined => {
+                    return Err(ToolError::Execution("confirmation declined".into()));
+                }
+                Confirmation::Cancelled => {
+                    return Err(ToolError::Execution("confirmation cancelled".into()));
+                }
             }
         }
 
